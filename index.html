@@ -3,120 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="3D idejni prikaz nadstrešnice uz kuću br. 7, s nacrtom pročelja, mjerama i usporedbom krovnih panela.">
+<meta name="description" content="3D idejni prikaz nadstrešnice uz kuću br. 7, s nacrtom pročelja, mjerama, popisom materijala i galerijom.">
 <title>Nadstrešnica br. 7</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,500;112,700;100,400;100,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<style>
-:root{
-  --ground:#eff1ee; --surface:#ffffff; --ink:#1c2220; --muted:#5b6661; --line:#d3d9d4;
-  --accent:#383e42; --sage:#7d9283; --chip:#e4e9e5;
-  --d-house:#b3bfae; --d-sheet:#3c4246; --d-seam:#555c61; --d-door:#30363a; --d-garage:#41474b;
-  --d-pillar:#e2e3dc; --d-brick:#c9a45a; --d-dim:#1c2220; --d-ground:#8d948f;
-  --lg-red:#e0352b; --lg-green:#3fbf3a; --lg-yellow:#e8c21c; --lg-blue:#2d55e0; --lg-purple:#c24fd6;
-  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    color-scheme:dark;
-    --ground:#141817; --surface:#1c211f; --ink:#e4e9e6; --muted:#9aa6a0; --line:#2e3633;
-    --accent:#c9d4cd; --sage:#9fb5a6; --chip:#252c29;
-    --d-house:#5c6a5d; --d-sheet:#8a939a; --d-seam:#6d767c; --d-door:#aab2b8; --d-garage:#7d868c;
-    --d-pillar:#3a403d; --d-brick:#8d7240; --d-dim:#e4e9e6; --d-ground:#6f7773;
-  }
-}
-:root[data-theme="dark"]{
-  color-scheme:dark;
-  --ground:#141817; --surface:#1c211f; --ink:#e4e9e6; --muted:#9aa6a0; --line:#2e3633;
-  --accent:#c9d4cd; --sage:#9fb5a6; --chip:#252c29;
-  --d-house:#5c6a5d; --d-sheet:#8a939a; --d-seam:#6d767c; --d-door:#aab2b8; --d-garage:#7d868c;
-  --d-pillar:#3a403d; --d-brick:#8d7240; --d-dim:#e4e9e6; --d-ground:#6f7773;
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--display);font-stretch:100%;font-size:15px;line-height:1.55;padding:0 16px}
-.wrap{max-width:1180px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
-header{display:flex;flex-direction:column;gap:8px;max-width:70ch}
-.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-h1{font-stretch:112%;font-weight:700;font-size:clamp(30px,5vw,46px);line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
-h2{font-stretch:112%;font-weight:700;font-size:22px;margin:0;text-wrap:balance}
-p{margin:0}
-.lede{color:var(--muted);font-size:16px}
-
-.viewer{display:grid;grid-template-columns:1fr 280px;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden}
-#stage{position:relative;min-height:max(420px,min(66vh,640px));background:#cfd8dd}
-#stage canvas{position:absolute;inset:0}
-#stage canvas{display:block;width:100%;height:100%;touch-action:none}
-.views{position:absolute;left:12px;top:12px;display:flex;flex-wrap:wrap;gap:6px}
-.views button,.doors button{font:500 12px var(--mono);letter-spacing:.04em;border:0;border-radius:3px;padding:7px 10px;background:rgba(255,255,255,.88);color:#1c2220;cursor:pointer}
-.views button[aria-pressed="true"],.doors button[aria-pressed="true"]{background:#383e42;color:#fff}
-.doors{position:absolute;left:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:6px}
-.hint{position:absolute;right:12px;bottom:12px;font:12px var(--mono);color:#2a3230;background:rgba(255,255,255,.7);padding:3px 7px;border-radius:3px}
-.panel{padding:20px;display:flex;flex-direction:column;gap:20px;border-left:1px solid var(--line)}
-.opt{display:flex;flex-direction:column;gap:8px}
-.opt-label{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.seg{display:flex;flex-direction:column;gap:4px}
-.seg button{text-align:left;font:500 14px var(--display);padding:8px 10px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:4px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
-.seg button small{font:12px var(--mono);color:var(--muted)}
-.seg button[aria-pressed="true"]{border-color:var(--ink);background:var(--chip)}
-button:focus-visible{outline:2px solid var(--sage);outline-offset:2px}
-.readout{font:12px/1.6 var(--mono);color:var(--muted);border-top:1px solid var(--line);padding-top:14px;font-variant-numeric:tabular-nums}
-.readout b{color:var(--ink);font-weight:500}
-
-section{display:flex;flex-direction:column;gap:16px}
-.sec-head{display:flex;flex-direction:column;gap:6px;max-width:70ch}
-.sec-head p{color:var(--muted)}
-.drawing{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;overflow-x:auto}
-.drawing svg{display:block;width:100%;min-width:560px;height:auto}
-.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted)}
-.legend span{display:inline-flex;align-items:center;gap:7px}
-.legend i{width:14px;height:14px;border:2.5px solid;border-radius:2px;display:inline-block}
-
-.panels{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:10px}
-.card.pick{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
-.card h3{margin:0;font-stretch:112%;font-size:17px;font-weight:700;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
-.tag{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;background:var(--ink);color:var(--surface);padding:2px 7px;border-radius:3px;white-space:nowrap}
-.card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px;font-size:14px}
-.card .meta{font:12px var(--mono);color:var(--muted)}
-.pros li::marker{content:"+  ";color:var(--sage)}
-.cons li::marker{content:"–  ";color:var(--muted)}
-.note{background:var(--chip);border-radius:6px;padding:14px 16px;font-size:14px;max-width:80ch}
-.specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0;border-top:1px solid var(--line)}
-.specs div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);margin-right:24px;font-size:14px}
-.specs dt{color:var(--muted)}
-.specs dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
-
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
-.gallery figure{margin:0;display:flex;flex-direction:column;gap:6px}
-.thumb{padding:0;border:1px solid var(--line);border-radius:5px;overflow:hidden;background:var(--chip);cursor:zoom-in;display:block;aspect-ratio:4/3;max-width:100%}
-.thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s}
-.thumb:hover img{transform:scale(1.03)}
-.gallery figcaption{font-size:13px;color:var(--muted)}
-#lb{border:0;padding:0;background:transparent;max-width:min(96vw,1600px);max-height:96vh;overflow:visible}
-#lb::backdrop{background:rgba(10,12,12,.88)}
-#lb img{display:block;max-width:min(96vw,1600px);max-height:calc(96vh - 56px);margin:0 auto;border-radius:4px}
-.lb-bar{display:flex;align-items:center;gap:8px;padding-top:10px;color:#e8ece9;font:13px var(--mono)}
-.lb-bar span{flex:1;text-align:center}
-.lb-bar button{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:4px;padding:7px 12px;font:15px var(--mono);cursor:pointer}
-@media (prefers-reduced-motion: reduce){.thumb img{transition:none}}
-@media (max-width:1100px){.hint{display:none}}
-@media (max-width:820px){
-  .viewer{grid-template-columns:1fr}
-  .panel{border-left:0;border-top:1px solid var(--line)}
-  .seg{flex-direction:row;flex-wrap:wrap}
-  .seg button{flex:1 1 auto}
-  .panels{grid-template-columns:1fr}
-  #stage{height:58vh;min-height:340px}
-}
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="wrap">
   <header>
     <div class="eyebrow">Idejni prikaz · kućni broj 7</div>
     <h1>Nadstrešnica između kuće i susjeda</h1>
-    <p class="lede">Jednostrešna čelična konstrukcija naslonjena na bočni zid kuće na 3,25 m, s padom prema susjedu. Sprijeda: ulazna vrata, stupić s interfonom, sekcijska garažna vrata i ograda od lima; ograda i prostor iznad vrata zatvoreni su istim limom. Nadstrešnica ide cijelom dužinom kuće. Model se okreće prstom ili mišem.</p>
+    <p class="lede">Jednostrešna čelična konstrukcija naslonjena na bočni zid kuće, s padom prema susjedu. Sprijeda su ulazna vrata, stupić s interfonom, sekcijska garažna vrata i ograda. Ograda i prostor iznad vrata zatvoreni su istim limom. Model se okreće prstom ili mišem, a mjere se mogu mijenjati u panelu.</p>
   </header>
 
   <div class="viewer">
@@ -138,122 +36,63 @@ section{display:flex;flex-direction:column;gap:16px}
       <div class="opt">
         <div class="opt-label">Visina krova</div>
         <div class="seg" id="o-height">
-          <button id="h-low" data-v="low" aria-pressed="true">Niža <small>1,90 m na kraju</small></button>
-          <button id="h-high" data-v="high" aria-pressed="false">Najviša <small>2,80 m na kraju</small></button>
+          <button id="h-high" data-v="high" aria-pressed="true">Najviša <small id="h-high-sub">2,80 m na kraju</small></button>
+          <button id="h-low" data-v="low" aria-pressed="false">Niža <small>1,90 m na kraju</small></button>
         </div>
       </div>
       <div class="opt">
         <div class="opt-label">Krov (panel odozgo)</div>
         <div class="seg" id="o-roof">
-          <button id="r-sandwich" data-v="sandwich" aria-pressed="true">Sendvič panel <small>40 mm</small></button>
-          <button id="r-poly" data-v="poly" aria-pressed="false">Polikarbonat <small>16 mm</small></button>
-          <button id="r-trap" data-v="trap" aria-pressed="false">Trapezni lim <small>0,5 mm</small></button>
+          <button data-v="sandwich" aria-pressed="true">Sendvič panel <small>40 mm</small></button>
+          <button data-v="poly" aria-pressed="false">Polikarbonat <small>16 mm</small></button>
+          <button data-v="trap" aria-pressed="false">Trapezni lim <small>0,5 mm</small></button>
         </div>
       </div>
       <div class="opt">
         <div class="opt-label">Garažna vrata</div>
         <div class="seg" id="o-garage">
-          <button id="g-anth" data-v="anth" aria-pressed="true">Antracit <small>RAL 7016</small></button>
-          <button id="g-wood" data-v="wood" aria-pressed="false">Dekor drvo <small>zlatni hrast</small></button>
-          <button id="g-white" data-v="white" aria-pressed="false">Bijela <small>RAL 9016</small></button>
+          <button data-v="anth" aria-pressed="true">Antracit <small>RAL 7016</small></button>
+          <button data-v="wood" aria-pressed="false">Dekor drvo <small>zlatni hrast</small></button>
+          <button data-v="white" aria-pressed="false">Bijela <small>RAL 9016</small></button>
         </div>
       </div>
       <div class="opt">
         <div class="opt-label">Ograda i lim (isti)</div>
         <div class="seg" id="o-fence">
-          <button id="f-anth" data-v="anth" aria-pressed="true">Antracit <small>kao susjedov balkon</small></button>
-          <button id="f-wood" data-v="wood" aria-pressed="false">Dekor drvo</button>
+          <button data-v="anth" aria-pressed="true">Antracit <small>kao susjedov balkon</small></button>
+          <button data-v="wood" aria-pressed="false">Dekor drvo</button>
         </div>
       </div>
+      <details class="opt dims">
+        <summary class="opt-label">Mjere (m)</summary>
+        <div class="dims-grid">
+          <label for="in-D">Dužina uz kuću</label><input id="in-D" inputmode="decimal" type="number" step="0.05">
+          <label for="in-WL">Širina do susjeda</label><input id="in-WL" inputmode="decimal" type="number" step="0.05">
+          <label for="in-gap">Razmak krova od susjeda</label><input id="in-gap" inputmode="decimal" type="number" step="0.05">
+          <label for="in-HH">Visina uz kuću</label><input id="in-HH" inputmode="decimal" type="number" step="0.05">
+          <label for="in-HL">Visina na kraju</label><input id="in-HL" inputmode="decimal" type="number" step="0.05">
+        </div>
+        <button id="dims-reset" class="link">Vrati izmjerene mjere</button>
+      </details>
       <div class="readout">
-        tlocrt <b>5,52 × 7,80 m</b><br>
-        visina uz kuću <b>3,25 m</b><br>
-        visina na kraju krova <b id="ro-end">1,90 m</b><br>
-        širina krova <b>5,02 m</b> (50 cm od susjeda)<br>
-        pad krova <b id="ro-pitch">≈ 15° (27 %)</b><br>
-        garažna vrata <b id="ro-garage">2,68 × 2,00 m</b>
+        tlocrt <b id="ro-plan"></b><br>
+        visina uz kuću <b id="ro-hh"></b><br>
+        visina na kraju krova <b id="ro-end"></b><br>
+        širina krova <b id="ro-w"></b> (<span id="ro-gap"></span> od susjeda)<br>
+        pad krova <b id="ro-pitch"></b><br>
+        garažna vrata <b id="ro-garage"></b>
       </div>
+      <ul id="warn" class="warn" hidden></ul>
     </div>
   </div>
 
   <section>
     <div class="sec-head">
       <h2>Pročelje s ulice, s mjerama</h2>
-      <p>Isti raspored kao na tvojoj skici; nacrt prikazuje nižu varijantu krova (1,90 m na kraju). Mjere u metrima; širine vrata i stupića su procjena iz fotografija, točne treba izmjeriti na licu mjesta.</p>
+      <p id="elev-note"></p>
+      <p>Mjere su u metrima. Širine vrata i stupića procijenjene su iz fotografija; točne treba izmjeriti na licu mjesta.</p>
     </div>
-    <div class="drawing">
-      <svg viewBox="-100 -34 760 514" role="img" aria-label="Nacrt pročelja nadstrešnice s kotama">
-        <defs>
-          <pattern id="seams" width="25" height="10" patternUnits="userSpaceOnUse">
-            <rect width="25" height="10" fill="var(--d-sheet)"/>
-            <rect x="0" width="1.6" height="10" fill="var(--d-seam)"/>
-          </pattern>
-          <pattern id="garage" width="10" height="40" patternUnits="userSpaceOnUse" y="150">
-            <rect width="10" height="40" fill="var(--d-garage)"/>
-            <rect y="39" width="10" height="1.4" fill="var(--d-seam)"/>
-          </pattern>
-          <marker id="tick" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-            <path d="M2 8 L8 2" stroke="var(--d-dim)" stroke-width="1.4"/>
-          </marker>
-        </defs>
-        <!-- house wall -->
-        <rect x="-100" y="-20" width="100" height="370" fill="var(--d-house)"/>
-        <text x="-50" y="60" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--ink)">kuća</text>
-        <!-- fascia sheet above doors -->
-        <polygon points="0,35 502,168 502,160 552,160 552,350 408,350 408,150 105,150 105,140 0,140" fill="url(#seams)"/>
-        <!-- roof edge -->
-        <polygon points="0,25 522,165 522,173 0,33" fill="var(--d-dim)"/>
-        <!-- entrance door -->
-        <rect x="5" y="140" width="100" height="210" fill="var(--d-door)"/>
-        <rect x="70" y="160" width="10" height="170" fill="var(--d-seam)" opacity=".9"/>
-        <rect x="18" y="215" width="3" height="80" fill="var(--d-pillar)"/>
-        <!-- pillar -->
-        <rect x="105" y="150" width="25" height="200" fill="var(--d-pillar)" stroke="var(--line)"/>
-        <rect x="110" y="195" width="15" height="22" fill="var(--d-door)"/>
-        <rect x="109" y="168" width="17" height="17" fill="#2c4f9e"/>
-        <text x="117.5" y="181" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="12" fill="#fff">7</text>
-        <!-- garage door -->
-        <rect x="130" y="150" width="268" height="200" fill="url(#garage)"/>
-        <!-- posts -->
-        <rect x="398" y="140" width="10" height="210" fill="var(--d-dim)"/>
-        <!-- neighbour pillar -->
-        <rect x="552" y="225" width="108" height="125" fill="var(--d-brick)"/>
-        <text x="566" y="215" font-family="var(--mono)" font-size="11" fill="var(--muted)">susjed</text>
-        <!-- ground -->
-        <line x1="-100" y1="350" x2="660" y2="350" stroke="var(--d-dim)" stroke-width="2"/>
-
-        <!-- horizontal dimension chain -->
-        <g stroke="var(--d-dim)" stroke-width="1" fill="none">
-          <line x1="0" y1="392" x2="552" y2="392" marker-start="url(#tick)" marker-end="url(#tick)"/>
-          <line x1="105" y1="386" x2="105" y2="398"/><line x1="130" y1="386" x2="130" y2="398"/><line x1="398" y1="386" x2="398" y2="398"/>
-          <path d="M105 392 L105 392" marker-start="url(#tick)"/><path d="M130 392 L130 392" marker-start="url(#tick)"/><path d="M398 392 L398 392" marker-start="url(#tick)"/>
-          <line x1="0" y1="440" x2="552" y2="440" marker-start="url(#tick)" marker-end="url(#tick)"/>
-          <line x1="0" y1="356" x2="0" y2="448" stroke-dasharray="2 3"/><line x1="552" y1="356" x2="552" y2="448" stroke-dasharray="2 3"/>
-        </g>
-        <g font-family="var(--mono)" font-size="12.5" fill="var(--ink)" text-anchor="middle">
-          <text x="52" y="386">1,05</text><text x="117.5" y="412">0,25</text><text x="264" y="386">2,68</text><text x="475" y="386">1,44</text>
-          <text x="276" y="434" font-weight="500">5,52</text>
-          <text x="52" y="372" font-size="10.5" fill="var(--muted)">vrata</text>
-          <text x="264" y="372" font-size="10.5" fill="var(--muted)">garažna vrata</text>
-          <text x="475" y="372" font-size="10.5" fill="var(--muted)">ograda (lim) + stup</text>
-        </g>
-        <!-- vertical dims -->
-        <g stroke="var(--d-dim)" stroke-width="1" fill="none">
-          <line x1="-30" y1="25" x2="-30" y2="350" marker-start="url(#tick)" marker-end="url(#tick)"/>
-          <line x1="630" y1="160" x2="630" y2="350" marker-start="url(#tick)" marker-end="url(#tick)"/>
-          <line x1="560" y1="160" x2="636" y2="160" stroke-dasharray="2 3"/>
-          <line x1="0" y1="-8" x2="502" y2="-8" marker-start="url(#tick)" marker-end="url(#tick)"/>
-          <line x1="502" y1="-14" x2="502" y2="160" stroke-dasharray="2 3"/>
-          <line x1="270" y1="150" x2="270" y2="350" marker-start="url(#tick)" marker-end="url(#tick)" stroke-opacity=".55"/>
-        </g>
-        <g font-family="var(--mono)" font-size="12.5" fill="var(--ink)">
-          <text x="-36" y="190" text-anchor="end">3,25</text>
-          <text x="638" y="260">1,90</text><text x="251" y="-14" text-anchor="middle">5,02 krov</text><text x="527" y="-14" text-anchor="middle" font-size="11" fill="var(--muted)">0,50</text>
-          <text x="276" y="255" fill="#fff" font-size="11.5">2,00</text>
-          <text x="475" y="250" font-size="11" fill="#fff" text-anchor="middle">lim</text>
-        </g>
-      </svg>
-    </div>
+    <div class="drawing" id="elev"></div>
     <div class="legend" aria-label="Boje sa skice">
       <span><i style="border-color:var(--lg-red)"></i>čelični stupovi i grede</span>
       <span><i style="border-color:var(--lg-green)"></i>ograda, isti lim kao iznad vrata</span>
@@ -265,44 +104,51 @@ section{display:flex;flex-direction:column;gap:16px}
 
   <section>
     <div class="sec-head">
-      <h2>Koji panel odozgo? — za Peru</h2>
-      <p>Pad je oko 15°, a prostor je uzak i zasjenjen s obje strane. Sva tri panela idu na taj pad, ali se razlikuju u buci, svjetlu i kondenzaciji.</p>
+      <h2>Koji panel odozgo?</h2>
+      <p>Pad krova je trenutno <b id="pn-pitch"></b>, a prostor je uzak i zasjenjen s obje strane. Paneli se razlikuju u buci, svjetlu i kondenzaciji.</p>
     </div>
     <div class="panels">
       <div class="card pick">
         <h3>Sendvič panel <span class="tag">preporuka</span></h3>
-        <div class="meta">krovni, 3 rebra, 40 mm, antracit</div>
+        <div class="meta">krovni, 3 rebra, 40 mm, antracit · od 5°</div>
         <ul class="pros"><li>tih na kiši i tuči</li><li>ne kaplje ispod (nema kondenzacije)</li><li>ljeti ne grije, izgleda najurednije</li></ul>
         <ul class="cons"><li>ispod je tamnije</li><li>skuplji od lima</li></ul>
       </div>
       <div class="card">
         <h3>Polikarbonat</h3>
-        <div class="meta">saćasti, 16 mm, opal ili bronca</div>
+        <div class="meta">saćasti, 16 mm, opal ili bronca · od 5°</div>
         <ul class="pros"><li>propušta svjetlo, pa prolaz nije mračan</li><li>lagan, jednostavna konstrukcija</li></ul>
         <ul class="cons"><li>prlja se i vidi se lišće odozgo</li><li>glasniji, s vremenom žuti</li></ul>
       </div>
       <div class="card">
         <h3>Trapezni lim</h3>
-        <div class="meta">T-35, 0,5 mm, plastificiran</div>
+        <div class="meta">T-35, 0,5 mm, plastificiran · od 8°</div>
         <ul class="pros"><li>najjeftiniji i najbrži za postaviti</li></ul>
-        <ul class="cons"><li>glasan na kiši</li><li>kondenzacija kaplje ispod (trebao bi filc)</li></ul>
+        <ul class="cons"><li>glasan na kiši</li><li>kondenzacija kaplje ispod (treba filc)</li><li>ne preporučuje se na najvišoj varijanti</li></ul>
       </div>
     </div>
-    <p class="note">Krov završava 50 cm prije susjeda, pa oluk ostaje na tvojoj strani. Vertikalu je najbolje odvesti straga u dvorište.<br><br><b>Dvije visine krova:</b> <b>niža</b> (1,90 m na kraju, pad 15°) daje garažna vrata od samo 2,00 m, uz okov za nisku nadvisinu. <b>Najviša</b> (2,80 m na kraju, pad 5°) je najviše što ide: uz kuću krov ne može ići iznad 3,25 m zbog prozora od staklene opeke iznad, a 5° je najmanji pad za sendvič panel i polikarbonat. Tu garažna vrata mogu biti 2,50 m sa standardnim okovom, a ograda uz susjeda ostaje visoka 2,00 m. Trapezni lim na 5° nije preporučljiv. Dozvoljenu visinu uz među sa susjedom provjeri u općini.</p>
+    <p class="note">Krov završava prije susjeda, pa oluk ostaje na tvojoj strani; vertikalu je najbolje odvesti straga u dvorište.<br><br><b>Najviša</b> varijanta drži krov uz kuću na 3,25 m (iznad je prozor od staklene opeke) i spušta ga najmanjim padom za sendvič panel i polikarbonat, 5°. Tako garažna vrata mogu biti 2,50 m sa standardnim okovom. <b>Niža</b> varijanta (1,90 m na kraju) daje vrata od 2,00 m uz okov za nisku nadvisinu. Dozvoljenu visinu uz među sa susjedom provjeri u općini.</p>
   </section>
 
   <section>
-    <div class="sec-head"><h2>Na čemu se temelji model</h2></div>
+    <div class="sec-head">
+      <h2>Popis materijala</h2>
+      <p>Količine se računaju iz trenutnih mjera, visine krova i odabranog krovnog panela. Služe kao orijentacija za ponude; cijene nisu uključene.</p>
+    </div>
+    <div class="bom-wrap">
+      <table class="bom" id="bom"></table>
+    </div>
+    <div><button id="bom-copy" class="btn">Kopiraj popis</button></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Izmjerene mjere</h2></div>
     <dl class="specs">
-      <div><dt>Dužina nadstrešnice</dt><dd>7,80 m = dužina kuće (izmjereno)</dd></div>
-      <div><dt>Visina sidrenja na zidu</dt><dd>3,25 m (izmjereno)</dd></div>
-      <div><dt>Širina kuća → susjed</dt><dd>5,52 m (izmjereno)</dd></div>
-      <div><dt>Visina na kraju krova</dt><dd>1,90 m niža · 2,80 m najviša</dd></div><div><dt>Širina krova</dt><dd>5,02 m (0,50 m od susjeda)</dd></div>
-      <div><dt>Stupovi</dt><dd>□100×100 mm, 5 kom</dd></div>
-      <div><dt>Rogovi</dt><dd>□60×120 mm, 7 kom</dd></div>
-      <div><dt>Ulazna vrata</dt><dd>1,00 × 2,10 m</dd></div>
-      <div><dt>Garažna vrata</dt><dd>2,68 × 2,00 / 2,50 m</dd></div>
-      <div><dt>Ograda</dt><dd>puna, lim do krova</dd></div>
+      <div><dt>Dužina bočnog zida kuće</dt><dd>7,80 m</dd></div>
+      <div><dt>Visina sidrenja na zidu</dt><dd>3,25 m</dd></div>
+      <div><dt>Širina kuća → susjed</dt><dd>5,52 m</dd></div>
+      <div><dt>Kraj krova, niža varijanta</dt><dd>1,90 m</dd></div>
+      <div><dt>Razmak krova od susjeda</dt><dd>0,50 m</dd></div>
     </dl>
   </section>
 
@@ -311,21 +157,7 @@ section{display:flex;flex-direction:column;gap:16px}
       <h2>Sve slike iz mape</h2>
       <p>Fotografije, mjerenja, skica i fotomontaža. Klikni na sliku za uvećanje; strelice ← → listaju.</p>
     </div>
-    <div class="gallery">
-      <figure><button class="thumb" data-i="0" aria-label="Otvori: Fotomontaža, niža varijanta krova"><img src="galerija/fotomontaza-t.jpg" alt="Fotomontaža, niža varijanta krova" loading="lazy"></button><figcaption>Fotomontaža, niža varijanta krova</figcaption></figure>
-      <figure><button class="thumb" data-i="1" aria-label="Otvori: Prije i poslije"><img src="galerija/prije-poslije-t.jpg" alt="Prije i poslije" loading="lazy"></button><figcaption>Prije i poslije</figcaption></figure>
-      <figure><button class="thumb" data-i="2" aria-label="Otvori: Idejna skica s bojama"><img src="galerija/ideja-t.jpg" alt="Idejna skica s bojama" loading="lazy"></button><figcaption>Idejna skica s bojama</figcaption></figure>
-      <figure><button class="thumb" data-i="3" aria-label="Otvori: Pogled s ulice"><img src="galerija/img_2794-t.jpg" alt="Pogled s ulice" loading="lazy"></button><figcaption>Pogled s ulice</figcaption></figure>
-      <figure><button class="thumb" data-i="4" aria-label="Otvori: Kuća i kapija ukoso"><img src="galerija/img_2795-t.jpg" alt="Kuća i kapija ukoso" loading="lazy"></button><figcaption>Kuća i kapija ukoso</figcaption></figure>
-      <figure><button class="thumb" data-i="5" aria-label="Otvori: Pogled s pločnika od susjeda"><img src="galerija/img_2796-t.jpg" alt="Pogled s pločnika od susjeda" loading="lazy"></button><figcaption>Pogled s pločnika od susjeda</figcaption></figure>
-      <figure><button class="thumb" data-i="6" aria-label="Otvori: Bočni zid kuće s ulazom"><img src="galerija/img_2792-t.jpg" alt="Bočni zid kuće s ulazom" loading="lazy"></button><figcaption>Bočni zid kuće s ulazom</figcaption></figure>
-      <figure><button class="thumb" data-i="7" aria-label="Otvori: Prolaz iz dvorišta prema ulici"><img src="galerija/img_2793-t.jpg" alt="Prolaz iz dvorišta prema ulici" loading="lazy"></button><figcaption>Prolaz iz dvorišta prema ulici</figcaption></figure>
-      <figure><button class="thumb" data-i="8" aria-label="Otvori: Mjerenje: 7,8 m duž zida"><img src="galerija/img_2797-t.jpg" alt="Mjerenje: 7,8 m duž zida" loading="lazy"></button><figcaption>Mjerenje: 7,8 m duž zida</figcaption></figure>
-      <figure><button class="thumb" data-i="9" aria-label="Otvori: Mjerenje: 3,25 m visina sidra"><img src="galerija/img_2798-t.jpg" alt="Mjerenje: 3,25 m visina sidra" loading="lazy"></button><figcaption>Mjerenje: 3,25 m visina sidra</figcaption></figure>
-      <figure><button class="thumb" data-i="10" aria-label="Otvori: Mjerenje: 5,52 m širina"><img src="galerija/img_2799-t.jpg" alt="Mjerenje: 5,52 m širina" loading="lazy"></button><figcaption>Mjerenje: 5,52 m širina</figcaption></figure>
-      <figure><button class="thumb" data-i="11" aria-label="Otvori: Inspiracija: nadstrešnica u susjedstvu"><img src="galerija/img_2842-t.jpg" alt="Inspiracija: nadstrešnica u susjedstvu" loading="lazy"></button><figcaption>Inspiracija: nadstrešnica u susjedstvu</figcaption></figure>
-      <figure><button class="thumb" data-i="12" aria-label="Otvori: Inspiracija: nadstrešnica i klizna kapija"><img src="galerija/img_2843-t.jpg" alt="Inspiracija: nadstrešnica i klizna kapija" loading="lazy"></button><figcaption>Inspiracija: nadstrešnica i klizna kapija</figcaption></figure>
-    </div>
+    <div class="gallery" id="gallery"></div>
   </section>
 </div>
 
@@ -338,261 +170,14 @@ section{display:flex;flex-direction:column;gap:16px}
     <button id="lb-close" aria-label="Zatvori">✕</button>
   </div>
 </dialog>
-<script>
-(function(){
-const items=[["fotomontaza", "Fotomontaža, niža varijanta krova"], ["prije-poslije", "Prije i poslije"], ["ideja", "Idejna skica s bojama"], ["img_2794", "Pogled s ulice"], ["img_2795", "Kuća i kapija ukoso"], ["img_2796", "Pogled s pločnika od susjeda"], ["img_2792", "Bočni zid kuće s ulazom"], ["img_2793", "Prolaz iz dvorišta prema ulici"], ["img_2797", "Mjerenje: 7,8 m duž zida"], ["img_2798", "Mjerenje: 3,25 m visina sidra"], ["img_2799", "Mjerenje: 5,52 m širina"], ["img_2842", "Inspiracija: nadstrešnica u susjedstvu"], ["img_2843", "Inspiracija: nadstrešnica i klizna kapija"]];
-const lb=document.getElementById('lb'),img=document.getElementById('lb-img'),cap=document.getElementById('lb-cap');let cur=0;
-function show(i){cur=(i+items.length)%items.length;img.src='galerija/'+items[cur][0]+'.jpg';img.alt=items[cur][1];cap.textContent=(cur+1)+' / '+items.length+' · '+items[cur][1];}
-document.querySelectorAll('.thumb').forEach(b=>b.addEventListener('click',()=>{show(+b.dataset.i);lb.showModal();}));
-document.getElementById('lb-prev').onclick=()=>show(cur-1);
-document.getElementById('lb-next').onclick=()=>show(cur+1);
-document.getElementById('lb-close').onclick=()=>lb.close();
-lb.addEventListener('click',e=>{if(e.target===lb)lb.close();});
-lb.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')show(cur-1);if(e.key==='ArrowRight')show(cur+1);});
-})();
-</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script>
-(function(){
-const stage=document.getElementById('stage');
-const W=5.02, WL=5.52, D=7.8, HH=3.25;
-const VAR={low:{HL:1.90,GH:2.00,tail:1.90},high:{HL:2.80,GH:2.50,tail:2.00}};
-let HL=VAR.low.HL, GH=VAR.low.GH, TAIL=VAR.low.tail;
-const roofY=x=>HH-(HH-HL)*x/W;
-let target=null;
-
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.outputEncoding=THREE.sRGBEncoding;
-renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-stage.prepend(renderer.domElement);
-
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0xcfd8dd);
-scene.fog=new THREE.Fog(0xcfd8dd,30,70);
-const camera=new THREE.PerspectiveCamera(42,1,0.1,200);
-const controls=new THREE.OrbitControls(camera,renderer.domElement);
-controls.enableDamping=true; controls.maxPolarAngle=Math.PI*0.495; controls.minDistance=3; controls.maxDistance=40;
-
-scene.add(new THREE.HemisphereLight(0xeef3f7,0x7a7466,0.75));
-const sun=new THREE.DirectionalLight(0xfff4e2,0.95);
-sun.position.set(9,14,11); sun.castShadow=true;
-sun.shadow.mapSize.set(2048,2048);
-Object.assign(sun.shadow.camera,{left:-16,right:16,top:16,bottom:-16,near:1,far:50});
-sun.shadow.bias=-0.0005;
-scene.add(sun);
-
-// ---------- helpers
-function tex(w,h,draw,rx,ry){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rx||1,ry||1);t.anisotropy=8;return t;}
-const M=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.8,metalness:0},o||{}));
-function B(x0,x1,y0,y1,z0,z1,mat,cast){const m=new THREE.Mesh(new THREE.BoxGeometry(x1-x0,y1-y0,z1-z0),mat);m.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);m.castShadow=cast!==false;m.receiveShadow=true;(target||scene).add(m);return m;}
-function slopeX(xa,ya,xb,yb,z0,z1,h,mat){const L=Math.hypot(xb-xa,yb-ya);const m=new THREE.Mesh(new THREE.BoxGeometry(L,h,z1-z0),mat);m.position.set((xa+xb)/2,(ya+yb)/2,(z0+z1)/2);m.rotation.z=Math.atan2(yb-ya,xb-xa);m.castShadow=m.receiveShadow=true;(target||scene).add(m);return m;}
-function plane(w,h,mat,x,y,z,ry){const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);m.position.set(x,y,z);if(ry)m.rotation.y=ry;m.receiveShadow=true;scene.add(m);return m;}
-function grain(g,w,h,base,dark,dir){g.fillStyle=base;g.fillRect(0,0,w,h);let s=7;const r=()=>{s=(s*9301+49297)%233280;return s/233280;};
-  for(let i=0;i<260;i++){g.strokeStyle=dark;g.globalAlpha=.08+r()*.18;g.lineWidth=.6+r()*1.6;g.beginPath();
-    if(dir==='v'){const x=r()*w;g.moveTo(x,0);g.bezierCurveTo(x+r()*6-3,h*.3,x+r()*6-3,h*.6,x+r()*4-2,h);}
-    else{const y=r()*h;g.moveTo(0,y);g.bezierCurveTo(w*.3,y+r()*6-3,w*.6,y+r()*6-3,w,y+r()*4-2);}g.stroke();}g.globalAlpha=1;}
-
-// ---------- ground
-const gnd=new THREE.Mesh(new THREE.PlaneGeometry(120,120),M(0x9a9178));gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;scene.add(gnd);
-B(-30,30,0,0.02,-40,0.3,M(0x8f8a70),false); // yard soil/grass mix
-B(-0.02,WL,0.02,0.05,-D,0.02,M(0xbdbcb5,{roughness:.95}),false); // concrete under canopy
-B(-30,30,0,0.06,0.3,1.6,M(0xc3c1b9,{roughness:.95}),false); // sidewalk
-B(-30,30,0,0.04,1.6,4.2,M(0x6f8a4b),false); // grass
-B(-30,30,0,0.03,4.2,12,M(0x4b4e52,{roughness:.95}),false); // road
-
-// ---------- green house (x -8..0)
-const houseMat=M(0xaab7a3,{roughness:.95});
-B(-8,0,0,4.4,-7.8,0,houseMat);
-B(-8.03,0.03,0,0.45,-7.83,0.03,M(0x86937f,{roughness:.95}));
-{ // gable
-  const s=new THREE.Shape();s.moveTo(-8,4.4);s.lineTo(0,4.4);s.lineTo(-4,7.2);s.lineTo(-8,4.4);
-  const g=new THREE.ExtrudeGeometry(s,{depth:7.8,bevelEnabled:false});const m=new THREE.Mesh(g,houseMat);m.position.z=-7.8;m.castShadow=m.receiveShadow=true;scene.add(m);}
-const tile=M(0xae5536,{roughness:.85});
-const ang=Math.atan2(2.8,4), rl=Math.hypot(4,2.8)+0.55;
-{const cx=-4+Math.cos(ang)*rl/2, cy=7.2-Math.sin(ang)*rl/2+0.08;
- const r1=new THREE.Mesh(new THREE.BoxGeometry(rl,0.16,8.6),tile);r1.position.set(cx,cy,-3.9);r1.rotation.z=-ang;r1.castShadow=true;scene.add(r1);
- const r2=r1.clone();r2.position.x=-8-(cx+0);r2.position.x=-4-(cx+4);r2.rotation.z=ang;scene.add(r2);}
-B(0.36,0.5,4.0,4.12,-8.2,0.4,M(0xb7bcbf,{metalness:.5,roughness:.4})); // house gutter
-// side wall details
-const white=M(0xf3f3ef,{roughness:.5});
-plane(1.0,2.05,white,0.012,1.58,-3.95,Math.PI/2);
-[[1.3,0.18],[1.1,0.36],[0.9,0.54]].forEach(([w,y],i)=>B(0,w,y-0.18,y,-4.6+i*0.05,-3.3-i*0.05,M(0xa8a79f,{roughness:1})));
-plane(1.0,0.36,M(0xd6dde0,{roughness:.2,metalness:.1}),0.012,3.72,-1.8,Math.PI/2); // glass block window
-plane(0.34,0.5,M(0xe6e2d6),0.012,1.55,-0.75,Math.PI/2); // meter box
-
-// ---------- neighbour
-const nWhite=M(0xecebe6,{roughness:.9});
-B(6.4,14,0,6.3,-13,-2.6,nWhite);
-B(6.38,14.02,0,1.1,-13.02,-2.58,M(0x6c7073,{roughness:.9}));
-{const rise=2.3,half=5.2,a=Math.atan2(rise,half),L=Math.hypot(half,rise)+0.5,dark=M(0x4f3d36,{roughness:.9});
- const r1=new THREE.Mesh(new THREE.BoxGeometry(8.4,0.16,L),dark);r1.position.set(10.2,6.3+rise/2+0.02,-2.6-half/2+0.2);r1.rotation.x=-a;r1.castShadow=true;scene.add(r1);
- const r2=r1.clone();r2.position.z=-13+half/2-0.2;r2.rotation.x=a;scene.add(r2);}
-const yBrick=M(0xcfab63,{roughness:1}), rBrick=M(0x9a5a44,{roughness:1});
-B(WL,14,0,1.25,-0.3,0,rBrick);
-
-// ---------- steel frame (parts that do not depend on the roof height)
-const steel=M(0x363b3f,{metalness:.55,roughness:.45});
-B(0,0.1,HH-0.15,HH,-D,0,steel); // wall ledger
-const T=0.06;
-B(-0.02,0.08,HH+T,HH+T+0.12,-D-0.1,0.14,steel); // wall flashing
-function ribTex(base,rib,px){return tex(8,64,(g,w,h)=>{g.fillStyle=base;g.fillRect(0,0,w,h);g.fillStyle=rib;g.fillRect(0,h*.42,w,h*.16);g.fillStyle='rgba(255,255,255,.18)';g.fillRect(0,h*.4,w,h*.03);},1,(D+0.25)/px);}
-const roofMats={
-  sandwich:M(0xffffff,{map:ribTex('#3b4146','#2c3134',0.33),roughness:.55,metalness:.25}),
-  trap:M(0xffffff,{map:ribTex('#7d8286','#5f6468',0.2),roughness:.4,metalness:.6}),
-  poly:new THREE.MeshStandardMaterial({color:0xe7e2d4,map:ribTex('#ffffff','#d9d6cc',0.032),transparent:true,opacity:.42,roughness:.25,depthWrite:false,side:THREE.DoubleSide})
-};
-let roofKind='sandwich', roof=null;
-const gutMat=M(0x3a3f43,{metalness:.5,roughness:.4,side:THREE.DoubleSide});
-function seamTex(base,seam){return tex(128,32,(g,w,h)=>{g.fillStyle=base;g.fillRect(0,0,w,h);g.fillStyle=seam;for(let i=0;i<4;i++){g.fillRect(i*32,0,3,h);}g.fillStyle='rgba(255,255,255,.12)';for(let i=0;i<4;i++)g.fillRect(i*32+3,0,1,h);},1,1);}
-function woodSeamTex(){return tex(256,256,(g,w,h)=>{grain(g,w,h,'#9a6a3e','#4d2e17','v');g.fillStyle='rgba(40,22,10,.55)';for(let i=0;i<2;i++)g.fillRect(i*128,0,3,h);},0.5,0.5);}
-const fasciaMat=M(0xffffff,{map:seamTex('#3b4146','#2b3033'),roughness:.5,metalness:.3});
-const pillarMat=M(0xe3e3dc,{roughness:.9});
-
-// entrance door
-const doorTex=tex(200,420,(g,w,h)=>{g.fillStyle='#33393d';g.fillRect(0,0,w,h);g.strokeStyle='#23272a';g.lineWidth=6;g.strokeRect(3,3,w-6,h-6);
-  g.fillStyle='#9aabb3';g.fillRect(w*.62,h*.08,w*.1,h*.84);g.fillStyle='rgba(255,255,255,.25)';g.fillRect(w*.62,h*.08,w*.02,h*.84);
-  g.fillStyle='#c9ccce';g.fillRect(w*.13,h*.3,w*.035,h*.4);g.fillStyle='#23272a';for(let i=1;i<4;i++)g.fillRect(w*.22,h*i/4,w*.34,2);});
-const doorPivot=new THREE.Group();doorPivot.position.set(0.05,0,-0.05);scene.add(doorPivot);
-{const dm=new THREE.Mesh(new THREE.PlaneGeometry(1.0,2.1),M(0xffffff,{map:doorTex,roughness:.5,metalness:.2,side:THREE.DoubleSide}));dm.position.set(0.5,1.1,0);dm.castShadow=true;doorPivot.add(dm);}
-B(0,0.05,0.05,2.15,-0.12,0.02,steel);B(0,1.05,2.1,2.15,-0.12,0.02,steel);
-
-// pillar with intercom + number
-B(1.10,1.25,1.3,1.52,0.02,0.05,M(0x2a2e31,{metalness:.4,roughness:.4}));
-B(1.13,1.22,1.42,1.49,0.05,0.052,M(0x7fa0b3,{roughness:.2,emissive:0x1b2a33}));
-{const nt=tex(128,128,(g,w,h)=>{g.fillStyle='#2c4f9e';g.fillRect(0,0,w,h);g.strokeStyle='#fff';g.lineWidth=5;g.strokeRect(8,8,w-16,h-16);g.fillStyle='#fff';g.font='bold 84px Arial';g.textAlign='center';g.textBaseline='middle';g.fillText('7',w/2,h/2+4);});
- plane(0.16,0.16,M(0xffffff,{map:nt,roughness:.5}),1.175,1.75,0.025);}
-
-// garage door
-function garageTex(kind){return tex(512,382,(g,w,h)=>{
-  const base=kind==='wood'?'#9a6a3e':kind==='white'?'#eceee9':'#3f454a';
-  if(kind==='wood')grain(g,w,h,base,'#4d2e17','h');else{g.fillStyle=base;g.fillRect(0,0,w,h);}
-  const sec=5;for(let i=0;i<sec;i++){const y=i*h/sec;
-    g.fillStyle=kind==='white'?'rgba(0,0,0,.18)':'rgba(0,0,0,.45)';g.fillRect(0,y,w,3);
-    g.fillStyle='rgba(255,255,255,.18)';g.fillRect(0,y+3,w,1.5);
-    if(kind!=='wood'){g.fillStyle=kind==='white'?'rgba(0,0,0,.05)':'rgba(255,255,255,.04)';for(let k=8;k<h/sec;k+=8)g.fillRect(0,y+k,w,1);}}
-  g.fillStyle=kind==='white'?'#b8bcbe':'#222';g.fillRect(w*.47,h*.9,w*.06,h*.02);});}
-const GX0=1.30,GW=2.68,GZ=-0.08,NP=5,TR=0.04;
-let garageBase=garageTex('anth');
-const gPanels=[];
-for(let i=0;i<NP;i++){const m=new THREE.Mesh(new THREE.PlaneGeometry(GW,GH/NP),M(0xffffff,{roughness:.55,metalness:.15,side:THREE.DoubleSide}));m.castShadow=m.receiveShadow=true;scene.add(m);gPanels.push(m);}
-function mapPanels(){gPanels.forEach((m,i)=>{if(m.material.map)m.material.map.dispose();const t=garageBase.clone();t.needsUpdate=true;t.repeat.set(1,1/NP);t.offset.set(0,i/NP);m.material.map=t;m.material.needsUpdate=true;});}
-function track(t){const t1=GH,arc=Math.PI*TR/2;
-  if(t<=t1)return [t,GZ,0];
-  if(t<=t1+arc){const th=(t-t1)/TR;return [GH+TR*Math.sin(th),GZ-TR+TR*Math.cos(th),th];}
-  return [GH+TR,GZ-TR-(t-t1-arc),Math.PI/2];}
-function placeGarage(o){const PH=GH/NP;gPanels.forEach((m,i)=>{const [y,z,th]=track(i*PH+PH/2+o*GH);m.position.set(GX0+GW/2,y,z);m.rotation.x=-th;});}
-mapPanels();
-
-// ---------- everything that follows the roof height (rebuilt when the variant changes)
-let dyn=null;
-function build(){
-  if(dyn){scene.remove(dyn);dyn.traverse(o=>{if(o.geometry)o.geometry.dispose();});}
-  dyn=new THREE.Group();scene.add(dyn);target=dyn;
-  const rafters=7;
-  for(let i=0;i<rafters;i++){const z=-0.04-i*(D-0.08)/(rafters-1);slopeX(0,HH-0.06,W,HL-0.06,z-0.03,z+0.03,0.12,steel);}
-  B(W-0.1,W,HL-0.14,HL-0.02,-D,0,steel); // side beam
-  [-0.05,-2.6,-5.2,-D+0.05].forEach(z=>B(W-0.1,W,0.05,HL-0.14,z-0.05,z+0.05,steel));
-  B(3.98,4.08,0.05,roofY(4.08)-0.12,-0.1,0,steel); // front post (garage jamb)
-  [-0.05,-2.6,-5.2,-D+0.05].forEach(z=>B(W-0.14,W+0.04,0.05,0.07,z-0.09,z+0.09,steel)); // base plates
-  // roof panel
-  const x0=-0.02, x1=W+0.2;
-  roof=new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(x1-x0,roofY(x0)-roofY(x1)),T,D+0.25),roofMats[roofKind]);
-  roof.position.set((x0+x1)/2,(roofY(x0)+roofY(x1))/2+T/2,-D/2+0.02);
-  roof.rotation.z=-Math.atan2(HH-HL,W);roof.castShadow=roofKind!=='poly';roof.receiveShadow=true;dyn.add(roof);
-  const gut=new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.075,D+0.3,16,1,true,0,Math.PI),gutMat);
-  gut.rotation.x=Math.PI/2;gut.rotation.y=Math.PI;gut.position.set(x1+0.04,roofY(x1)-0.02,-D/2+0.02);dyn.add(gut);
-  const dp=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,roofY(x1),12),gutMat);dp.position.set(x1+0.04,roofY(x1)/2,-D+0.05);dp.castShadow=true;dyn.add(dp);
-  // front sheet: above the doors and the whole fence
-  const sh=new THREE.Shape();const tl=HH+T,tr=roofY(W)+T;
-  sh.moveTo(0,2.1);sh.lineTo(1.05,2.1);sh.lineTo(1.05,GH);sh.lineTo(4.08,GH);sh.lineTo(4.08,0.05);sh.lineTo(WL,0.05);sh.lineTo(WL,TAIL);sh.lineTo(W,TAIL);sh.lineTo(W,tr);sh.lineTo(0,tl);sh.lineTo(0,2.1);
-  const fm=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:0.03,bevelEnabled:false}),fasciaMat);fm.position.z=0.02;fm.castShadow=fm.receiveShadow=true;dyn.add(fm);
-  // pillar as tall as the garage door
-  B(1.05,1.30,0.05,GH,-0.22,0.02,pillarMat);
-  // garage door panels + guide rails
-  gPanels.forEach(m=>{m.geometry.dispose();m.geometry=new THREE.PlaneGeometry(GW,GH/NP);});
-  [GX0-0.03,GX0+GW+0.01].forEach(x=>{B(x,x+0.02,0.05,GH,GZ-0.05,GZ-0.02,steel,false);B(x,x+0.02,GH+TR,GH+TR+0.02,GZ-2.2,GZ-0.02,steel,false);});
-  target=null;
-}
-build();placeGarage(0);
-
-// ---------- car (parked inside)
-{const car=new THREE.Group();
- const paint=M(0xb4bac0,{metalness:.75,roughness:.3}), glass=M(0x1d2830,{metalness:.3,roughness:.08}), tyre=M(0x1b1c1e,{roughness:.9}), rim=M(0xcfd3d6,{metalness:.8,roughness:.25});
- const ext=(pts,depth,mat,bev)=>{const sh=new THREE.Shape();sh.moveTo(pts[0][0],pts[0][1]);pts.slice(1).forEach(p=>sh.lineTo(p[0],p[1]));
-   const g=new THREE.ExtrudeGeometry(sh,{depth,bevelEnabled:!!bev,bevelThickness:bev||0,bevelSize:bev||0,bevelSegments:3,steps:1});g.translate(0,0,-depth/2);
-   const m=new THREE.Mesh(g,mat);m.castShadow=m.receiveShadow=true;car.add(m);return m;};
- ext([[0.02,0.32],[0,0.6],[0.12,0.74],[1.25,0.88],[3.9,0.96],[4.62,0.94],[4.72,0.7],[4.7,0.36],[4.55,0.3],[0.15,0.3]],1.72,paint,0.05);
- ext([[1.28,0.9],[2.05,1.36],[3.28,1.38],[4.05,0.97]],1.54,glass,0.03);
- ext([[2.0,1.37],[3.3,1.39],[3.3,1.43],[2.05,1.42]],1.5,paint,0.02);
- ext([[2.6,0.92],[2.7,0.92],[2.7,1.38],[2.6,1.38]],1.58,paint);
- [[0.95],[3.72]].forEach(([u])=>[-0.8,0.8].forEach(w=>{
-   const t=new THREE.Mesh(new THREE.CylinderGeometry(0.33,0.33,0.23,28),tyre);t.rotation.x=Math.PI/2;t.position.set(u,0.33,w);t.castShadow=true;car.add(t);
-   const h=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,0.24,20),rim);h.rotation.x=Math.PI/2;h.position.set(u,0.33,w);car.add(h);}));
- [-0.6,0.6].forEach(w=>{const hl=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.07,0.34),M(0xe8eef2,{emissive:0x777b80,roughness:.2}));hl.position.set(0.08,0.68,w);car.add(hl);
-   const tl=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.08,0.4),M(0xa5161b,{emissive:0x3a0507,roughness:.3}));tl.position.set(4.68,0.84,w);car.add(tl);});
- car.rotation.y=Math.PI/2;car.position.set(GX0+GW/2,0.05,-0.6);scene.add(car);}
-
-// ---------- concrete driveway in front
-{const ct=tex(256,256,(g,w,h)=>{g.fillStyle='#c7c6bf';g.fillRect(0,0,w,h);let s=3;const r=()=>{s=(s*9301+49297)%233280;return s/233280;};
-   for(let i=0;i<1800;i++){g.fillStyle=r()>.5?'rgba(255,255,255,.12)':'rgba(0,0,0,.07)';g.fillRect(r()*w,r()*h,1.5,1.5);}
-   g.fillStyle='rgba(60,60,55,.45)';g.fillRect(0,0,w,2);g.fillRect(0,0,2,h);},2,2);
- B(0,GX0+GW+0.1,0.02,0.08,0.03,4.25,M(0xffffff,{map:ct,roughness:.95}),false);}
-
-// ---------- options
-function pressed(group,btn){group.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===btn));}
-function setRoof(v){roofKind=v;roof.material=roofMats[v];roof.castShadow=v!=='poly';}
-function setGarage(v){garageBase.dispose();garageBase=garageTex(v);mapPanels();}
-const fasciaAnth=fasciaMat.map;let fasciaWood=null;
-function setFence(v){if(v==='wood'){fasciaWood=fasciaWood||woodSeamTex();fasciaMat.map=fasciaWood;fasciaMat.metalness=0;fasciaMat.roughness=.8;}
-  else{fasciaMat.map=fasciaAnth;fasciaMat.metalness=.3;fasciaMat.roughness=.5;}fasciaMat.needsUpdate=true;}
-const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const morph={cur:0,tgt:0};
-const fmt=n=>n.toFixed(2).replace('.',',');
-function readout(){const drop=HH-HL,deg=Math.atan2(drop,W)*180/Math.PI;
-  document.getElementById('ro-end').textContent=fmt(HL)+' m';
-  document.getElementById('ro-pitch').textContent='≈ '+Math.round(deg)+'° ('+Math.round(drop/W*100)+' %)';
-  document.getElementById('ro-garage').textContent=fmt(GW)+' × '+fmt(GH)+' m';}
-function applyMorph(k){const a=VAR.low,b=VAR.high;HL=a.HL+(b.HL-a.HL)*k;GH=a.GH+(b.GH-a.GH)*k;TAIL=a.tail+(b.tail-a.tail)*k;build();readout();}
-function setHeight(v){morph.tgt=v==='high'?1:0;if(reduce){morph.cur=morph.tgt;applyMorph(morph.cur);}}
-[['o-height',setHeight],['o-roof',setRoof],['o-garage',setGarage],['o-fence',setFence]].forEach(([id,fn])=>{const g=document.getElementById(id);
-  g.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pressed(g,b);fn(b.dataset.v);});});
-setRoof('sandwich');readout();
-
-// ---------- views
-const V={street:[[1.0,1.7,13],[2.9,2.1,0]],angle:[[-4.5,3.4,9],[2.8,1.8,-3.5]],yard:[[3.2,1.9,-15],[2.6,1.8,-3]],top:[[13,13,9],[2.8,1,-3.5]],inside:[[4.5,1.75,-7.4],[2.2,1.0,-1.2]]};
-let anim=null;
-function go(name,instant){const [p,t]=V[name];const from={p:camera.position.clone(),t:controls.target.clone()};
-  if(instant||matchMedia('(prefers-reduced-motion: reduce)').matches){camera.position.set(...p);controls.target.set(...t);anim=null;return;}
-  anim={from,p:new THREE.Vector3(...p),t:new THREE.Vector3(...t),s:performance.now()};}
-const vg=document.querySelector('.views');
-vg.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pressed(vg,b);go(b.id.slice(2));});
-go('street',true);
-
-const doorsState={garage:{cur:0,tgt:0,speed:1/3.2},entry:{cur:0,tgt:0,speed:1/1.1}};
-function bindDoor(id,key,openTxt,closeTxt){const b=document.getElementById(id);
-  b.addEventListener('click',()=>{const st=doorsState[key];st.tgt=st.tgt?0:1;if(reduce)st.cur=st.tgt;b.setAttribute('aria-pressed',!!st.tgt);b.textContent=st.tgt?closeTxt:openTxt;});}
-bindDoor('d-garage','garage','Otvori garažna vrata','Zatvori garažna vrata');
-bindDoor('d-entry','entry','Otvori ulazna vrata','Zatvori ulazna vrata');
-const ease=k=>k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
-let last=performance.now();
-
-function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);renderer.domElement.style.width=w+'px';renderer.domElement.style.height=h+'px';camera.aspect=w/h;camera.updateProjectionMatrix();}
-new ResizeObserver(resize).observe(stage);resize();
-
-(function loop(now){
-  const dt=Math.min(0.05,(now-last)/1000);last=now;
-  for(const k in doorsState){const st=doorsState[k];if(st.cur!==st.tgt){const d=st.speed*dt;st.cur=st.tgt>st.cur?Math.min(st.tgt,st.cur+d):Math.max(st.tgt,st.cur-d);}}
-  if(morph.cur!==morph.tgt){const d=dt/0.9;morph.cur=morph.tgt>morph.cur?Math.min(1,morph.cur+d):Math.max(0,morph.cur-d);applyMorph(ease(morph.cur));}
-  placeGarage(ease(doorsState.garage.cur));doorPivot.rotation.y=1.5*ease(doorsState.entry.cur);
-  if(anim){let k=Math.min(1,(now-anim.s)/900);k=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
-    camera.position.lerpVectors(anim.from.p,anim.p,k);controls.target.lerpVectors(anim.from.t,anim.t,k);if(k>=1)anim=null;}
-  controls.update();renderer.render(scene,camera);requestAnimationFrame(loop);})(performance.now());
-})();
-</script>
-
+<script src="js/config.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/elevation.js"></script>
+<script src="js/materials.js"></script>
+<script src="js/gallery.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
