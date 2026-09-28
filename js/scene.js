@@ -103,26 +103,28 @@ window.N7 = window.N7 || {};
     const fasciaMat = M(0xffffff, { map: seamTex('#3b4146', '#2b3033'), roughness: .5, metalness: .3 });
     const pillarMat = M(0xe3e3dc, { roughness: .9 });
 
-    // ---------- entrance door (hinged at the house wall)
+    // ---------- entrance door (hinged on the right, opens inwards)
     const doorTex = tex(200, 420, (g, w, h) => {
       g.fillStyle = '#33393d'; g.fillRect(0, 0, w, h); g.strokeStyle = '#23272a'; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6);
       g.fillStyle = '#9aabb3'; g.fillRect(w * .62, h * .08, w * .1, h * .84); g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(w * .62, h * .08, w * .02, h * .84);
       g.fillStyle = '#c9ccce'; g.fillRect(w * .13, h * .3, w * .035, h * .4); g.fillStyle = '#23272a'; for (let i = 1; i < 4; i++) g.fillRect(w * .22, h * i / 4, w * .34, 2);
     });
     const dw = FIX.door.x1 - FIX.door.x0, dh = FIX.door.h;
-    const doorPivot = new THREE.Group(); doorPivot.position.set(FIX.door.x0, 0, -0.05); scene.add(doorPivot);
+    const doorPivot = new THREE.Group(); doorPivot.position.set(FIX.door.x1, 0, -0.05); scene.add(doorPivot);
     {
+      // the texture has its handle on the left, away from the hinge
       const dm = new THREE.Mesh(new THREE.PlaneGeometry(dw, dh), M(0xffffff, { map: doorTex, roughness: .5, metalness: .2, side: THREE.DoubleSide }));
-      dm.position.set(dw / 2, dh / 2 + 0.05, 0); dm.castShadow = true; doorPivot.add(dm);
+      dm.position.set(-dw / 2, dh / 2 + 0.05, 0); dm.castShadow = true; doorPivot.add(dm);
     }
-    B(0, FIX.door.x0, 0.05, dh + 0.05, -0.12, 0.02, steel); B(0, FIX.door.x1, dh, dh + 0.05, -0.12, 0.02, steel);
+    B(FIX.door.x0 - 0.05, FIX.door.x0, 0.05, dh + 0.05, -0.12, 0.02, steel); B(FIX.door.x0 - 0.05, FIX.door.x1, dh, dh + 0.05, -0.12, 0.02, steel);
 
     // ---------- intercom + house number on the pillar
-    B(1.10, 1.25, 1.3, 1.52, 0.02, 0.05, M(0x2a2e31, { metalness: .4, roughness: .4 }));
-    B(1.13, 1.22, 1.42, 1.49, 0.05, 0.052, M(0x7fa0b3, { roughness: .2, emissive: 0x1b2a33 }));
+    const pc = (FIX.pillar.x0 + FIX.pillar.x1) / 2;
+    B(pc - 0.075, pc + 0.075, 1.3, 1.52, 0.02, 0.05, M(0x2a2e31, { metalness: .4, roughness: .4 }));
+    B(pc - 0.045, pc + 0.045, 1.42, 1.49, 0.05, 0.052, M(0x7fa0b3, { roughness: .2, emissive: 0x1b2a33 }));
     {
       const nt = tex(128, 128, (g, w, h) => { g.fillStyle = '#2c4f9e'; g.fillRect(0, 0, w, h); g.strokeStyle = '#fff'; g.lineWidth = 5; g.strokeRect(8, 8, w - 16, h - 16); g.fillStyle = '#fff'; g.font = 'bold 84px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('7', w / 2, h / 2 + 4); });
-      plane(0.16, 0.16, M(0xffffff, { map: nt, roughness: .5 }), 1.175, 1.75, 0.025);
+      plane(0.16, 0.16, M(0xffffff, { map: nt, roughness: .5 }), pc, 1.75, 0.025);
     }
 
     // ---------- sectional garage door
@@ -140,10 +142,10 @@ window.N7 = window.N7 || {};
         g.fillStyle = kind === 'white' ? '#b8bcbe' : '#222'; g.fillRect(w * .47, h * .9, w * .06, h * .02);
       });
     }
-    const GX0 = FIX.garage.x0, GW = FIX.garage.w, GZ = -0.08, NP = 5, TR = 0.04;
+    const GZ = -0.08, NP = 5, TR = 0.04;
     let garageBase = garageTex('anth');
     const gPanels = [];
-    for (let i = 0; i < NP; i++) { const m = new THREE.Mesh(new THREE.PlaneGeometry(GW, 0.4), M(0xffffff, { roughness: .55, metalness: .15, side: THREE.DoubleSide })); m.castShadow = m.receiveShadow = true; scene.add(m); gPanels.push(m); }
+    for (let i = 0; i < NP; i++) { const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.4), M(0xffffff, { roughness: .55, metalness: .15, side: THREE.DoubleSide })); m.castShadow = m.receiveShadow = true; scene.add(m); gPanels.push(m); }
     function mapPanels() { gPanels.forEach((m, i) => { if (m.material.map) m.material.map.dispose(); const t = garageBase.clone(); t.needsUpdate = true; t.repeat.set(1, 1 / NP); t.offset.set(0, i / NP); m.material.map = t; m.material.needsUpdate = true; }); }
     mapPanels();
     // the panels run up the vertical track, round a small bend and continue back under the roof
@@ -153,11 +155,11 @@ window.N7 = window.N7 || {};
       if (t <= GH + arc) { const th = (t - GH) / TR; return [GH + TR * Math.sin(th), GZ - TR + TR * Math.cos(th), th]; }
       return [GH + TR, GZ - TR - (t - GH - arc), Math.PI / 2];
     }
-    function placeGarage(o) { const GH = d.GH, PH = GH / NP; gPanels.forEach((m, i) => { const [y, z, th] = track(i * PH + PH / 2 + o * GH, GH); m.position.set(GX0 + GW / 2, y, z); m.rotation.x = -th; }); }
+    function placeGarage(o) { const GH = d.GH, PH = GH / NP; gPanels.forEach((m, i) => { const [y, z, th] = track(i * PH + PH / 2 + o * GH, GH); m.position.set(d.gx + d.GW / 2, y, z); m.rotation.x = -th; }); }
 
-    // ---------- car parked inside
+    // ---------- car parked inside (centred on the garage door in build())
+    const car = new THREE.Group();
     {
-      const car = new THREE.Group();
       const paint = M(0xb4bac0, { metalness: .75, roughness: .3 }), glass = M(0x1d2830, { metalness: .3, roughness: .08 }), tyre = M(0x1b1c1e, { roughness: .9 }), rim = M(0xcfd3d6, { metalness: .8, roughness: .25 });
       const ext = (pts, depth, mat, bev) => {
         const sh = new THREE.Shape(); sh.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach(p => sh.lineTo(p[0], p[1]));
@@ -176,25 +178,25 @@ window.N7 = window.N7 || {};
         const hl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.07, 0.34), M(0xe8eef2, { emissive: 0x777b80, roughness: .2 })); hl.position.set(0.08, 0.68, w); car.add(hl);
         const tl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 0.4), M(0xa5161b, { emissive: 0x3a0507, roughness: .3 })); tl.position.set(4.68, 0.84, w); car.add(tl);
       });
-      car.rotation.y = Math.PI / 2; car.position.set(GX0 + GW / 2, 0.05, -0.6); scene.add(car);
+      car.rotation.y = Math.PI / 2; scene.add(car);
     }
 
-    // ---------- concrete driveway in front
-    {
+    // ---------- concrete driveway texture (the slab itself follows the garage in build())
+    const driveMat = (() => {
       const ct = tex(256, 256, (g, w, h) => {
         g.fillStyle = '#c7c6bf'; g.fillRect(0, 0, w, h); let s = 3; const r = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
         for (let i = 0; i < 1800; i++) { g.fillStyle = r() > .5 ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.07)'; g.fillRect(r() * w, r() * h, 1.5, 1.5); }
         g.fillStyle = 'rgba(60,60,55,.45)'; g.fillRect(0, 0, w, 2); g.fillRect(0, 0, 2, h);
       }, 2, 2);
-      B(0, FIX.post.x1, 0.02, 0.08, 0.03, FIX.drivewayLen + 0.05, M(0xffffff, { map: ct, roughness: .95 }), false);
-    }
+      return M(0xffffff, { map: ct, roughness: .95 });
+    })();
 
     // ---------- everything that follows the dimensions (rebuilt on every change)
     let dyn = null;
     function build() {
       if (dyn) { scene.remove(dyn); dyn.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
       dyn = new THREE.Group(); scene.add(dyn); target = dyn;
-      const { HH, HL, W, WL, D, GH, tail, roofY } = d, T = FIX.T;
+      const { HH, HL, W, WL, D, GH, GW, gx, post, roofY } = d, T = FIX.T;
 
       B(-0.02, WL, 0.02, 0.05, -D, 0.02, floorMat, false); // concrete floor under the carport
       B(WL, 14, 0, 1.25, -0.3, 0, rBrick);                 // neighbour's low brick wall
@@ -205,28 +207,34 @@ window.N7 = window.N7 || {};
       B(W - 0.1, W, HL - 0.14, HL - 0.02, -D, 0, steel); // side beam
       d.sideZ.forEach(z => B(W - 0.1, W, 0.05, HL - 0.14, z - 0.05, z + 0.05, steel));
       d.sideZ.forEach(z => B(W - 0.14, W + 0.04, 0.05, 0.07, z - 0.09, z + 0.09, steel)); // base plates
-      B(FIX.post.x0, FIX.post.x1, 0.05, roofY(FIX.post.x1) - FIX.rafterH, -0.1, 0, steel); // front post (garage jamb)
+      B(post.x0, post.x1, 0.05, roofY(post.x1) - FIX.rafterH, -0.1, 0, steel); // front post (garage jamb)
+      B(0, post.x1, 0.02, 0.08, 0.03, FIX.drivewayLen + 0.05, driveMat, false); // driveway
+      car.position.set(gx + GW / 2, 0.05, -0.6);
 
       const x0 = -0.02, x1 = W + FIX.overhang;
       Object.values(roofMats).forEach(m => { m.map.repeat.set(1, (D + 0.25) / m.map.userData.px); });
       roof = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(x1 - x0, roofY(x0) - roofY(x1)), T, D + 0.25), roofMats[roofKind]);
       roof.position.set((x0 + x1) / 2, (roofY(x0) + roofY(x1)) / 2 + T / 2, -D / 2 + 0.02);
       roof.rotation.z = -Math.atan2(HH - HL, W); roof.castShadow = roofKind !== 'poly'; roof.receiveShadow = true; dyn.add(roof);
-      const gut = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, D + 0.3, 16, 1, true, 0, Math.PI), gutMat);
-      gut.rotation.x = Math.PI / 2; gut.rotation.y = Math.PI; gut.position.set(x1 + 0.04, roofY(x1) - 0.02, -D / 2 + 0.02); dyn.add(gut);
-      const dp = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, roofY(x1), 12), gutMat); dp.position.set(x1 + 0.04, roofY(x1) / 2, -D + 0.05); dp.castShadow = true; dyn.add(dp);
+      // gutter falls towards the street and drains through a downpipe on the front, away from the yard
+      const gz0 = -D - 0.1, gz1 = 0.14, gy = roofY(x1) - 0.02;
+      const gut = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, gz1 - gz0, 16, 1, true, 0, Math.PI), gutMat);
+      gut.rotation.x = Math.PI / 2; gut.rotation.y = Math.PI; gut.position.set(x1 + 0.04, gy, (gz0 + gz1) / 2); dyn.add(gut);
+      const dpz = 0.13, dph = gy - 0.2;
+      const dp = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, dph, 12), gutMat); dp.position.set(x1 + 0.04, 0.2 + dph / 2, dpz); dp.castShadow = true; dyn.add(dp);
+      const shoe = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3, 12), gutMat); shoe.rotation.x = Math.PI / 2 - 0.5; shoe.position.set(x1 + 0.04, 0.14, dpz + 0.12); dyn.add(shoe);
 
       // front sheet: above the doors and the whole fence (same outline as the elevation drawing)
       const sh = new THREE.Shape();
       d.front.forEach(([x, y], i) => {
-        const yy = (x === 0 && y === HH) || (x === W && Math.abs(y - roofY(W)) < 1e-9) ? y + T : Math.max(y, 0.05);
+        const yy = (x === 0 && y === HH) || (x >= W && Math.abs(y - roofY(W)) < 1e-9) ? y + T : Math.max(y, 0.05);
         if (i === 0) sh.moveTo(x, yy); else sh.lineTo(x, yy);
       });
       const fm = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.03, bevelEnabled: false }), fasciaMat); fm.position.z = 0.02; fm.castShadow = fm.receiveShadow = true; dyn.add(fm);
 
       B(FIX.pillar.x0, FIX.pillar.x1, 0.05, GH, -0.22, 0.02, pillarMat); // pillar as tall as the garage door
       gPanels.forEach(m => { m.geometry.dispose(); m.geometry = new THREE.PlaneGeometry(GW, GH / NP); });
-      [GX0 - 0.03, GX0 + GW + 0.01].forEach(x => { B(x, x + 0.02, 0.05, GH, GZ - 0.05, GZ - 0.02, steel, false); B(x, x + 0.02, GH + TR, GH + TR + 0.02, GZ - 2.2, GZ - 0.02, steel, false); });
+      [gx - 0.03, gx + GW + 0.01].forEach(x => { B(x, x + 0.02, 0.05, GH, GZ - 0.05, GZ - 0.02, steel, false); B(x, x + 0.02, GH + TR, GH + TR + 0.02, GZ - 2.2, GZ - 0.02, steel, false); });
       target = null;
     }
 
@@ -256,7 +264,7 @@ window.N7 = window.N7 || {};
     function loop(now) {
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
       for (const k in doors) { const st = doors[k]; if (st.cur !== st.tgt) { const s = st.speed * dt; st.cur = st.tgt > st.cur ? Math.min(st.tgt, st.cur + s) : Math.max(st.tgt, st.cur - s); } }
-      placeGarage(ease(doors.garage.cur)); doorPivot.rotation.y = 1.5 * ease(doors.entry.cur);
+      placeGarage(ease(doors.garage.cur)); doorPivot.rotation.y = -1.5 * ease(doors.entry.cur); // hinge on the right, swings into the yard
       if (anim) {
         const k = ease(Math.min(1, (now - anim.s) / 900));
         camera.position.lerpVectors(anim.from.p, anim.p, k); controls.target.lerpVectors(anim.from.t, anim.t, k); if (k >= 1) anim = null;

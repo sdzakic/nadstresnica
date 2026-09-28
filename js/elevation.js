@@ -14,6 +14,7 @@ window.N7 = window.N7 || {};
     const GH = d.GH, secH = GH / 5 * S;
     const roofEnd = d.W + FIX.overhang;
     const t = 0.08;
+    const pc = (FIX.pillar.x0 + FIX.pillar.x1) / 2, gc = d.gx + d.GW / 2, gap = d.gx - FIX.pillar.x1;
 
     const dimH = (x0, x1, y, label, sub, below) => `
       <line x1="${X(x0)}" y1="${y}" x2="${X(x1)}" y2="${y}" marker-start="url(#tick)" marker-end="url(#tick)"/>
@@ -45,29 +46,34 @@ window.N7 = window.N7 || {};
 
   <polygon points="${pts(d.front)}" fill="url(#seams)"/>
   <polygon points="${pts([[0, d.HH + t], [roofEnd, d.roofY(roofEnd) + t], [roofEnd, d.roofY(roofEnd)], [0, d.HH]])}" fill="var(--d-dim)"/>
-  <text x="${(X(FIX.post.x1) + right) / 2}" y="${Y(d.tail / 2)}" text-anchor="middle" class="t" style="fill:#fff">lim</text>
+  <circle cx="${X(roofEnd + 0.04)}" cy="${Y(d.roofY(roofEnd) - 0.02)}" r="7.5" fill="var(--d-dim)"/>
+  <rect x="${X(roofEnd + 0.04) - 5}" y="${Y(d.roofY(roofEnd) - 0.02)}" width="10" height="${X(d.roofY(roofEnd) - 0.02 - 0.14)}" fill="var(--d-dim)"/>
+  <rect x="${X(roofEnd + 0.04) - 7}" y="${Y(0.2)}" width="14" height="${X(0.14)}" rx="3" fill="var(--d-dim)"/>
+  <text x="${(X(d.post.x1) + right) / 2}" y="${Y(d.tail / 2)}" text-anchor="middle" class="t" style="fill:#fff">lim</text>
 
   <rect x="${X(FIX.door.x0)}" y="${Y(FIX.door.h)}" width="${X(FIX.door.x1 - FIX.door.x0)}" height="${X(FIX.door.h)}" fill="var(--d-door)"/>
-  <rect x="${X(0.70)}" y="${Y(1.9)}" width="10" height="${X(1.7)}" fill="var(--d-seam)" opacity=".9"/>
-  <rect x="${X(0.18)}" y="${Y(1.35)}" width="3" height="80" fill="var(--d-pillar)"/>
+  <rect x="${X(FIX.door.x0 + 0.62)}" y="${Y(1.9)}" width="10" height="${X(1.7)}" fill="var(--d-seam)" opacity=".9"/>
+  <rect x="${X(FIX.door.x0 + 0.13)}" y="${Y(1.35)}" width="3" height="80" fill="var(--d-pillar)"/>
 
   <rect x="${X(FIX.pillar.x0)}" y="${Y(GH)}" width="${X(FIX.pillar.x1 - FIX.pillar.x0)}" height="${X(GH)}" fill="var(--d-pillar)" stroke="var(--line)"/>
-  <rect x="${X(1.10)}" y="${Y(1.55)}" width="15" height="22" fill="var(--d-door)"/>
-  <rect x="${X(1.09)}" y="${Y(1.82)}" width="17" height="17" fill="#2c4f9e"/>
-  <text x="${X(1.175)}" y="${Y(1.82) + 13}" text-anchor="middle" style="font:700 12px var(--display);fill:#fff">7</text>
+  <rect x="${X(pc) - 7.5}" y="${Y(1.55)}" width="15" height="22" fill="var(--d-door)"/>
+  <rect x="${X(pc) - 8.5}" y="${Y(1.82)}" width="17" height="17" fill="#2c4f9e"/>
+  <text x="${X(pc)}" y="${Y(1.82) + 13}" text-anchor="middle" style="font:700 12px var(--display);fill:#fff">7</text>
 
-  <rect x="${X(FIX.garage.x0)}" y="${Y(GH)}" width="${X(FIX.garage.w)}" height="${X(GH)}" fill="url(#garage)"/>
-  <rect x="${X(FIX.post.x0)}" y="${Y(d.roofY(FIX.post.x1))}" width="${X(FIX.post.x1 - FIX.post.x0)}" height="${X(d.roofY(FIX.post.x1))}" fill="var(--d-dim)"/>
+  <rect x="${X(d.gx)}" y="${Y(GH)}" width="${X(d.GW)}" height="${X(GH)}" fill="url(#garage)"/>
+  <rect x="${X(d.post.x0)}" y="${Y(d.roofY(d.post.x1))}" width="${X(FIX.postW)}" height="${X(d.roofY(d.post.x1))}" fill="var(--d-dim)"/>
 
   <rect x="${right}" y="${Y(1.25)}" width="108" height="${X(1.25)}" fill="var(--d-brick)"/>
   <text x="${right + 14}" y="${Y(1.25) - 10}" class="s">susjed</text>
   <line x1="-100" y1="${G}" x2="${right + 120}" y2="${G}" stroke="var(--d-dim)" stroke-width="2"/>
 
   <g class="dim">
-    ${dimH(0, FIX.door.x1, G + 42, f(FIX.door.x1), 'vrata')}
+    ${dimH(0, FIX.door.x0, G + 42, f(FIX.door.x0), '', true)}
+    ${dimH(FIX.door.x0, FIX.door.x1, G + 42, f(FIX.door.x1 - FIX.door.x0), 'vrata')}
     ${dimH(FIX.pillar.x0, FIX.pillar.x1, G + 42, f(FIX.pillar.x1 - FIX.pillar.x0), '', true)}
-    ${dimH(FIX.garage.x0, FIX.post.x0, G + 42, f(FIX.post.x0 - FIX.garage.x0), 'garažna vrata')}
-    ${dimH(FIX.post.x0, d.WL, G + 42, f(d.WL - FIX.post.x0), 'ograda (lim) + stup')}
+    ${gap > 0.01 ? dimH(FIX.pillar.x1, d.gx, G + 42, f(gap), '', gap < 0.45) : ''}
+    ${dimH(d.gx, d.post.x0, G + 42, f(d.GW), 'garažna vrata')}
+    ${dimH(d.post.x0, d.WL, G + 42, f(d.WL - d.post.x0), d.WL - d.post.x0 > 0.9 ? 'ograda (lim) + stup' : '', d.WL - d.post.x0 < 0.45)}
     ${dimH(0, d.WL, G + 90, `<tspan font-weight="500">${f(d.WL)}</tspan>`)}
     <line x1="0" y1="${G + 6}" x2="0" y2="${G + 98}" stroke-dasharray="2 3"/>
     <line x1="${right}" y1="${G + 6}" x2="${right}" y2="${G + 98}" stroke-dasharray="2 3"/>
@@ -79,9 +85,9 @@ window.N7 = window.N7 || {};
     ${dimV(-30, 0, d.HH, f(d.HH), 'end')}
     ${dimV(right + 78, 0, d.HL, f(d.HL))}
     <line x1="${X(d.W) + 8}" y1="${Y(d.HL)}" x2="${right + 84}" y2="${Y(d.HL)}" stroke-dasharray="2 3"/>
-    ${dimV(X(2.64), 0, GH, '').replace(/<text[^]*<\/text>/, '')}
+    ${dimV(X(gc), 0, GH, '').replace(/<text[^]*<\/text>/, '')}
   </g>
-  <text x="${X(2.64) + 6}" y="${Y(GH / 2)}" class="t" style="fill:#fff;font-size:11.5px">${f(GH)}</text>
+  <text x="${X(gc) + 6}" y="${Y(GH / 2)}" class="t" style="fill:#fff;font-size:11.5px">${f(GH)}</text>
 </svg>`;
   };
 })(window.N7);

@@ -20,7 +20,7 @@ window.N7 = window.N7 || {};
 
     // ---------- steel
     const sidePostL = up(d.HL - 0.14);
-    const frontPostL = up(d.roofY(FIX.post.x1) - FIX.rafterH);
+    const frontPostL = up(d.roofY(d.post.x1) - FIX.rafterH);
     const fencePostL = up(d.tail + 0.6);
     const rafterL = up(d.slopeLen);
     const plates = d.nSide + 1;
@@ -67,18 +67,18 @@ window.N7 = window.N7 || {};
     roofRows.push(['Bočni opšavi (sprijeda i straga)', `2 × ${m(roofLen)}`, '']);
     roofRows.push(['Oluk polukružni 125 mm', m(d.D + 0.3, 1), `kuke ${kom(Math.ceil((d.D + 0.3) / 0.6) + 1)}, 2 čepa, 1 izljev`]);
     const pipeL = up(d.roofY(d.W + FIX.overhang) + 0.1, 0.1);
-    roofRows.push(['Vertikala Ø80', m(pipeL, 1), `2 koljena, ${kom(Math.ceil(pipeL) + 1)} obujmica · straga u dvorištu`]);
+    roofRows.push(['Vertikala Ø80', m(pipeL, 1), `2 koljena + izljev, ${kom(Math.ceil(pipeL) + 1)} obujmica · sprijeda, voda ide prema ulici`]);
     groups.push({ title: `Krov · ${m2(roofArea)}`, rows: roofRows });
 
     // ---------- front sheet + fence
     const frontArea = polyArea(d.front);
-    const fasciaW = FIX.post.x1;
-    const railsM = 3 * d.fenceW + 2 * fasciaW + 2 * d.tail;
+    const fasciaW = d.post.x1;
+    const railsM = 3 * (d.fenceW + FIX.door.x0 + Math.max(0, d.gx - FIX.pillar.x1)) + 2 * fasciaW + 2 * d.tail;
     groups.push({
       title: `Lim pročelja i ograda · ${m2(frontArea)}`, rows: [
         ['Fasadni lim s uspravnim spojem 300 mm, RAL 7016', m2(frontArea * 1.1), `${m2(frontArea)} + 10 % rezanja · ${kom(Math.ceil(d.WL / 0.3))} lamela`],
-        ['Pocinčani profil 40×40 (potkonstrukcija)', m(railsM, 1), '3 reda na ogradi, 2 iznad vrata'],
-        ['Opšavi i okapnice', m(fasciaW + (d.WL - d.W) + d.tail + d.HH, 1), 'donji rub iznad vrata, vrh ograde, bočni rubovi'],
+        ['Pocinčani profil 40×40 (potkonstrukcija)', m(railsM, 1), '3 reda na punim dijelovima, 2 iznad vrata'],
+        ['Opšavi i okapnice', m(fasciaW + (d.WL - d.W) + d.tail + d.HH, 1), 'donji rub iznad vrata, rub uz susjeda, bočni rubovi'],
         ['Fasadni vijci u boji', kom(Math.ceil(frontArea * 8)), '≈ 8 po m²']
       ]
     });
@@ -86,8 +86,8 @@ window.N7 = window.N7 || {};
     // ---------- doors + pillar
     groups.push({
       title: 'Vrata i stupić', rows: [
-        ['Sekcijska garažna vrata s motorom', `${f(FIX.garage.w)} × ${f(d.GH)} m`, d.lowHeadroom ? 'okov za nisku nadvisinu' : 'standardni okov'],
-        ['Ulazna vrata, aluminij, antracit', `${f(FIX.door.x1 - FIX.door.x0)} × ${f(FIX.door.h)} m`, 'otvaranje prema unutra'],
+        ['Sekcijska garažna vrata s motorom', `${f(d.GW)} × ${f(d.GH)} m`, d.lowHeadroom ? 'okov za nisku nadvisinu' : 'standardni okov'],
+        ['Ulazna vrata, aluminij, antracit', `${f(FIX.door.x1 - FIX.door.x0)} × ${f(FIX.door.h)} m`, 'šarke desno, otvaranje prema unutra'],
         ['Stupić 25×25 cm', `${kom(Math.ceil(d.GH / 0.2))} betonskih blokova`, `visina ${f(d.GH)} m, žbuka + fasada`],
         ['Interfon s kamerom', '1 kpl', 'kabel do kuće'],
         ['Kućni broj i sandučić', 'postojeći', 'premjestiti na stupić']
@@ -97,12 +97,12 @@ window.N7 = window.N7 || {};
     // ---------- concrete
     const footings = d.nSide + 2; // side posts + garage post + fence post
     const fVol = footings * 0.4 * 0.4 * 0.8;
-    const driveA = FIX.post.x1 * FIX.drivewayLen;
+    const driveA = d.post.x1 * FIX.drivewayLen;
     const slabA = d.WL * d.D;
     groups.push({
       title: 'Beton', rows: [
         ['Temelji stupova 40×40×80 cm', `${kom(footings)} · ${m3(fVol)}`, 'C25/30'],
-        ['Betonski prilaz, 12 cm', `${m2(driveA)} · ${m3(driveA * 0.12)}`, `${f(FIX.post.x1)} × ${f(FIX.drivewayLen)} m do ceste`],
+        ['Betonski prilaz, 12 cm', `${m2(driveA)} · ${m3(driveA * 0.12)}`, `${f(d.post.x1)} × ${f(FIX.drivewayLen)} m do ceste`],
         ['Ploča ispod nadstrešnice, 12 cm', `${m2(slabA)} · ${m3(slabA * 0.12)}`, 'ako se radi i pod'],
         ['Armaturna mreža Q-188', m2((driveA + slabA) * 1.1), 'prilaz + ploča, s preklopima'],
         ['Tampon šljunak 15 cm', m3((driveA + slabA) * 0.15), 'ispod betona'],

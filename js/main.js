@@ -16,7 +16,8 @@
     'in-WL': { key: 'WL', min: 4.9, max: 8 },
     'in-gap': { key: 'gap', min: 0, max: 1.5 },
     'in-HH': { key: 'HH', min: 2.4, max: 3.6 },
-    'in-HL': { key: 'HL', min: 1.8, max: 3.6 }
+    'in-HL': { key: 'HL', min: 1.8, max: 3.6 },
+    'in-GW': { key: 'GW', min: N7.FIX.garage.minW, max: N7.FIX.garage.maxW }
   };
 
   function pressed(group, v) { group.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v)); }
@@ -31,10 +32,14 @@
     $('ro-w').textContent = f(d.W) + ' m';
     $('ro-gap').textContent = Math.round(d.gap * 100) + ' cm';
     $('ro-pitch').textContent = '≈ ' + f(d.pitchDeg, 1) + '° (' + Math.round(d.pitchPct) + ' %)';
-    $('ro-garage').textContent = f(N7.FIX.garage.w) + ' × ' + f(d.GH) + ' m';
+    $('ro-garage').textContent = f(d.GW) + ' × ' + f(d.GH) + ' m';
+    const gxIn = $('in-GX');
+    gxIn.min = d.gxMin.toFixed(2); gxIn.max = d.gxMax.toFixed(2); gxIn.value = d.gx.toFixed(2);
+    gxIn.disabled = d.gxMax - d.gxMin < 0.01;
+    $('gx-out').textContent = f(d.gx - N7.FIX.pillar.x1) + ' m od stupića';
     if (light) return;
     const label = p.mode === 'high' ? 'Najviša' : p.mode === 'low' ? 'Niža' : 'Vlastita';
-    $('elev-note').textContent = `Prikazano: ${label} varijanta · kraj krova ${f(d.HL)} m · pad ${f(d.pitchDeg, 1)}° · garažna vrata ${f(N7.FIX.garage.w)} × ${f(d.GH)} m${d.lowHeadroom ? ' (okov za nisku nadvisinu)' : ''}.`;
+    $('elev-note').textContent = `Prikazano: ${label} varijanta · kraj krova ${f(d.HL)} m · pad ${f(d.pitchDeg, 1)}° · garažna vrata ${f(d.GW)} × ${f(d.GH)} m${d.lowHeadroom ? ' (okov za nisku nadvisinu)' : ''}.`;
     $('pn-pitch').textContent = f(d.pitchDeg, 1) + '°';
     $('h-high-sub').textContent = f(N7.maxHL(p)) + ' m na kraju';
     $('warn').innerHTML = d.warnings.map(w => `<li>${w}</li>`).join('');
@@ -83,8 +88,10 @@
       refresh();
     });
   });
+  $('in-GX').addEventListener('input', e => { p.gx = parseFloat(e.target.value); refresh(); });
+  $('gx-auto').addEventListener('click', () => { p.gx = null; refresh(); });
   $('dims-reset').addEventListener('click', () => {
-    Object.assign(p, N7.MEASURED, { mode: 'high' }); p.HL = N7.resolveHL(p); refresh();
+    Object.assign(p, N7.MEASURED, { mode: 'high', GW: N7.FIX.garage.w, gx: null }); p.HL = N7.resolveHL(p); refresh();
   });
 
   const vg = document.querySelector('.views');

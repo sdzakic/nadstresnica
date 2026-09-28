@@ -14,7 +14,8 @@ window.N7 = window.N7 || {};
     ['img_2798', 'Mjerenje: 3,25 m visina sidra'],
     ['img_2799', 'Mjerenje: 5,52 m širina'],
     ['img_2842', 'Inspiracija: nadstrešnica u susjedstvu'],
-    ['img_2843', 'Inspiracija: nadstrešnica i klizna kapija']
+    ['img_2843', 'Inspiracija: nadstrešnica i klizna kapija'],
+    ['primjer-3', 'Inspiracija: nadstrešnica između dviju kuća']
   ];
 
   N7.initGallery = function (grid, lb) {
