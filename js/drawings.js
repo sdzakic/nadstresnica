@@ -72,6 +72,7 @@ window.N7 = window.N7 || {};
     b += txt(X(WL + 1.2), Y(0.95) + 5, 'pločnik', 's');
     b += `<line x1="${X(-2.2)}" y1="${Y(FIX.drivewayLen)}" x2="${X(WL + 2.2)}" y2="${Y(FIX.drivewayLen)}" class="ln"/>`;
     b += txt(X(WL + 1.2), Y(FIX.drivewayLen) + 20, 'cesta', 's');
+    b += dimV(X(-1.6), Y(0), Y(FIX.drivewayLen), f(FIX.drivewayLen) + ' do ceste', { ext: X(0) });
 
     // side entrance of the house and its steps
     {

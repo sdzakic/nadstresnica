@@ -21,7 +21,7 @@ window.N7 = window.N7 || {};
     lowHL: 1.90,              // measured height for the "lower" variant
     headroomStd: 0.25,        // lintel needed by a standard sectional door
     headroomLow: 0.06,        // lintel needed with a low-headroom kit
-    drivewayLen: 4.2,
+    drivewayLen: 9.45,        // measured: front line to the road edge
     // existing side entrance of the house under the carport: door on the wall + three concrete steps
     sideDoor: { z0: -4.45, z1: -3.45, y0: 0.55, y1: 2.60 },
     stairs: { z0: -4.60, z1: -3.30, rise: 0.18, inset: 0.05, widths: [1.30, 1.10, 0.90] }

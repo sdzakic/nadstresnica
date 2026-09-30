@@ -52,8 +52,10 @@ window.N7 = window.N7 || {};
     const gnd = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), M(0x9a9178)); gnd.rotation.x = -Math.PI / 2; gnd.receiveShadow = true; scene.add(gnd);
     B(-30, 30, 0, 0.02, -40, 0.3, M(0x8f8a70), false); // yard
     B(-30, 30, 0, 0.06, 0.3, 1.6, M(0xc3c1b9, { roughness: .95 }), false); // sidewalk
-    B(-30, 30, 0, 0.04, 1.6, 4.2, M(0x6f8a4b), false); // grass
-    B(-30, 30, 0, 0.03, 4.2, 12, M(0x4b4e52, { roughness: .95 }), false); // road
+    const roadZ = FIX.drivewayLen;
+    B(-30, 30, 0, 0.04, 1.6, roadZ, M(0x6f8a4b), false); // grass
+    B(-30, 30, 0, 0.03, roadZ, roadZ + 7, M(0x4b4e52, { roughness: .95 }), false); // road
+    B(-30, 30, 0.031, 0.032, roadZ + 3.4, roadZ + 3.5, M(0xe8e8e2), false); // centre line
 
     // ---------- green house (x -8..0)
     const HL_ = FIX.houseLen;

@@ -2,7 +2,8 @@
 window.N7 = window.N7 || {};
 (function (N7) {
   const ITEMS = [
-    ['fotomontaza', 'Fotomontaža, niža varijanta krova'],
+    ['fotomontaza', 'Fotomontaža, niža varijanta krova (prvi raspored)'],
+    ['fotomontaza-najvisa', 'Fotomontaža, najviša varijanta krova'],
     ['prije-poslije', 'Prije i poslije'],
     ['ideja', 'Idejna skica s bojama'],
     ['img_2794', 'Pogled s ulice'],
