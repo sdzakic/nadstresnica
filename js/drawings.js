@@ -3,6 +3,7 @@
 window.N7 = window.N7 || {};
 (function (N7) {
   const S = 100;
+  N7.sectionZ = d => -d.D / 2 - 0.4; // where section A–A cuts the carport
   const f = n => N7.fmt(n);
 
   const STYLE = (k = 1) => `<style>
@@ -69,6 +70,15 @@ window.N7 = window.N7 || {};
     b += `<line x1="${X(-2.2)}" y1="${Y(FIX.drivewayLen)}" x2="${X(WL + 2.2)}" y2="${Y(FIX.drivewayLen)}" class="ln"/>`;
     b += txt(X(WL + 1.2), Y(FIX.drivewayLen) + 20, 'cesta', 's');
 
+    // side entrance of the house and its steps
+    {
+      const sd = FIX.sideDoor, st = FIX.stairs;
+      b += rect(X(-0.14), Y(sd.z0), 14, (sd.z1 - sd.z0) * S, 'fill="#fff" class="ln thin"');
+      st.widths.forEach((w, i) => { b += rect(X(0), Y(st.z0 + i * st.inset), w * S, (st.z1 - st.z0 - 2 * i * st.inset) * S, `fill="${i ? 'none' : '#e2e2dc'}" class="ln thin"`); });
+      b += `<path d="M${X(1.2)} ${Y((st.z0 + st.z1) / 2)} h-80 m12 -6 l-12 6 l12 6" class="ln thin"/>`;
+      b += txt(X(1.4), Y(st.z1) + 22, 'stepenice (3 × 18 cm)', 's', 'start');
+    }
+
     // roof, frame
     b += rect(X(-0.02), Y(-D - 0.105), (x1 + 0.02) * S, (D + 0.25) * S, 'class="ln dash"');
     b += txt(X(W / 2), Y(-D - 0.105) - 8, 'rub krova', 's');
@@ -100,7 +110,7 @@ window.N7 = window.N7 || {};
     b += txt(X(gc), Y(-3.2), 'auto', 't');
 
     // section line A–A
-    const za = -D / 2 - 0.4;
+    const za = N7.sectionZ(d);
     b += `<line x1="${X(-0.5)}" y1="${Y(za)}" x2="${X(WL + 0.5)}" y2="${Y(za)}" class="ln axis"/>`;
     [-0.5, WL + 0.5].forEach(x => { b += `<path d="M${X(x)} ${Y(za)} v24 m-6 -10 l6 10 l6 -10" class="ln"/>` + txt(X(x), Y(za) - 10, 'A', 'b'); });
 
@@ -134,6 +144,12 @@ window.N7 = window.N7 || {};
 
     b += rect(U(0), Y(4.4), FIX.houseLen * S, 4.4 * S, 'fill="#eef0ec" class="ln thin"');
     b += txt(U(FIX.houseLen / 2), Y(4.1), 'kuća (u pozadini)', 's');
+    {
+      const sd = FIX.sideDoor, st = FIX.stairs;
+      b += rect(U(-sd.z1), Y(sd.y1), (sd.z1 - sd.z0) * S, (sd.y1 - sd.y0) * S, 'fill="#fff" class="ln thin"');
+      b += txt(U(-(sd.z0 + sd.z1) / 2), Y(sd.y1) - 8, 'bočni ulaz', 's');
+      st.widths.forEach((w, i) => { b += rect(U(-st.z1 + i * st.inset), Y((i + 1) * st.rise), (st.z1 - st.z0 - 2 * i * st.inset) * S, st.rise * S, 'fill="#e2e2dc" class="ln thin"'); });
+    }
     b += `<line x1="${U(-2.4)}" y1="${G}" x2="${U(D + 1.6)}" y2="${G}" class="ln bold"/>`;
     b += rect(U(-2.2), G - 5, 2.2 * S, 5, `fill="url(#sd-conc)"`) + txt(U(-1.1), G - 12, 'prilaz', 's');
     // roof surface rising away from the viewer, gutter, beam, posts
@@ -180,7 +196,22 @@ window.N7 = window.N7 || {};
 
     // house: cut wall + the part beyond, glass block window above the carport
     b += rect(X(-1.5), Y(4.4), 110, 4.4 * S, 'fill="#eef0ec" class="ln thin"');
-    b += rect(X(-0.4), Y(4.4), 40, 4.4 * S, `fill="url(#sc-hatch)" class="ln"`);
+    const zc = N7.sectionZ(d), sd = FIX.sideDoor, st = FIX.stairs;
+    if (zc > sd.z0 && zc < sd.z1) {
+      // the cut runs through the side door: wall below and above the opening, door leaf in the opening
+      b += rect(X(-0.4), Y(sd.y0), 40, sd.y0 * S, `fill="url(#sc-hatch)" class="ln"`);
+      b += rect(X(-0.4), Y(4.4), 40, (4.4 - sd.y1) * S, `fill="url(#sc-hatch)" class="ln"`);
+      b += rect(X(-0.12), Y(sd.y1), 6, (sd.y1 - sd.y0) * S, 'fill="#fff" class="ln thin"');
+      b += txt(X(-0.45), Y((sd.y0 + sd.y1) / 2), 'bočni ulaz', 's', 'end');
+    } else b += rect(X(-0.4), Y(4.4), 40, 4.4 * S, `fill="url(#sc-hatch)" class="ln"`);
+    {
+      const cut = zc > st.z0 && zc < st.z1;
+      const pts = [[0, 0]];
+      st.widths.forEach((w, i) => { pts.push([w, i * st.rise], [w, (i + 1) * st.rise]); });
+      pts.push([0, st.widths.length * st.rise]);
+      b += `<polygon points="${pts.map(([x, y]) => X(x) + ',' + Y(y)).join(' ')}" fill="${cut ? 'url(#sc-hatch)' : '#e2e2dc'}" class="ln"/>`;
+      b += txt(X(st.widths[0]) + 8, Y(st.rise) - 4, 'stepenice', 's', 'start');
+    }
     b += rect(X(-0.4), Y(3.9), 40, 35, 'fill="#fff" class="ln thin"');
     b += txt(X(-0.45), Y(3.72) + 4, 'prozor', 's', 'end');
     b += txt(X(-0.95), Y(2.2), 'kuća', 'b');
@@ -213,7 +244,7 @@ window.N7 = window.N7 || {};
 
     // labels along the roof
     const ang = -Math.atan2(HH - HL, W) * 180 / Math.PI;
-    const mx = X(W * 0.42), my = Y(roofY(W * 0.42) + T) - 10;
+    const mx = X(W * 0.45), my = Y(roofY(W * 0.45) + T) - 16;
     b += `<text x="${mx}" y="${my}" text-anchor="middle" class="t" transform="rotate(${ang} ${mx} ${my})">pad ${N7.fmt(d.pitchDeg, 1)}° (${Math.round(d.pitchPct)} %) · panel ${f(d.slopeLen + oh)} m</text>`;
     const rx = X(W * 0.3), ry = Y(roofY(W * 0.3) - 0.12) + 34;
     b += `<text x="${rx}" y="${ry}" text-anchor="middle" class="s" transform="rotate(${ang} ${rx} ${ry})">rog □120×60 · ${f(d.slopeLen)} m</text>`;
@@ -227,7 +258,7 @@ window.N7 = window.N7 || {};
     b += dimV(X(WL + 1.5), G, Y(HL), f(HL), { right: true, ext: X(W) });
     const clear = roofY(post.x0) - FIX.rafterH;
     b += dimV(X(post.x0) - 16, G, Y(clear), f(clear), { cls: 's' });
-    b += txt(X(post.x0) - 30, Y(clear) - 8, 'slobodno ispod roga', 's', 'end');
+    b += txt(X(post.x0) - 26, Y(clear * 0.62), 'slobodno ispod roga', 's', 'end');
     b += dimV(X(W + 0.3), G, G + 80, '0,80', { right: true, cls: 's' });
 
     el.innerHTML = wrap('sc', vb, b, 'Poprečni presjek A–A s kotama');

@@ -72,8 +72,11 @@ window.N7 = window.N7 || {};
       const r2 = r1.clone(); r2.position.x = -8 - cx; r2.rotation.z = ang; scene.add(r2);
     }
     B(0.36, 0.5, 4.0, 4.12, -HL_ - 0.4, 0.4, M(0xb7bcbf, { metalness: .5, roughness: .4 })); // house gutter
-    plane(1.0, 2.05, M(0xf3f3ef, { roughness: .5 }), 0.012, 1.58, -3.95, Math.PI / 2); // side door
-    [[1.3, 0.18], [1.1, 0.36], [0.9, 0.54]].forEach(([w, y], i) => B(0, w, y - 0.18, y, -4.6 + i * 0.05, -3.3 - i * 0.05, M(0xa8a79f, { roughness: 1 })));
+    { // side door + steps
+      const sd = FIX.sideDoor, st = FIX.stairs;
+      plane(sd.z1 - sd.z0, sd.y1 - sd.y0, M(0xf3f3ef, { roughness: .5 }), 0.012, (sd.y0 + sd.y1) / 2, (sd.z0 + sd.z1) / 2, Math.PI / 2);
+      st.widths.forEach((w, i) => B(0, w, i * st.rise, (i + 1) * st.rise, st.z0 + i * st.inset, st.z1 - i * st.inset, M(0xa8a79f, { roughness: 1 })));
+    }
     plane(1.0, 0.36, M(0xd6dde0, { roughness: .2, metalness: .1 }), 0.012, 3.72, -1.8, Math.PI / 2); // glass block window
     plane(0.34, 0.5, M(0xe6e2d6), 0.012, 1.55, -0.75, Math.PI / 2); // meter box
 

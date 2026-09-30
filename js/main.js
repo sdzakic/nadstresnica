@@ -44,8 +44,8 @@
     $('h-high-sub').textContent = f(N7.maxHL(p)) + ' m na kraju';
     $('warn').innerHTML = d.warnings.map(w => `<li>${w}</li>`).join('');
     $('warn').hidden = !d.warnings.length;
-    renderPrint();
     const groups = N7.materials(d, roofKind);
+    renderPrint(groups);
     N7.renderMaterials($('bom'), groups);
     $('bom-copy').onclick = () => copyText(N7.materialsText(groups));
     Object.entries(INPUTS).forEach(([id, c]) => { if (document.activeElement !== $(id)) $(id).value = (c.key === 'HL' ? d.HL : p[c.key]).toFixed(2); });
@@ -71,7 +71,7 @@
   }
 
   // ---------- print sheet (two A4 landscape pages)
-  function renderPrint() {
+  function renderPrint(groups) {
     N7.renderElevation($('ps-front'), d, 'pf');
     N7.renderSection($('ps-section'), d);
     N7.renderPlan($('ps-plan'), d);
@@ -87,6 +87,9 @@
       ['Stupovi / rogovi', `${d.nSide + 1} × □100×100 · ${d.nRafters} × □120×60`]
     ];
     $('ps-specs').innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+    const roofName = { sandwich: 'sendvič panel 40 mm', poly: 'polikarbonat 16 mm', trap: 'trapezni lim' }[roofKind];
+    $('ps-bom').innerHTML = `<p class="ps-bom-meta">Krov: ${roofName} · tlocrt ${f(d.WL)} × ${f(d.D)} m · kraj krova ${f(d.HL)} m · garažna vrata ${f(d.GW)} × ${f(d.GH)} m</p>` +
+      groups.map(g => `<table><thead><tr><th colspan="3">${g.title}</th></tr></thead><tbody>${g.rows.map(r => `<tr><td>${r[0]}</td><td class="q">${r[1]}</td><td class="n">${r[2]}</td></tr>`).join('')}</tbody></table>`).join('');
   }
   // Inside an embedded preview the browser blocks printing, so the button opens the published site instead.
   const embedded = window.self !== window.top;

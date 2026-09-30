@@ -170,5 +170,12 @@ section{display:flex;flex-direction:column;gap:16px}
   .ps-specs{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:1mm 5mm;font:8pt "IBM Plex Mono",monospace}
   .ps-specs div{display:flex;justify-content:space-between;gap:3mm;border-bottom:.5pt solid #ccc;padding:.8mm 0}
   .ps-specs dt{color:#555}.ps-specs dd{margin:0;text-align:right}
+  .ps-bom{columns:2;column-gap:7mm;font:7.6pt/1.3 "Archivo",Arial,sans-serif;min-height:0}
+  .ps-bom-meta{column-span:all;margin:0 0 3mm;font:8pt "IBM Plex Mono",monospace;color:#333}
+  .ps-bom table{width:100%;border-collapse:collapse;margin:0 0 3.5mm;break-inside:avoid}
+  .ps-bom th{text-align:left;font:700 9pt "Archivo",Arial,sans-serif;border-bottom:1pt solid #111;padding:0 0 1mm}
+  .ps-bom td{border-bottom:.4pt solid #ccc;padding:.8mm 1.5mm .8mm 0;vertical-align:top}
+  .ps-bom td.q{font:7.4pt "IBM Plex Mono",monospace;white-space:nowrap}
+  .ps-bom td.n{color:#555}
   .ps-foot{font:7.5pt "IBM Plex Mono",monospace;color:#555;border-top:.5pt solid #999;padding-top:1.5mm}
 }
