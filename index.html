@@ -7,7 +7,7 @@
 <title>Nadstrešnica br. 7</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,500;112,700;100,400;100,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=16">
+<link rel="stylesheet" href="css/style.css?v=23">
 </head>
 <body>
 <div class="wrap">
@@ -29,6 +29,7 @@
       <div class="doors">
         <button id="d-garage" aria-pressed="false">Otvori garažna vrata</button>
         <button id="d-entry" aria-pressed="false">Otvori ulazna vrata</button>
+        <button id="d-parapet" aria-pressed="false" title="Lim pročelja ide do visine krova uz kuću, pa krov izvana izgleda ravno">Ravni krov izvana</button>
       </div>
       <div class="hint">povuci · kotačić za zoom</div>
     </div>
@@ -56,33 +57,33 @@
         </div>
       </div>
       <div class="opt">
-        <div class="opt-label">Garažna vrata</div>
-        <div class="seg" id="o-garage">
-          <button data-v="anth" aria-pressed="true">Antracit <small>RAL 7016</small></button>
-          <button data-v="white" aria-pressed="false">Bijela <small>RAL 9016</small></button>
-          <button data-v="silver" aria-pressed="false">Srebrna <small>RAL 9006</small></button>
-          <button data-v="brown" aria-pressed="false">Smeđa <small>RAL 8014</small></button>
-          <button data-v="wood" aria-pressed="false">Dekor drvo <small>zlatni hrast</small></button>
-          <button data-v="house" aria-pressed="false">Kao kuća <small>boja fasade</small></button>
-        </div>
+        <label class="opt-label" for="o-garage">Garažna vrata</label>
+        <select id="o-garage" class="pick">
+          <option value="anth">Antracit (RAL 7016)</option>
+          <option value="white">Bijela (RAL 9016)</option>
+          <option value="silver">Srebrna (RAL 9006)</option>
+          <option value="brown">Smeđa (RAL 8014)</option>
+          <option value="wood">Dekor drvo (zlatni hrast)</option>
+          <option value="house">Kao kuća (boja fasade)</option>
+        </select>
       </div>
       <div class="opt">
-        <div class="opt-label">Ograda i lim (isti)</div>
-        <div class="seg" id="o-fence">
-          <button data-v="anth" aria-pressed="true">Antracit <small>kao susjedov balkon</small></button>
-          <button data-v="house" aria-pressed="false">Kao kuća <small>prefarban u boju fasade</small></button>
-          <button data-v="wood" aria-pressed="false">Dekor drvo</button>
-        </div>
+        <label class="opt-label" for="o-fence">Ograda i lim (isti)</label>
+        <select id="o-fence" class="pick">
+          <option value="anth">Antracit (kao susjedov balkon)</option>
+          <option value="house">Kao kuća (prefarban u boju fasade)</option>
+          <option value="wood">Dekor drvo</option>
+        </select>
       </div>
       <div class="opt">
-        <div class="opt-label">Ulazna vrata</div>
-        <div class="seg" id="o-door">
-          <button data-v="anth" aria-pressed="true">Antracit <small>RAL 7016</small></button>
-          <button data-v="white" aria-pressed="false">Bijela <small>RAL 9016</small></button>
-          <button data-v="brown" aria-pressed="false">Smeđa <small>RAL 8014</small></button>
-          <button data-v="wood" aria-pressed="false">Dekor drvo</button>
-          <button data-v="house" aria-pressed="false">Kao kuća</button>
-        </div>
+        <label class="opt-label" for="o-door">Ulazna vrata</label>
+        <select id="o-door" class="pick">
+          <option value="anth">Antracit (RAL 7016)</option>
+          <option value="white">Bijela (RAL 9016)</option>
+          <option value="brown">Smeđa (RAL 8014)</option>
+          <option value="wood">Dekor drvo</option>
+          <option value="house">Kao kuća</option>
+        </select>
       </div>
       <details class="opt dims">
         <summary class="opt-label">Mjere (m)</summary>
@@ -254,13 +255,13 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="js/config.js?v=16"></script>
-<script src="js/statics.js?v=16"></script>
-<script src="js/scene.js?v=16"></script>
-<script src="js/elevation.js?v=16"></script>
-<script src="js/drawings.js?v=16"></script>
-<script src="js/materials.js?v=16"></script>
-<script src="js/gallery.js?v=16"></script>
-<script src="js/main.js?v=16"></script>
+<script src="js/config.js?v=23"></script>
+<script src="js/statics.js?v=23"></script>
+<script src="js/scene.js?v=23"></script>
+<script src="js/elevation.js?v=23"></script>
+<script src="js/drawings.js?v=23"></script>
+<script src="js/materials.js?v=23"></script>
+<script src="js/gallery.js?v=23"></script>
+<script src="js/main.js?v=23"></script>
 </body>
 </html>

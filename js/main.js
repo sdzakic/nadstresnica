@@ -122,10 +122,15 @@
     const b = e.target.closest('button'); if (!b) return;
     const from = d.HL; p.mode = b.dataset.v; p.HL = N7.resolveHL(p); animateHL(from, p.HL);
   });
-  [['o-view', v => scene.setFrameOnly(v === 'steel')], ['o-roof', v => { p.roof = v; scene.setRoof(v); refresh(); }], ['o-garage', v => { look.garage = v; scene.setGarage(v); refresh(); }], ['o-fence', v => { look.sheet = v; scene.setFence(v); refresh(); }], ['o-door', v => { look.door = v; scene.setDoor(v); refresh(); }]].forEach(([id, fn]) => {
+  [['o-view', v => scene.setFrameOnly(v === 'steel')], ['o-roof', v => { p.roof = v; scene.setRoof(v); refresh(); }]].forEach(([id, fn]) => {
     const g = $(id);
     g.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; pressed(g, b.dataset.v); fn(b.dataset.v); });
   });
+  // colour pickers are drop-downs
+  [['o-garage', v => { look.garage = v; scene.setGarage(v); }], ['o-fence', v => { look.sheet = v; scene.setFence(v); }], ['o-door', v => { look.door = v; scene.setDoor(v); }]].forEach(([id, fn]) => {
+    $(id).addEventListener('change', e => { fn(e.target.value); refresh(); });
+  });
+  $('d-parapet').addEventListener('click', e => { p.parapet = !p.parapet; e.currentTarget.setAttribute('aria-pressed', p.parapet); refresh(); });
   Object.entries(INPUTS).forEach(([id, c]) => { $(id).min = c.min; $(id).max = c.max; });
   Object.entries(INPUTS).forEach(([id, c]) => {
     $(id).addEventListener('change', e => {

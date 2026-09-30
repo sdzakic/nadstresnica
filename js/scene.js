@@ -21,13 +21,14 @@ window.N7 = window.N7 || {};
     scene.fog = new THREE.Fog(0xcfd8dd, 30, 70);
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 3; controls.maxDistance = 40;
+    controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 3; controls.maxDistance = 60;
 
     scene.add(new THREE.HemisphereLight(0xeef3f7, 0x7a7466, 0.75));
     const sun = new THREE.DirectionalLight(0xfff4e2, 0.95);
-    sun.position.set(9, 14, 11); sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 50 });
+    sun.position.set(11, 18, 6); sun.castShadow = true;
+    Object.assign(sun.shadow.camera, { left: -28, right: 28, top: 28, bottom: -28, near: 1, far: 70 });
+    sun.shadow.mapSize.set(4096, 4096);
+    sun.target.position.set(2, 0, -10); scene.add(sun.target);
     sun.shadow.bias = -0.0005;
     scene.add(sun);
 
@@ -93,6 +94,15 @@ window.N7 = window.N7 || {};
       frame: M(0xf6f6f3, { roughness: .4 }),
       glass: M(0x3a3230, { roughness: .2 }),
       fence: M(0x3b4045, { roughness: .6, metalness: .3 }),
+      oldTiles: M(0x5a3b2c, { roughness: .95 }),
+      oldBrick: M(0xffffff, {
+        roughness: 1,
+        map: tex(256, 128, (g, w, h) => {
+          g.fillStyle = '#9c8f7c'; g.fillRect(0, 0, w, h); let s = 17; const r = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+          const cols = ['#8a4f33', '#7d4730', '#9a5c3e', '#b39473'];
+          for (let row = 0; row < 16; row++) for (let x = (row % 2) * -16; x < w; x += 32) { g.fillStyle = cols[Math.floor(r() * cols.length)]; g.fillRect(x + 1, row * 8 + 1, 30, 6); }
+        }, 8, 4)
+      }),
       stone: M(0xffffff, {
         roughness: .95,
         map: tex(256, 64, (g, W_, H_) => {
@@ -131,8 +141,66 @@ window.N7 = window.N7 || {};
         const m = add(new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), mat)); m.position.set(x0 - off, 3.5, -7.6); m.rotation.y = -Math.PI / 2;
       });
       B(WL, x0, 0, 2.0, z1, -0.3, NB.fence);   // dark grey panel fence on the boundary, from the house front to the street wall
+      // neighbour's old brick building behind his house, its yard wall flush with the house
+      if (N7._yardShed) N7._yardShed(x0, x0 + 5.5, z0 - 11, z0 + 0.2, 2.9, 5.3, NB.oldBrick, NB.oldTiles);
     }
     const rBrick = M(0x9a5a44, { roughness: 1 });
+
+    // ---------- rest of the yard (IMG_2908–2913): old buildings behind the house and the neighbour's old brick building.
+    // Positions are estimated from the photos; the one measured value is 10 m between the neighbour's building and the barn.
+    {
+      const plaster = M(0xd9bf9c, { roughness: .95 }), oldTiles = M(0x4e3427, { roughness: .95 });
+      const brickTex = (base, mortar, k) => tex(256, 128, (g, w, h) => {
+        g.fillStyle = mortar; g.fillRect(0, 0, w, h); let s = 17; const r = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+        for (let row = 0; row < 16; row++) for (let x = (row % 2) * -16; x < w; x += 32) {
+          g.fillStyle = base[Math.floor(r() * base.length)]; g.fillRect(x + 1, row * 8 + 1, 30, 6);
+        }
+      }, k, k / 2);
+      const yellowBrick = M(0xffffff, { roughness: 1, map: brickTex(['#d7b16a', '#cfa75f', '#dcb877'], '#b9a58a', 2) });
+      const boards = M(0xffffff, { roughness: 1, map: tex(256, 256, (g, w, h) => { grain(g, w, h, '#8a7664', '#3d3228', 'v'); g.fillStyle = 'rgba(30,22,15,.6)'; for (let x = 0; x < w; x += 18 + (x % 7)) g.fillRect(x, 0, 2, h); }, 3, 1) });
+      const brownDoor = M(0x7a5a48, { roughness: .9 }), glass = M(0x2e3a40, { roughness: .2 }), frameW = M(0xf1f1ee, { roughness: .5 });
+
+      // gable building with the ridge along z; eave on both long sides at `eave`
+      function shed(x0, x1, z0, z1, eave, ridge, wallMat, roofMat, gableMat) {
+        B(x0, x1, 0, eave, z0, z1, wallMat);
+        const xc = (x0 + x1) / 2, half = (x1 - x0) / 2, rise = ridge - eave, a = Math.atan2(rise, half);
+        const gs = new THREE.Shape(); gs.moveTo(x0, eave); gs.lineTo(x1, eave); gs.lineTo(xc, ridge); gs.lineTo(x0, eave);
+        const gm = new THREE.Mesh(new THREE.ExtrudeGeometry(gs, { depth: z1 - z0, bevelEnabled: false }), gableMat || wallMat);
+        gm.position.z = z0; gm.castShadow = gm.receiveShadow = true; (target || scene).add(gm);
+        const L = Math.hypot(half, rise) + 0.35, t = 0.16;
+        [1, -1].forEach(side => {
+          const dir = new THREE.Vector3(side * Math.cos(a), -Math.sin(a), 0), nrm = new THREE.Vector3(side * Math.sin(a), Math.cos(a), 0);
+          const c = new THREE.Vector3(xc, ridge, (z0 + z1) / 2).addScaledVector(dir, L / 2).addScaledVector(nrm, t / 2 + 0.02);
+          const r = new THREE.Mesh(new THREE.BoxGeometry(L, t, z1 - z0 + 0.5), roofMat);
+          r.position.copy(c); r.rotation.z = -side * a; r.castShadow = r.receiveShadow = true; (target || scene).add(r);
+        });
+      }
+      const H0 = -FIX.houseLen; // back wall of the green house
+      // the old buildings behind the house are set back: their yard wall is exactly 10 m from the neighbour's
+      // old building, which stands flush with the neighbour's house (measured width 5,41 m to that wall)
+      const XW = N7.MEASURED.WL + 0.03 - 10;
+      // the old part is narrower than the house: from the far side of the house (x = -8) to just past its middle
+      const XF = -8;
+      // old ground-floor house right behind the green house, yellow-brick part next to it
+      shed(XF, XW, H0 - 5.6, H0, 2.7, 4.3, plaster, oldTiles);
+      B(XW - 0.02, XW, 0, 2.7, H0 - 1.6, H0, yellowBrick);
+      plane(0.7, 0.9, frameW, XW + 0.01, 1.5, H0 - 0.9, Math.PI / 2); plane(0.56, 0.76, glass, XW + 0.015, 1.5, H0 - 0.9, Math.PI / 2);
+      plane(1.4, 1.2, frameW, XW + 0.01, 1.35, H0 - 3.4, Math.PI / 2); plane(1.26, 1.06, glass, XW + 0.015, 1.35, H0 - 3.4, Math.PI / 2);
+      plane(0.9, 2.1, glass, XW + 0.01, 1.05, H0 - 4.6, Math.PI / 2);
+      // storage building with the brown wooden door
+      shed(XF, XW, H0 - 11.2, H0 - 5.6, 2.8, 4.4, plaster, oldTiles);
+      B(XW, XW + 0.02, 0.05, 2.05, H0 - 8.6, H0 - 7.4, brownDoor);
+      // old barn at the back: plaster walls, wooden gable towards the back of the yard
+      shed(XF, XW, H0 - 16.2, H0 - 11.2, 2.9, 4.6, plaster, oldTiles, boards);
+      // existing small terrace roof on thin red posts, in the middle of the old buildings (not next to the house)
+      const tz0 = H0 - 10.6, tz1 = H0 - 5.6;
+      B(XW, XW + 2.9, 0.02, 0.1, tz0 + 0.2, tz1 - 0.2, M(0xbdbab2, { roughness: .95 }), false);
+      slopeX(XW, 2.55, XW + 2.7, 2.3, tz0 + 0.4, tz1 - 0.4, 0.04, M(0xa4aaad, { metalness: .5, roughness: .45 }));
+      [tz1 - 0.6, (tz0 + tz1) / 2, tz0 + 0.6].forEach(z => B(XW + 2.55, XW + 2.61, 0.1, 2.3, z - 0.03, z + 0.03, M(0xb23a2e, { roughness: .6 })));
+      // concrete path along the old buildings
+      B(XW, XW + 1.5, 0.02, 0.07, H0 - 16, H0 - 5.4, M(0xbdbab2, { roughness: .95 }), false);
+      N7._yardShed = shed;
+    }
 
     // ---------- materials of the carport
     const steel = M(0x363b3f, { metalness: .55, roughness: .45 });      // load-bearing steel only ("samo čelik" view)
@@ -274,8 +342,10 @@ window.N7 = window.N7 || {};
 
       const x0 = -0.02, x1 = W + FIX.overhang;
       Object.values(roofMats).forEach(m => { m.map.repeat.set(1, (D + 0.25) / m.map.userData.px); });
-      roof = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(x1 - x0, roofY(x0) - roofY(x1)), T, D + 0.25), roofMats[roofKind]);
-      roof.position.set((x0 + x1) / 2, (roofY(x0) + roofY(x1)) / 2 + T / 2, -D / 2 + 0.02);
+      // with the flat-look parapet the roof stops behind the front sheet (no front overhang, no front flashing)
+      const zFront = d.parapet ? 0 : 0.145, zBack = -D - 0.105;
+      roof = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(x1 - x0, roofY(x0) - roofY(x1)), T, zFront - zBack), roofMats[roofKind]);
+      roof.position.set((x0 + x1) / 2, (roofY(x0) + roofY(x1)) / 2 + T / 2, (zFront + zBack) / 2);
       roof.rotation.z = -Math.atan2(HH - HL, W); roof.castShadow = true; roof.receiveShadow = true; dyn.add(roof);
       // gutter falls towards the street and drains through a downpipe on the front, away from the yard
       const gz0 = -D - 0.1, gz1 = 0.14, gy = roofY(x1) - 0.02;
@@ -288,7 +358,7 @@ window.N7 = window.N7 || {};
       // front sheet: above the doors and the whole fence (same outline as the elevation drawing)
       const sh = new THREE.Shape();
       d.front.forEach(([x, y], i) => {
-        const yy = (x === 0 && y === HH) || (x >= W && Math.abs(y - roofY(W)) < 1e-9) ? y + T : Math.max(y, 0.05);
+        const yy = Math.abs(y - HH) < 1e-9 || (x >= W && Math.abs(y - roofY(W)) < 1e-9) ? y + T : Math.max(y, 0.05);
         if (i === 0) sh.moveTo(x, yy); else sh.lineTo(x, yy);
       });
       const fm = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.03, bevelEnabled: false }), fasciaMat); fm.position.z = 0.02; fm.castShadow = fm.receiveShadow = true; dyn.add(fm);
@@ -315,8 +385,8 @@ window.N7 = window.N7 || {};
     const views = () => ({
       street: [[1.0, 1.7, 13], [2.9, 2.1, 0]],
       angle: [[-4.5, 3.4, 9], [2.8, 1.8, -3.5]],
-      yard: [[3.2, 1.9, -d.D - 7.2], [2.6, 1.8, -3]],
-      top: [[13, 13, 9], [2.8, 1, -d.D / 2]],
+      yard: [[5.0, 3.0, -FIX.houseLen - 22.2], [2.6, 1.8, -10]],
+      top: [[-3, 26, 12], [3, 0, -11]],
       inside: [[4.5, 1.75, -d.D + 0.4], [2.2, 1.0, -1.2]]
     });
     let anim = null;

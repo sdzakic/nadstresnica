@@ -72,7 +72,7 @@ window.N7 = window.N7 || {};
       roofRows.push(['Samourezni vijci s kapicom', kom(Math.ceil(roofArea * 4)), '≈ 4 po m²']);
     }
     roofRows.push(['Zidni opšav (spoj s kućom)', m(d.D + 0.3, 1), 'lim + trajnoelastični kit']);
-    roofRows.push(['Bočni opšavi (sprijeda i straga)', `2 × ${m(roofLen)}`, '']);
+    roofRows.push(d.parapet ? ['Bočni opšav (straga)', `1 × ${m(roofLen)}`, 'sprijeda ga zamjenjuje lim atike'] : ['Bočni opšavi (sprijeda i straga)', `2 × ${m(roofLen)}`, '']);
     roofRows.push(['Oluk polukružni 125 mm', m(d.D + 0.3, 1), `kuke ${kom(Math.ceil((d.D + 0.3) / 0.6) + 1)}, 2 čepa, 1 izljev`]);
     const pipeL = up(d.roofY(d.W + FIX.overhang) + 0.1, 0.1);
     roofRows.push(['Vertikala Ø80', m(pipeL, 1), `2 koljena + izljev, ${kom(Math.ceil(pipeL) + 1)} obujmica · sprijeda, voda ide prema ulici`]);
@@ -87,7 +87,8 @@ window.N7 = window.N7 || {};
         [`Fasadni lim s uspravnim spojem 300 mm, ${lk.sheet === 'house' ? 'u boji fasade kuće' : lk.sheet === 'wood' ? 'dekor drvo' : 'RAL 7016'}`, m2(frontArea * 1.1), `${m2(frontArea)} + 10 % rezanja · ${kom(Math.ceil(d.WL / 0.3))} lamela`],
         ['Pocinčani profil 40×40 (potkonstrukcija)', m(railsM, 1), '3 reda na punim dijelovima, 2 iznad vrata'],
         ['Opšavi i okapnice', m(fasciaW + (d.WL - d.W) + d.tail + d.HH, 1), 'donji rub iznad vrata, rub uz susjeda, bočni rubovi'],
-        ['Fasadni vijci u boji', kom(Math.ceil(frontArea * 8)), '≈ 8 po m²']
+        ['Fasadni vijci u boji', kom(Math.ceil(frontArea * 8)), '≈ 8 po m²'],
+        ...(d.parapet ? [['Pokrovni opšav atike', m(d.WL + 0.1, 1), 'vrh lima u visini krova uz kuću']] : [])
       ]
     });
 

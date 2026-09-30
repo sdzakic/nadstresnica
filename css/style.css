@@ -128,6 +128,9 @@ section{display:flex;flex-direction:column;gap:16px}
 :root[data-theme="dark"] .chip.ok{background:#1f3a24;color:#a8dcb0}
 :root[data-theme="dark"] .chip.bad{background:#4a211a;color:#f2b3a6}
 
+.pick{width:100%;font:500 14px var(--display);padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink)}
+.pick:focus-visible{outline:2px solid var(--sage);outline-offset:2px}
+
 /* bill of materials */
 .bom-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
 .bom{width:100%;border-collapse:collapse;font-size:14px;min-width:620px}

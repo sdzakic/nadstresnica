@@ -36,7 +36,7 @@ window.N7 = window.N7 || {};
   };
 
   const MEASURED = { HH: 3.18, D: 7.8, WL: 5.41, gap: 0.50 };
-  const DEFAULTS = Object.assign({ mode: 'high', HL: 2.70, GW: FIX.garage.w, gx: null, roof: 'sandwich', sk: 1.25, qp: 0.50, doorH: 2.10 }, MEASURED); // gx null = as far from the entrance as possible
+  const DEFAULTS = Object.assign({ mode: 'high', HL: 2.70, GW: FIX.garage.w, gx: null, roof: 'sandwich', sk: 1.25, qp: 0.50, doorH: 2.10, parapet: false }, MEASURED); // gx null = as far from the entrance as possible
 
   const fmt = (n, dec = 2) => n.toFixed(dec).replace('.', ',');
   const floorTo = (v, step) => Math.floor(v / step + 1e-6) * step;
@@ -142,7 +142,10 @@ window.N7 = window.N7 || {};
       if (b[1] === 0 && Math.abs(a[0] - b[0]) < 0.005 && Math.abs(c[0] - b[0]) < 0.005 && a[1] > 0 && c[1] > 0) front.splice(k, 1);
     }
     for (let k = front.length - 1; k > 0; k--) if (Math.abs(front[k][0] - front[k - 1][0]) < 1e-6 && Math.abs(front[k][1] - front[k - 1][1]) < 1e-6) front.splice(k, 1);
-    front.push([p.WL, tail], [W, roofY(W)], [0, HH]);
+    // with the parapet option the sheet goes up to the roof height at the house over the whole front,
+    // so from the street the roof looks flat
+    if (p.parapet) front.push([p.WL, HH], [0, HH]);
+    else front.push([p.WL, tail], [W, roofY(W)], [0, HH]);
 
     const warnings = [];
     if (drop <= 0) warnings.push('Kraj krova mora biti niži od visine uz kuću.');
@@ -158,7 +161,7 @@ window.N7 = window.N7 || {};
     return {
       HH, HL, D: p.D, WL: p.WL, gap: p.gap, W, drop, roofY, pitchDeg, pitchPct: drop / W * 100, slopeLen,
       intercomX, GW, gx, gxMin, gxMax, gRight, attached, post, frontPosts, GH, lowHeadroom, tail, fenceW, front,
-      st, rafterH, doorH: entryH, doorMax, roof: p.roof || 'sandwich',
+      st, rafterH, doorH: entryH, doorMax, parapet: !!p.parapet, roof: p.roof || 'sandwich',
       nSide, sideZ,
       nRafters, rafterZ: spread(nRafters, -0.04, -p.D + 0.04),
       warnings, FIX

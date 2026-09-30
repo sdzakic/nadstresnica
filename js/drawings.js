@@ -170,7 +170,7 @@ window.N7 = window.N7 || {};
     });
     b += rect(U(-0.18), Y(ye - 0.05), 10, (ye - 0.25) * S, 'fill="#333"') + `<path d="M${U(-0.13)} ${Y(0.22)} l-18 12" class="ln" stroke-width="9" stroke="#333"/>`;
     b += txt(U(-0.3), Y(0.6), 'vertikala', 's', 'end');
-    b += `<line x1="${U(-0.02)}" y1="${G}" x2="${U(-0.02)}" y2="${Y(HL)}" class="ln" stroke-width="4"/>`;
+    b += `<line x1="${U(-0.02)}" y1="${G}" x2="${U(-0.02)}" y2="${Y(d.parapet ? HH + T : HL)}" class="ln" stroke-width="4"/>`;
     b += txt(U(-0.1), Y(HL + 0.25), 'lim pročelja', 's', 'end');
 
     // dimensions

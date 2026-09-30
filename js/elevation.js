@@ -46,8 +46,8 @@ window.N7 = window.N7 || {};
   <text x="-50" y="${Y(d.HH) + 40}" text-anchor="middle" class="t">kuća</text>
 
   <polygon points="${pts(d.front)}" fill="url(#${pfx}-seams)"/>
-  <polygon points="${pts([[0, d.HH + t], [roofEnd, d.roofY(roofEnd) + t], [roofEnd, d.roofY(roofEnd)], [0, d.HH]])}" fill="var(--d-dim)"/>
-  <circle cx="${X(roofEnd + 0.04)}" cy="${Y(d.roofY(roofEnd) - 0.02)}" r="7.5" fill="var(--d-dim)"/>
+  ${d.parapet ? `<rect x="0" y="${Y(d.HH) - 5}" width="${right}" height="5" fill="var(--d-dim)"/>` : `<polygon points="${pts([[0, d.HH + t], [roofEnd, d.roofY(roofEnd) + t], [roofEnd, d.roofY(roofEnd)], [0, d.HH]])}" fill="var(--d-dim)"/>
+  <circle cx="${X(roofEnd + 0.04)}" cy="${Y(d.roofY(roofEnd) - 0.02)}" r="7.5" fill="var(--d-dim)"/>`}
   <rect x="${X(roofEnd + 0.04) - 5}" y="${Y(d.roofY(roofEnd) - 0.02)}" width="10" height="${X(d.roofY(roofEnd) - 0.02 - 0.14)}" fill="var(--d-dim)"/>
   <rect x="${X(roofEnd + 0.04) - 7}" y="${Y(0.2)}" width="14" height="${X(0.14)}" rx="3" fill="var(--d-dim)"/>
   ${d.WL - d.post.x1 > 0.6 ? `<text x="${(X(d.post.x1) + right) / 2}" y="${Y(d.tail / 2)}" text-anchor="middle" class="t" style="fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.35);stroke-width:3px">lim</text>` : ''}
