@@ -3,7 +3,7 @@ window.N7 = window.N7 || {};
 (function (N7) {
   const S = 100; // px per metre
 
-  N7.renderElevation = function (el, d) {
+  N7.renderElevation = function (el, d, pfx = 'e') {
     const FIX = N7.FIX, f = N7.fmt;
     const G = Math.round((d.HH + 0.5) * S);     // ground line
     const X = m => +(m * S).toFixed(1);
@@ -17,23 +17,23 @@ window.N7 = window.N7 || {};
     const pc = (FIX.pillar.x0 + FIX.pillar.x1) / 2, gc = d.gx + d.GW / 2, gap = d.gx - FIX.pillar.x1;
 
     const dimH = (x0, x1, y, label, sub, below) => `
-      <line x1="${X(x0)}" y1="${y}" x2="${X(x1)}" y2="${y}" marker-start="url(#tick)" marker-end="url(#tick)"/>
+      <line x1="${X(x0)}" y1="${y}" x2="${X(x1)}" y2="${y}" marker-start="url(#${pfx}-tick)" marker-end="url(#${pfx}-tick)"/>
       <text x="${(X(x0) + X(x1)) / 2}" y="${below ? y + 20 : y - 6}" text-anchor="middle" class="t">${label}</text>
       ${sub ? `<text x="${(X(x0) + X(x1)) / 2}" y="${y - 20}" text-anchor="middle" class="s">${sub}</text>` : ''}`;
     const dimV = (x, y0, y1, label, anchor) => `
-      <line x1="${x}" y1="${Y(y0)}" x2="${x}" y2="${Y(y1)}" marker-start="url(#tick)" marker-end="url(#tick)"/>
+      <line x1="${x}" y1="${Y(y0)}" x2="${x}" y2="${Y(y1)}" marker-start="url(#${pfx}-tick)" marker-end="url(#${pfx}-tick)"/>
       <text x="${anchor === 'end' ? x - 6 : x + 8}" y="${(Y(y0) + Y(y1)) / 2 + 4}" text-anchor="${anchor || 'start'}" class="t">${label}</text>`;
 
     el.innerHTML = `
 <svg viewBox="-100 -40 ${vbW} ${vbH}" role="img" aria-label="Nacrt pročelja nadstrešnice s kotama">
   <defs>
-    <pattern id="seams" width="30" height="10" patternUnits="userSpaceOnUse">
+    <pattern id="${pfx}-seams" width="30" height="10" patternUnits="userSpaceOnUse">
       <rect width="30" height="10" fill="var(--d-sheet)"/><rect x="0" width="1.6" height="10" fill="var(--d-seam)"/>
     </pattern>
-    <pattern id="garage" width="10" height="${secH}" patternUnits="userSpaceOnUse" y="${Y(GH)}">
+    <pattern id="${pfx}-garage" width="10" height="${secH}" patternUnits="userSpaceOnUse" y="${Y(GH)}">
       <rect width="10" height="${secH}" fill="var(--d-garage)"/><rect y="${secH - 1.4}" width="10" height="1.4" fill="var(--d-seam)"/>
     </pattern>
-    <marker id="tick" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+    <marker id="${pfx}-tick" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto">
       <path d="M2 8 L8 2" stroke="var(--d-dim)" stroke-width="1.4"/>
     </marker>
   </defs>
@@ -44,7 +44,7 @@ window.N7 = window.N7 || {};
   <rect x="-100" y="-40" width="100" height="${G + 40}" fill="var(--d-house)"/>
   <text x="-50" y="${Y(d.HH) + 40}" text-anchor="middle" class="t">kuća</text>
 
-  <polygon points="${pts(d.front)}" fill="url(#seams)"/>
+  <polygon points="${pts(d.front)}" fill="url(#${pfx}-seams)"/>
   <polygon points="${pts([[0, d.HH + t], [roofEnd, d.roofY(roofEnd) + t], [roofEnd, d.roofY(roofEnd)], [0, d.HH]])}" fill="var(--d-dim)"/>
   <circle cx="${X(roofEnd + 0.04)}" cy="${Y(d.roofY(roofEnd) - 0.02)}" r="7.5" fill="var(--d-dim)"/>
   <rect x="${X(roofEnd + 0.04) - 5}" y="${Y(d.roofY(roofEnd) - 0.02)}" width="10" height="${X(d.roofY(roofEnd) - 0.02 - 0.14)}" fill="var(--d-dim)"/>
@@ -60,7 +60,7 @@ window.N7 = window.N7 || {};
   <rect x="${X(pc) - 8.5}" y="${Y(1.82)}" width="17" height="17" fill="#2c4f9e"/>
   <text x="${X(pc)}" y="${Y(1.82) + 13}" text-anchor="middle" style="font:700 12px var(--display);fill:#fff">7</text>
 
-  <rect x="${X(d.gx)}" y="${Y(GH)}" width="${X(d.GW)}" height="${X(GH)}" fill="url(#garage)"/>
+  <rect x="${X(d.gx)}" y="${Y(GH)}" width="${X(d.GW)}" height="${X(GH)}" fill="url(#${pfx}-garage)"/>
   <rect x="${X(d.post.x0)}" y="${Y(d.roofY(d.post.x1))}" width="${X(FIX.postW)}" height="${X(d.roofY(d.post.x1))}" fill="var(--d-dim)"/>
 
   <rect x="${right}" y="${Y(1.25)}" width="108" height="${X(1.25)}" fill="var(--d-brick)"/>

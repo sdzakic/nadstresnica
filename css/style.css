@@ -139,3 +139,36 @@ section{display:flex;flex-direction:column;gap:16px}
   .panels{grid-template-columns:1fr}
   #stage{height:58vh;min-height:340px}
 }
+
+/* print button */
+.print-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:4px}
+.print-row .btn{text-decoration:none;display:inline-block}
+.s-note{font-size:13px;color:var(--muted)}
+
+/* print sheet: hidden on screen, two A4 landscape pages on paper */
+#print-sheet{display:none}
+@media print{
+  @page{size:A4 landscape;margin:9mm}
+  :root,:root:not([data-theme="light"]),:root[data-theme="dark"]{
+    color-scheme:light;--ground:#fff;--surface:#fff;--ink:#111;--muted:#555;--line:#bbb;--chip:#eee;
+    --d-house:#dfe3dc;--d-sheet:#9aa0a4;--d-seam:#6c7276;--d-door:#50565a;--d-garage:#b9bec1;
+    --d-pillar:#e8e8e2;--d-brick:#d9c39a;--d-dim:#111}
+  html,body{background:#fff!important;color:#111;padding:0!important;margin:0}
+  .wrap,#lb{display:none!important}
+  #print-sheet{display:block}
+  .ps-page{height:191mm;display:grid;grid-template-rows:auto 1fr auto;gap:3mm;break-after:page;page-break-after:always;overflow:hidden}
+  .ps-page:last-child{break-after:auto;page-break-after:auto}
+  .ps-head{display:flex;justify-content:space-between;gap:6mm;align-items:baseline;border-bottom:1.2pt solid #111;padding-bottom:2mm;font:9pt "IBM Plex Mono",monospace}
+  .ps-head b{font:700 12pt "Archivo",Arial,sans-serif}
+  .ps-cols{display:grid;grid-template-columns:1fr 1fr;gap:6mm;min-height:0}
+  .ps-cols-2{grid-template-columns:0.85fr 1.15fr}
+  .ps-cols figure{margin:0;display:flex;flex-direction:column;gap:2mm;min-height:0}
+  .ps-cols figcaption{font:700 10pt "Archivo",Arial,sans-serif}
+  .ps-cols figure > div{flex:1;min-height:0;display:flex;align-items:flex-start;justify-content:center}
+  .ps-cols svg{width:100%;height:100%;max-height:100%}
+  #ps-front svg{min-width:0}
+  .ps-specs{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:1mm 5mm;font:8pt "IBM Plex Mono",monospace}
+  .ps-specs div{display:flex;justify-content:space-between;gap:3mm;border-bottom:.5pt solid #ccc;padding:.8mm 0}
+  .ps-specs dt{color:#555}.ps-specs dd{margin:0;text-align:right}
+  .ps-foot{font:7.5pt "IBM Plex Mono",monospace;color:#555;border-top:.5pt solid #999;padding-top:1.5mm}
+}

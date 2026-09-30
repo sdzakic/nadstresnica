@@ -7,7 +7,7 @@
 <title>Nadstrešnica br. 7</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,500;112,700;100,400;100,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=6">
 </head>
 <body>
 <div class="wrap">
@@ -97,6 +97,10 @@
       <h2>Pročelje s ulice, s mjerama</h2>
       <p id="elev-note"></p>
       <p>Mjere su u metrima. Širine vrata i stupića procijenjene su iz fotografija; točne treba izmjeriti na licu mjesta.</p>
+      <div class="print-row">
+        <a id="print-btn" class="btn" href="#ispis">Ispiši crteže</a>
+        <span class="s-note">Dva lista A4 (vodoravno): pročelje i presjek, tlocrt i bokocrt, sa svim kotama.</span>
+      </div>
     </div>
     <div class="drawing" id="elev"></div>
     <div class="legend" aria-label="Boje sa skice">
@@ -167,6 +171,25 @@
   </section>
 </div>
 
+<div id="print-sheet" aria-hidden="true">
+  <div class="ps-page">
+    <header class="ps-head"><b>Nadstrešnica br. 7 · idejni prikaz</b><span class="ps-meta"></span><span>list 1/2</span></header>
+    <div class="ps-cols">
+      <figure><figcaption>1 · Pročelje s ulice (nacrt)</figcaption><div id="ps-front"></div></figure>
+      <figure><figcaption>2 · Poprečni presjek A–A (pogled prema ulici)</figcaption><div id="ps-section"></div></figure>
+    </div>
+    <footer class="ps-foot">Mjere u metrima · crteži nisu u mjerilu, vrijede kote · širine vrata i stupića procijenjene iz fotografija</footer>
+  </div>
+  <div class="ps-page">
+    <header class="ps-head"><b>Nadstrešnica br. 7 · idejni prikaz</b><span class="ps-meta"></span><span>list 2/2</span></header>
+    <div class="ps-cols ps-cols-2">
+      <figure><figcaption>3 · Tlocrt</figcaption><div id="ps-plan"></div></figure>
+      <figure><figcaption>4 · Bokocrt (pogled od susjeda)</figcaption><div id="ps-side"></div><dl class="ps-specs" id="ps-specs"></dl></figure>
+    </div>
+    <footer class="ps-foot">Mjere u metrima · crteži nisu u mjerilu, vrijede kote · dozvoljenu visinu uz među provjeriti u općini</footer>
+  </div>
+</div>
+
 <dialog id="lb" aria-label="Pregled slike">
   <div class="lb-stage" id="lb-stage"><img id="lb-img" alt="" draggable="false"></div>
   <button id="lb-close" class="lb-btn lb-close" aria-label="Zatvori">✕</button>
@@ -184,11 +207,12 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="js/config.js"></script>
-<script src="js/scene.js"></script>
-<script src="js/elevation.js"></script>
-<script src="js/materials.js"></script>
-<script src="js/gallery.js"></script>
-<script src="js/main.js"></script>
+<script src="js/config.js?v=6"></script>
+<script src="js/scene.js?v=6"></script>
+<script src="js/elevation.js?v=6"></script>
+<script src="js/drawings.js?v=6"></script>
+<script src="js/materials.js?v=6"></script>
+<script src="js/gallery.js?v=6"></script>
+<script src="js/main.js?v=6"></script>
 </body>
 </html>

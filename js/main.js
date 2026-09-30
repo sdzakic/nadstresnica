@@ -44,6 +44,7 @@
     $('h-high-sub').textContent = f(N7.maxHL(p)) + ' m na kraju';
     $('warn').innerHTML = d.warnings.map(w => `<li>${w}</li>`).join('');
     $('warn').hidden = !d.warnings.length;
+    renderPrint();
     const groups = N7.materials(d, roofKind);
     N7.renderMaterials($('bom'), groups);
     $('bom-copy').onclick = () => copyText(N7.materialsText(groups));
@@ -68,6 +69,30 @@
     const done = ok => { btn.textContent = ok ? 'Kopirano' : 'Označi i kopiraj ručno'; setTimeout(() => { btn.textContent = 'Kopiraj popis'; }, 2000); };
     try { navigator.clipboard.writeText(txt).then(() => done(true), () => done(false)); } catch (e) { done(false); }
   }
+
+  // ---------- print sheet (two A4 landscape pages)
+  function renderPrint() {
+    N7.renderElevation($('ps-front'), d, 'pf');
+    N7.renderSection($('ps-section'), d);
+    N7.renderPlan($('ps-plan'), d);
+    N7.renderSide($('ps-side'), d);
+    const label = p.mode === 'high' ? 'najviša' : p.mode === 'low' ? 'niža' : 'vlastita';
+    const today = new Date().toLocaleDateString('hr-HR');
+    document.querySelectorAll('.ps-meta').forEach(m => { m.textContent = `${label} varijanta krova · ${today}`; });
+    const rows = [
+      ['Tlocrt nadstrešnice', `${f(d.WL)} × ${f(d.D)} m`], ['Širina krova', `${f(d.W)} m (${f(d.gap)} m od susjeda)`],
+      ['Visina uz kuću / na kraju', `${f(d.HH)} / ${f(d.HL)} m`], ['Pad krova', `${f(d.pitchDeg, 1)}° (${Math.round(d.pitchPct)} %)`],
+      ['Ulazna vrata', `${f(N7.FIX.door.x1 - N7.FIX.door.x0)} × ${f(N7.FIX.door.h)} m, ${f(N7.FIX.door.x0)} m od kuće, šarke desno`],
+      ['Garažna vrata', `${f(d.GW)} × ${f(d.GH)} m, ${f(d.gx)} m od kuće${d.lowHeadroom ? ', niska nadvisina' : ''}`],
+      ['Stupovi / rogovi', `${d.nSide + 1} × □100×100 · ${d.nRafters} × □120×60`]
+    ];
+    $('ps-specs').innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  }
+  // Inside an embedded preview the browser blocks printing, so the button opens the published site instead.
+  const embedded = window.self !== window.top;
+  const pb = $('print-btn');
+  if (embedded) { pb.href = 'https://nadstresnica.slobo.eu/#ispis'; pb.target = '_blank'; pb.rel = 'noopener'; pb.textContent = 'Ispiši crteže (otvara stranicu)'; }
+  else pb.addEventListener('click', e => { e.preventDefault(); window.print(); });
 
   // ---------- controls
   $('o-height').addEventListener('click', e => {
@@ -103,4 +128,5 @@
 
   refresh();
   N7.initGallery($('gallery'), $('lb'));
+  if (!embedded && location.hash === '#ispis') setTimeout(() => window.print(), 800);
 })(window.N7);
