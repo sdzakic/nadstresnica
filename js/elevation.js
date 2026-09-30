@@ -14,7 +14,7 @@ window.N7 = window.N7 || {};
     const GH = d.GH, secH = GH / 5 * S;
     const roofEnd = d.W + FIX.overhang;
     const t = 0.08;
-    const pc = (FIX.pillar.x0 + FIX.pillar.x1) / 2, gc = d.gx + d.GW / 2, gap = d.gx - FIX.pillar.x1;
+    const pc = d.intercomX, gc = d.gx + d.GW / 2, gap = d.gx - FIX.door.x1;
 
     const dimH = (x0, x1, y, label, sub, below) => `
       <line x1="${X(x0)}" y1="${y}" x2="${X(x1)}" y2="${y}" marker-start="url(#${pfx}-tick)" marker-end="url(#${pfx}-tick)"/>
@@ -55,13 +55,12 @@ window.N7 = window.N7 || {};
   <rect x="${X(FIX.door.x0 + 0.62)}" y="${Y(1.9)}" width="10" height="${X(1.7)}" fill="var(--d-seam)" opacity=".9"/>
   <rect x="${X(FIX.door.x0 + 0.13)}" y="${Y(1.35)}" width="3" height="80" fill="var(--d-pillar)"/>
 
-  <rect x="${X(FIX.pillar.x0)}" y="${Y(GH)}" width="${X(FIX.pillar.x1 - FIX.pillar.x0)}" height="${X(GH)}" fill="var(--d-pillar)" stroke="var(--line)"/>
   <rect x="${X(pc) - 7.5}" y="${Y(1.55)}" width="15" height="22" fill="var(--d-door)"/>
   <rect x="${X(pc) - 8.5}" y="${Y(1.82)}" width="17" height="17" fill="#2c4f9e"/>
   <text x="${X(pc)}" y="${Y(1.82) + 13}" text-anchor="middle" style="font:700 12px var(--display);fill:#fff">7</text>
 
   <rect x="${X(d.gx)}" y="${Y(GH)}" width="${X(d.GW)}" height="${X(GH)}" fill="url(#${pfx}-garage)"/>
-  <rect x="${X(d.post.x0)}" y="${Y(d.roofY(d.post.x1))}" width="${X(FIX.postW)}" height="${X(d.roofY(d.post.x1))}" fill="var(--d-dim)"/>
+  ${d.frontPosts.concat(d.attached ? [{ x0: d.post.x0, x1: d.post.x1, h: d.HL - 0.14 }] : []).map(q => `<rect x="${X(q.x0)}" y="${Y(q.h)}" width="${X(q.x1 - q.x0)}" height="${X(q.h)}" fill="var(--d-dim)"/>`).join('')}
 
   <rect x="${right}" y="${Y(1.25)}" width="108" height="${X(1.25)}" fill="var(--d-brick)"/>
   <text x="${right + 14}" y="${Y(1.25) - 10}" class="s">susjed</text>
@@ -70,10 +69,9 @@ window.N7 = window.N7 || {};
   <g class="dim">
     ${dimH(0, FIX.door.x0, G + 42, f(FIX.door.x0), '', true)}
     ${dimH(FIX.door.x0, FIX.door.x1, G + 42, f(FIX.door.x1 - FIX.door.x0), 'vrata')}
-    ${dimH(FIX.pillar.x0, FIX.pillar.x1, G + 42, f(FIX.pillar.x1 - FIX.pillar.x0), '', true)}
-    ${gap > 0.01 ? dimH(FIX.pillar.x1, d.gx, G + 42, f(gap), '', gap < 0.45) : ''}
-    ${dimH(d.gx, d.post.x0, G + 42, f(d.GW), 'garažna vrata')}
-    ${dimH(d.post.x0, d.WL, G + 42, f(d.WL - d.post.x0), d.WL - d.post.x0 > 0.9 ? 'ograda (lim) + stup' : '', d.WL - d.post.x0 < 0.45)}
+    ${dimH(FIX.door.x1, d.gx, G + 42, f(gap), gap > 0.7 ? 'interfon' : '', gap < 0.45)}
+    ${dimH(d.gx, d.gRight, G + 42, f(d.GW), 'garažna vrata')}
+    ${dimH(d.gRight, d.WL, G + 42, f(d.WL - d.gRight), d.WL - d.gRight > 0.9 ? 'ograda (lim) + stup' : '', d.WL - d.gRight < 0.45)}
     ${dimH(0, d.WL, G + 90, `<tspan font-weight="500">${f(d.WL)}</tspan>`)}
     <line x1="0" y1="${G + 6}" x2="0" y2="${G + 98}" stroke-dasharray="2 3"/>
     <line x1="${right}" y1="${G + 6}" x2="${right}" y2="${G + 98}" stroke-dasharray="2 3"/>

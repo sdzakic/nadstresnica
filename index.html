@@ -7,14 +7,14 @@
 <title>Nadstrešnica br. 7</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,500;112,700;100,400;100,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=7">
+<link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body>
 <div class="wrap">
   <header>
     <div class="eyebrow">Idejni prikaz · kućni broj 7</div>
     <h1>Nadstrešnica između kuće i susjeda</h1>
-    <p class="lede">Jednostrešna čelična konstrukcija naslonjena na bočni zid kuće, s padom prema susjedu. Sprijeda su ulazna vrata, stupić s interfonom, sekcijska garažna vrata i ograda. Ograda i prostor iznad vrata zatvoreni su istim limom. Model se okreće prstom ili mišem, a mjere se mogu mijenjati u panelu.</p>
+    <p class="lede">Jednostrešna čelična konstrukcija naslonjena na bočni zid kuće, s padom prema susjedu. Sprijeda su ulazna vrata, interfon na limu između vrata, sekcijska garažna vrata i ograda. Ograda i prostor iznad vrata zatvoreni su istim limom. Model se okreće prstom ili mišem, a mjere se mogu mijenjati u panelu.</p>
   </header>
 
   <div class="viewer">
@@ -38,6 +38,13 @@
         <div class="seg" id="o-height">
           <button id="h-high" data-v="high" aria-pressed="true">Najviša <small id="h-high-sub">2,80 m na kraju</small></button>
           <button id="h-low" data-v="low" aria-pressed="false">Niža <small>1,90 m na kraju</small></button>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-label">Prikaz</div>
+        <div class="seg" id="o-view">
+          <button data-v="all" aria-pressed="true">Sve</button>
+          <button data-v="steel" aria-pressed="false">Samo čelična konstrukcija <small>stupovi, grede, rogovi</small></button>
         </div>
       </div>
       <div class="opt">
@@ -96,10 +103,10 @@
     <div class="sec-head">
       <h2>Pročelje s ulice, s mjerama</h2>
       <p id="elev-note"></p>
-      <p>Mjere su u metrima. Širine vrata i stupića procijenjene su iz fotografija; točne treba izmjeriti na licu mjesta.</p>
+      <p>Mjere su u metrima. Širine vrata procijenjene su iz fotografija; točne treba izmjeriti na licu mjesta.</p>
       <div class="print-row">
         <a id="print-btn" class="btn" href="#ispis">Ispiši crteže</a>
-        <span class="s-note">Dva lista A4 (vodoravno): pročelje i presjek, tlocrt i bokocrt, sa svim kotama.</span>
+        <span class="s-note">Tri lista A4 (vodoravno): pročelje i presjek, tlocrt i bokocrt, popis materijala.</span>
       </div>
     </div>
     <div class="drawing" id="elev"></div>
@@ -108,7 +115,7 @@
       <span><i style="border-color:var(--lg-green)"></i>ograda, isti lim kao iznad vrata</span>
       <span><i style="border-color:var(--lg-yellow)"></i>sekcijska garažna vrata</span>
       <span><i style="border-color:var(--lg-blue)"></i>ulazna vrata</span>
-      <span><i style="border-color:var(--lg-purple)"></i>stupić + lim iznad vrata</span>
+      <span><i style="border-color:var(--lg-purple)"></i>lim iznad vrata + interfon</span>
     </div>
   </section>
 
@@ -178,7 +185,7 @@
       <figure><figcaption>1 · Pročelje s ulice (nacrt)</figcaption><div id="ps-front"></div></figure>
       <figure><figcaption>2 · Poprečni presjek A–A (pogled prema ulici)</figcaption><div id="ps-section"></div></figure>
     </div>
-    <footer class="ps-foot">Mjere u metrima · crteži nisu u mjerilu, vrijede kote · širine vrata i stupića procijenjene iz fotografija</footer>
+    <footer class="ps-foot">Mjere u metrima · crteži nisu u mjerilu, vrijede kote · širine vrata procijenjene iz fotografija</footer>
   </div>
   <div class="ps-page">
     <header class="ps-head"><b>Nadstrešnica br. 7 · idejni prikaz</b><span class="ps-meta"></span><span>list 2/3</span></header>
@@ -212,12 +219,12 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="js/config.js?v=7"></script>
-<script src="js/scene.js?v=7"></script>
-<script src="js/elevation.js?v=7"></script>
-<script src="js/drawings.js?v=7"></script>
-<script src="js/materials.js?v=7"></script>
-<script src="js/gallery.js?v=7"></script>
-<script src="js/main.js?v=7"></script>
+<script src="js/config.js?v=10"></script>
+<script src="js/scene.js?v=10"></script>
+<script src="js/elevation.js?v=10"></script>
+<script src="js/drawings.js?v=10"></script>
+<script src="js/materials.js?v=10"></script>
+<script src="js/gallery.js?v=10"></script>
+<script src="js/main.js?v=10"></script>
 </body>
 </html>

@@ -46,7 +46,7 @@ window.N7 = window.N7 || {};
 
   // ======================================================================= TLOCRT (plan)
   N7.renderPlan = function (el, d) {
-    const FIX = N7.FIX, dr = FIX.door, pl = FIX.pillar, oh = FIX.overhang;
+    const FIX = N7.FIX, dr = FIX.door, oh = FIX.overhang;
     const X = x => x * S, Y = z => z * S;          // street at z = 0, yard is negative z (up on the sheet)
     const { D, W, WL, gx, GW, post } = d;
     const x1 = W + oh, gc = gx + GW / 2;
@@ -86,23 +86,23 @@ window.N7 = window.N7 || {};
     b += rect(X(0), Y(-D), 10, D * S, 'fill="#2a2a2a"');
     b += rect(X(W - 0.1), Y(-D), 10, D * S, 'class="ln thin" fill="#fff"');
     d.sideZ.forEach(z => { b += rect(X(W - 0.1), Y(z - 0.05), 10, 10, 'fill="#111"'); });
-    b += rect(X(post.x0), Y(-0.1), 10, 10, 'fill="#111"');
+    d.frontPosts.forEach(q => { b += rect(X(q.x0), Y(-0.1), 10, 10, 'fill="#111"'); });
     b += `<line x1="${X(x1 + 0.04)}" y1="${Y(-D - 0.1)}" x2="${X(x1 + 0.04)}" y2="${Y(0.14)}" class="ln" stroke-width="4"/>`;
     b += `<circle cx="${X(x1 + 0.04)}" cy="${Y(0.13)}" r="6" fill="#111"/>`;
     b += `<path d="M${X(x1 + 0.04) + 16} ${Y(-D / 2)} v70 m-6 -12 l6 12 l6 -12" class="ln thin"/>`;
     b += txt(X(x1 + 0.04) + 22, Y(-D / 2) - 6, 'oluk, pad', 's', 'start');
     b += txt(X(x1 + 0.04) + 22, Y(-D / 2) + 10, 'prema ulici', 's', 'start');
 
-    // front line: sheet, door with swing, pillar, garage door and its tracks
+    // front line: sheet, door with swing, intercom, garage door and its tracks
     const seg = (a, c) => `<line x1="${X(a)}" y1="${Y(0.03)}" x2="${X(c)}" y2="${Y(0.03)}" class="ln" stroke-width="5"/>`;
-    b += seg(0, dr.x0);
-    if (gx - pl.x1 > 0.01) b += seg(pl.x1, gx);
+    b += seg(0, dr.x0 - FIX.postW);
+    b += seg(dr.x1 + FIX.postW, gx - FIX.postW);
     b += seg(post.x1, WL);
     const dw = dr.x1 - dr.x0;
     b += `<line x1="${X(dr.x1)}" y1="${Y(0)}" x2="${X(dr.x1)}" y2="${Y(-dw)}" class="ln" stroke-width="2.4"/>`;
     b += `<path d="M${X(dr.x0)} ${Y(0)} A${dw * S} ${dw * S} 0 0 1 ${X(dr.x1)} ${Y(-dw)}" class="ln thin dash"/>`;
     b += txt(X(dr.x0 + dw / 2) - 8, Y(-0.35), 'ulaz', 't');
-    b += rect(X(pl.x0), Y(-0.22), (pl.x1 - pl.x0) * S, 24, 'fill="#bbb" class="ln thin"');
+    b += rect(X(d.intercomX - 0.075), Y(0.05), 15, 4, 'fill="#111"') + txt(X(d.intercomX), Y(0.05) + 18, 'interfon', 's');
     b += rect(X(gx), Y(-0.1), GW * S, 5, 'fill="#333"');
     b += rect(X(gx), Y(-2.2), GW * S, 2.1 * S, 'class="ln thin dash"');
     b += txt(X(gc), Y(-1.6), 'vodilice garažnih vrata', 's');
@@ -116,9 +116,8 @@ window.N7 = window.N7 || {};
 
     // dimensions
     const y1 = Y(FIX.drivewayLen) + 60, y2 = y1 + 50;
-    const chain = [[0, dr.x0], [dr.x0, dr.x1], [pl.x0, pl.x1]];
-    if (gx - pl.x1 > 0.01) chain.push([pl.x1, gx]);
-    chain.push([gx, post.x0], [post.x0, WL]);
+    const chain = [[0, dr.x0], [dr.x0, dr.x1], [dr.x1, gx]];
+    chain.push([gx, d.gRight], [d.gRight, WL]);
     chain.forEach(([a, c]) => { const w = c - a; b += dimH(X(a), X(c), y1, f(w), { below: w < 0.45 }); });
     b += dimH(X(0), X(WL), y2, f(WL), { ext: Y(0.03) });
     const yt = Y(-D - 0.105) - 50;

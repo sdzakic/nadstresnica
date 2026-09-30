@@ -7,11 +7,11 @@ window.N7 = window.N7 || {};
     houseLen: 7.8,            // measured length of the side wall
     T: 0.06,                  // roof panel thickness in the model
     overhang: 0.20,           // roof overhang past the side beam, over the gutter
-    door: { x0: 0.30, x1: 1.30, h: 2.10 },   // 30 cm from the house wall, hinged on the right
-    pillar: { x0: 1.30, x1: 1.55 },
-    garage: { w: 2.68, minW: 2.2, maxW: 3.6, maxH: 2.50, minH: 2.00 },
-    postW: 0.10,                               // steel post on the right jamb of the garage door
-    cornerClear: 0.20,                         // keep the garage post clear of the corner post
+    door: { x0: 0.30, x1: 1.30, h: 2.10 },   // 30 cm from the house wall, hinged on the right, a post on each side
+    intercomMinGap: 0.20,                      // sheet between the door post and the garage post, carries the intercom
+    garage: { w: 2.68, minW: 2.2, maxW: 3.6, maxH: 2.50, minH: 2.00, cornerMinH: 2.10 },
+    postW: 0.10,                               // steel posts on the pročelje, up to the front rafter
+    cornerClear: 0.20,                         // keep a separate garage post clear of the corner post
     rafterH: 0.12,
     rafterMaxSpacing: 1.3,
     sidePostMaxSpacing: 2.7,
@@ -58,31 +58,74 @@ window.N7 = window.N7 || {};
     const pitchDeg = Math.atan2(drop, W) * 180 / Math.PI;
     const slopeLen = Math.hypot(W, drop);
 
-    // garage door: its right jamb may go as far right as the roof still leaves 2 m of door
-    const GW = p.GW;
+    // garage door hangs between a post on its left and either the corner post by the neighbour
+    // (when the roof there still leaves at least 2,10 m of door) or its own post on the right
+    const GW = p.GW, pw = FIX.postW;
     const minH = FIX.garage.minH;
-    const needY = minH + FIX.rafterH + FIX.headroomLow;
-    const xrRoof = drop > 0 ? (HH - needY) * W / drop : W;
-    const xrMax = Math.min(W - FIX.cornerClear - FIX.postW, xrRoof);
-    const gxMin = FIX.pillar.x1, gxMax = Math.max(gxMin, xrMax - GW);
-    const gx = Math.min(gxMax, Math.max(gxMin, p.gx == null ? gxMax : p.gx));
-    const post = { x0: gx + GW, x1: gx + GW + FIX.postW };
-    const under = roofY(post.x0) - FIX.rafterH;
-    let GH, lowHeadroom = false;
-    const std = floorTo(under - FIX.headroomStd, 0.05);
-    if (std >= minH) GH = Math.min(FIX.garage.maxH, std);
-    else { GH = Math.min(minH, floorTo(under - FIX.headroomLow, 0.05)); lowHeadroom = true; }
+    const doorH = xr => {
+      const under = roofY(xr) - FIX.rafterH;
+      const std = floorTo(under - FIX.headroomStd, 0.05);
+      if (std >= minH) return { GH: Math.min(FIX.garage.maxH, std), low: false };
+      return { GH: Math.min(minH, floorTo(under - FIX.headroomLow, 0.05)), low: true };
+    };
+    const cornerIn = W - pw;                  // inner face of the corner post
+    const gxMin = FIX.door.x1 + pw + FIX.intercomMinGap + pw; // door post, sheet with intercom, garage post
+    const cornerH = doorH(cornerIn);
+    const canAttach = !cornerH.low && cornerH.GH >= FIX.garage.cornerMinH - 1e-6 && cornerIn - GW >= gxMin;
+    let gx, gxMax, attached, xrMax;
+    if (canAttach) {
+      gxMax = cornerIn - GW; xrMax = cornerIn;
+      gx = Math.min(gxMax, Math.max(gxMin, p.gx == null ? gxMax : p.gx));
+      if (gx > gxMax - pw - 0.05) gx = gxMax;   // too close for its own post: snap onto the corner post
+      attached = gx >= gxMax - 1e-6;
+    } else {
+      const needY = minH + FIX.rafterH + FIX.headroomLow;
+      const xrRoof = drop > 0 ? (HH - needY) * W / drop : W;
+      xrMax = Math.min(W - FIX.cornerClear - pw, xrRoof);
+      gxMax = Math.max(gxMin, xrMax - GW);
+      gx = Math.min(gxMax, Math.max(gxMin, p.gx == null ? gxMax : p.gx));
+      attached = false;
+    }
+    const gRight = gx + GW;
+    const post = attached ? { x0: cornerIn, x1: W } : { x0: gRight, x1: gRight + pw }; // right jamb
+    const { GH, low: lowHeadroom } = doorH(post.x0);
+
+    // posts on the pročelje, all up to the underside of the front rafter
+    const dr = FIX.door;
+    const intercomX = (dr.x1 + pw + gx - pw) / 2; // intercom + house number, centred on the sheet between the posts
+    const topAt = x => roofY(x) - FIX.rafterH;
+    const frontPosts = [
+      { x0: dr.x0 - pw, x1: dr.x0, role: 'ulazna vrata lijevo' },
+      { x0: dr.x1, x1: dr.x1 + pw, role: 'ulazna vrata desno' },
+      { x0: gx - pw, x1: gx, role: 'garažna vrata lijevo' }
+    ];
+    if (!attached) frontPosts.push({ x0: post.x0, x1: post.x1, role: 'garažna vrata desno' });
+    frontPosts.forEach(q => { q.h = topAt(q.x1); });
 
     const tail = HL; // the sheet by the neighbour goes up to the roof edge
     const fenceW = p.WL - post.x1;
     const nSide = Math.ceil(p.D / FIX.sidePostMaxSpacing) + 1;
     const nRafters = Math.ceil(p.D / FIX.rafterMaxSpacing) + 1;
 
-    // outline of the front sheet (above the doors + fence), in front-elevation metres
-    const dr = FIX.door, pl = FIX.pillar;
-    const front = [[0, 0], [dr.x0, 0], [dr.x0, dr.h], [dr.x1, dr.h], [dr.x1, GH], [pl.x1, GH]];
-    if (gx - pl.x1 > 0.01) front.push([pl.x1, 0], [gx, 0], [gx, GH]);
-    front.push([post.x1, GH], [post.x1, 0], [p.WL, 0], [p.WL, tail], [W, roofY(W)], [0, HH]);
+    // outline of the front sheet: it comes down to the ground everywhere except over the openings
+    // (door with its posts, garage with its posts), where it stops at the opening's top
+    const spans = [[dr.x0 - pw, dr.x1 + pw, dr.h], [gx - pw, post.x1, GH]];
+    const front = [[0, 0]];
+    let lastX = 0;
+    spans.forEach(([a, b, h]) => {
+      if (a - lastX > 0.005) front.push([a, 0]);
+      front.push([a, h], [b, h]);
+      lastX = b;
+      front.push([b, 0]);
+    });
+    front.push([p.WL, 0]);
+    // where two spans touch, drop the dip to the ground between them and any repeated point
+    for (let k = front.length - 2; k > 0; k--) {
+      const [a, b, c] = [front[k - 1], front[k], front[k + 1]];
+      if (b[1] === 0 && Math.abs(a[0] - b[0]) < 0.005 && Math.abs(c[0] - b[0]) < 0.005 && a[1] > 0 && c[1] > 0) front.splice(k, 1);
+    }
+    for (let k = front.length - 1; k > 0; k--) if (Math.abs(front[k][0] - front[k - 1][0]) < 1e-6 && Math.abs(front[k][1] - front[k - 1][1]) < 1e-6) front.splice(k, 1);
+    front.push([p.WL, tail], [W, roofY(W)], [0, HH]);
 
     const warnings = [];
     if (drop <= 0) warnings.push('Kraj krova mora biti niži od visine uz kuću.');
@@ -94,7 +137,7 @@ window.N7 = window.N7 || {};
 
     return {
       HH, HL, D: p.D, WL: p.WL, gap: p.gap, W, drop, roofY, pitchDeg, pitchPct: drop / W * 100, slopeLen,
-      GW, gx, gxMin, gxMax, post, GH, lowHeadroom, tail, fenceW, front,
+      intercomX, GW, gx, gxMin, gxMax, gRight, attached, post, frontPosts, GH, lowHeadroom, tail, fenceW, front,
       nSide, sideZ: spread(nSide, -0.05, -p.D + 0.05),
       nRafters, rafterZ: spread(nRafters, -0.04, -p.D + 0.04),
       warnings, FIX

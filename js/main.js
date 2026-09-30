@@ -36,7 +36,7 @@
     const gxIn = $('in-GX');
     gxIn.min = d.gxMin.toFixed(2); gxIn.max = d.gxMax.toFixed(2); gxIn.value = d.gx.toFixed(2);
     gxIn.disabled = d.gxMax - d.gxMin < 0.01;
-    $('gx-out').textContent = f(d.gx - N7.FIX.pillar.x1) + ' m od stupića';
+    $('gx-out').textContent = f(d.gx - N7.FIX.door.x1) + ' m od ulaznih vrata' + (d.attached ? ' · na kutnom stupu' : '');
     if (light) return;
     const label = p.mode === 'high' ? 'Najviša' : p.mode === 'low' ? 'Niža' : 'Vlastita';
     $('elev-note').textContent = `Prikazano: ${label} varijanta · kraj krova ${f(d.HL)} m · pad ${f(d.pitchDeg, 1)}° · garažna vrata ${f(d.GW)} × ${f(d.GH)} m${d.lowHeadroom ? ' (okov za nisku nadvisinu)' : ''}.`;
@@ -84,7 +84,7 @@
       ['Visina uz kuću / na kraju', `${f(d.HH)} / ${f(d.HL)} m`], ['Pad krova', `${f(d.pitchDeg, 1)}° (${Math.round(d.pitchPct)} %)`],
       ['Ulazna vrata', `${f(N7.FIX.door.x1 - N7.FIX.door.x0)} × ${f(N7.FIX.door.h)} m, ${f(N7.FIX.door.x0)} m od kuće, šarke desno`],
       ['Garažna vrata', `${f(d.GW)} × ${f(d.GH)} m, ${f(d.gx)} m od kuće${d.lowHeadroom ? ', niska nadvisina' : ''}`],
-      ['Stupovi / rogovi', `${d.nSide + 1} × □100×100 · ${d.nRafters} × □120×60`]
+      ['Stupovi / rogovi', `${d.nSide} uz susjeda + ${d.frontPosts.length} na pročelju · ${d.nRafters} rogova`]
     ];
     $('ps-specs').innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
     const roofName = { sandwich: 'sendvič panel 40 mm', poly: 'polikarbonat 16 mm', trap: 'trapezni lim' }[roofKind];
@@ -102,7 +102,7 @@
     const b = e.target.closest('button'); if (!b) return;
     const from = d.HL; p.mode = b.dataset.v; p.HL = N7.resolveHL(p); animateHL(from, p.HL);
   });
-  [['o-roof', v => { roofKind = v; scene.setRoof(v); refresh(); }], ['o-garage', v => scene.setGarage(v)], ['o-fence', v => scene.setFence(v)]].forEach(([id, fn]) => {
+  [['o-view', v => scene.setFrameOnly(v === 'steel')], ['o-roof', v => { roofKind = v; scene.setRoof(v); refresh(); }], ['o-garage', v => scene.setGarage(v)], ['o-fence', v => scene.setFence(v)]].forEach(([id, fn]) => {
     const g = $(id);
     g.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; pressed(g, b.dataset.v); fn(b.dataset.v); });
   });

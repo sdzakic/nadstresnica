@@ -20,21 +20,25 @@ window.N7 = window.N7 || {};
 
     // ---------- steel
     const sidePostL = up(d.HL - 0.14);
-    const frontPostL = up(d.roofY(d.post.x1) - FIX.rafterH);
+    const frontL = d.frontPosts.map(q => up(q.h));
+    const frontSum = frontL.reduce((a, b) => a + b, 0);
+    const lintelDoor = up(FIX.door.x1 - FIX.door.x0 + 2 * FIX.postW), lintelGar = up(d.post.x1 - d.gx + FIX.postW);
     const fencePostL = up(d.tail + 0.6);
     const rafterL = up(d.slopeLen);
-    const plates = d.nSide + 1;
-    const posts100 = d.nSide * sidePostL + frontPostL;
+    const plates = d.nSide + d.frontPosts.length;
+    const posts100 = d.nSide * sidePostL + frontSum + lintelDoor + lintelGar;
     const steelKg = posts100 * KG.p100 + d.nRafters * rafterL * KG.p120x60 + d.D * KG.p100 + d.D * KG.p150x100 + fencePostL * KG.p80 + plates * 3.1;
     const paintArea = posts100 * 0.4 + d.nRafters * rafterL * 0.36 + d.D * 0.4 + d.D * 0.5 + fencePostL * 0.32;
     groups.push({
       title: 'Čelična konstrukcija', rows: [
-        ['Stupovi □100×100×4', `${kom(d.nSide)} × ${m(sidePostL)} + ${kom(1)} × ${m(frontPostL)}`, `${d.nSide} uz susjeda, 1 uz garažna vrata · ukupno ${m(posts100, 1)}`],
+        ['Stupovi uz susjeda □100×100×4', `${kom(d.nSide)} × ${m(sidePostL)}`, d.attached ? 'prvi (kutni) nosi i garažna vrata' : 'nose bočnu gredu'],
+        ['Stupovi na pročelju □100×100×4', `${kom(frontL.length)}: ${frontL.map(v => f(v)).join(' + ')} m`, d.frontPosts.map(q => q.role).join(', ') + ' · svi do roga'],
+        ['Nadvoji □100×100×4', `${m(lintelDoor)} + ${m(lintelGar)}`, 'iznad ulaznih i garažnih vrata'],
         ['Rogovi □120×60×3', `${kom(d.nRafters)} × ${m(rafterL)}`, `razmak ≈ ${f(d.D / (d.nRafters - 1))} m · ukupno ${m(d.nRafters * rafterL, 1)}`],
         ['Bočna greda □100×100×4', m(d.D), 'na stupovima uz susjeda'],
         ['Zidna greda □150×100×4', m(d.D), `na zidu kuće, na ${f(d.HH)} m`],
         ['Stup ograde □80×80×3', `${kom(1)} × ${m(fencePostL)}`, 'na kraju ograde uz susjeda, 60 cm u betonu'],
-        ['Podložne ploče 200×200×10 mm', kom(plates), 'ispod svakog stupa'],
+        ['Podložne ploče 200×200×10 mm', kom(plates), `ispod svakog stupa (${d.nSide} + ${d.frontPosts.length})`],
         ['Sidreni vijci M12 (ploče)', kom(plates * 4), 'u betonske temelje'],
         ['Kemijska sidra M12 (zidna greda)', kom(Math.ceil(d.D / 0.5) + 1), 'svakih 50 cm'],
         ['Ukupno čelika', `≈ ${Math.round(steelKg / 10) * 10} kg`, 'orijentacijski, za ponudu bravara'],
@@ -73,7 +77,7 @@ window.N7 = window.N7 || {};
     // ---------- front sheet + fence
     const frontArea = polyArea(d.front);
     const fasciaW = d.post.x1;
-    const railsM = 3 * (d.fenceW + FIX.door.x0 + Math.max(0, d.gx - FIX.pillar.x1)) + 2 * fasciaW + 2 * d.tail;
+    const railsM = 3 * (d.fenceW + FIX.door.x0 + Math.max(0, d.gx - FIX.door.x1 - 2 * FIX.postW)) + 2 * fasciaW + 2 * d.tail;
     groups.push({
       title: `Lim pročelja i ograda · ${m2(frontArea)}`, rows: [
         ['Fasadni lim s uspravnim spojem 300 mm, RAL 7016', m2(frontArea * 1.1), `${m2(frontArea)} + 10 % rezanja · ${kom(Math.ceil(d.WL / 0.3))} lamela`],
@@ -83,19 +87,18 @@ window.N7 = window.N7 || {};
       ]
     });
 
-    // ---------- doors + pillar
+    // ---------- doors + intercom
     groups.push({
-      title: 'Vrata i stupić', rows: [
-        ['Sekcijska garažna vrata s motorom', `${f(d.GW)} × ${f(d.GH)} m`, d.lowHeadroom ? 'okov za nisku nadvisinu' : 'standardni okov'],
+      title: 'Vrata i interfon', rows: [
+        ['Sekcijska garažna vrata s motorom', `${f(d.GW)} × ${f(d.GH)} m`, (d.lowHeadroom ? 'okov za nisku nadvisinu' : 'standardni okov') + (d.attached ? ' · desno na kutni stup' : '')],
         ['Ulazna vrata, aluminij, antracit', `${f(FIX.door.x1 - FIX.door.x0)} × ${f(FIX.door.h)} m`, 'šarke desno, otvaranje prema unutra'],
-        ['Stupić 25×25 cm', `${kom(Math.ceil(d.GH / 0.2))} betonskih blokova`, `visina ${f(d.GH)} m, žbuka + fasada`],
-        ['Interfon s kamerom', '1 kpl', 'kabel do kuće'],
-        ['Kućni broj i sandučić', 'postojeći', 'premjestiti na stupić']
+        ['Interfon s kamerom', '1 kpl', 'na limu između stupova vrata, kabel do kuće'],
+        ['Kućni broj i sandučić', 'postojeći', 'premjestiti na lim uz interfon']
       ]
     });
 
     // ---------- concrete
-    const footings = d.nSide + 2; // side posts + garage post + fence post
+    const footings = d.nSide + d.frontPosts.length + 1; // side posts + pročelje posts + fence post
     const fVol = footings * 0.4 * 0.4 * 0.8;
     const driveA = d.post.x1 * FIX.drivewayLen;
     const slabA = d.WL * d.D;

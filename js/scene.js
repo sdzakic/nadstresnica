@@ -91,7 +91,8 @@ window.N7 = window.N7 || {};
     const rBrick = M(0x9a5a44, { roughness: 1 });
 
     // ---------- materials of the carport
-    const steel = M(0x363b3f, { metalness: .55, roughness: .45 });
+    const steel = M(0x363b3f, { metalness: .55, roughness: .45 });      // load-bearing steel only ("samo čelik" view)
+    const trim = M(0x363b3f, { metalness: .55, roughness: .45 });       // flashing, door rails: same look, not structure
     const floorMat = M(0xbdbcb5, { roughness: .95 });
     function ribTex(base, rib, px) { const t = tex(8, 64, (g, w, h) => { g.fillStyle = base; g.fillRect(0, 0, w, h); g.fillStyle = rib; g.fillRect(0, h * .42, w, h * .16); g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(0, h * .4, w, h * .03); }); t.userData = { px }; return t; }
     const roofMats = {
@@ -104,7 +105,6 @@ window.N7 = window.N7 || {};
     function seamTex(base, seam) { return tex(128, 32, (g, w, h) => { g.fillStyle = base; g.fillRect(0, 0, w, h); g.fillStyle = seam; for (let i = 0; i < 4; i++) g.fillRect(i * 32, 0, 3, h); g.fillStyle = 'rgba(255,255,255,.12)'; for (let i = 0; i < 4; i++) g.fillRect(i * 32 + 3, 0, 1, h); }); }
     function woodSeamTex() { return tex(256, 256, (g, w, h) => { grain(g, w, h, '#9a6a3e', '#4d2e17', 'v'); g.fillStyle = 'rgba(40,22,10,.55)'; for (let i = 0; i < 2; i++) g.fillRect(i * 128, 0, 3, h); }, 0.5, 0.5); }
     const fasciaMat = M(0xffffff, { map: seamTex('#3b4146', '#2b3033'), roughness: .5, metalness: .3 });
-    const pillarMat = M(0xe3e3dc, { roughness: .9 });
 
     // ---------- entrance door (hinged on the right, opens inwards)
     const doorTex = tex(200, 420, (g, w, h) => {
@@ -119,16 +119,14 @@ window.N7 = window.N7 || {};
       const dm = new THREE.Mesh(new THREE.PlaneGeometry(dw, dh), M(0xffffff, { map: doorTex, roughness: .5, metalness: .2, side: THREE.DoubleSide }));
       dm.position.set(-dw / 2, dh / 2 + 0.05, 0); dm.castShadow = true; doorPivot.add(dm);
     }
-    B(FIX.door.x0 - 0.05, FIX.door.x0, 0.05, dh + 0.05, -0.12, 0.02, steel); B(FIX.door.x0 - 0.05, FIX.door.x1, dh, dh + 0.05, -0.12, 0.02, steel);
 
-    // ---------- intercom + house number on the pillar
-    const pc = (FIX.pillar.x0 + FIX.pillar.x1) / 2;
-    B(pc - 0.075, pc + 0.075, 1.3, 1.52, 0.02, 0.05, M(0x2a2e31, { metalness: .4, roughness: .4 }));
-    B(pc - 0.045, pc + 0.045, 1.42, 1.49, 0.05, 0.052, M(0x7fa0b3, { roughness: .2, emissive: 0x1b2a33 }));
-    {
-      const nt = tex(128, 128, (g, w, h) => { g.fillStyle = '#2c4f9e'; g.fillRect(0, 0, w, h); g.strokeStyle = '#fff'; g.lineWidth = 5; g.strokeRect(8, 8, w - 16, h - 16); g.fillStyle = '#fff'; g.font = 'bold 84px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('7', w / 2, h / 2 + 4); });
-      plane(0.16, 0.16, M(0xffffff, { map: nt, roughness: .5 }), pc, 1.75, 0.025);
-    }
+    // ---------- intercom + house number (mounted on the sheet in build())
+    const intercomMat = M(0x2a2e31, { metalness: .4, roughness: .4 });
+    const screenMat = M(0x7fa0b3, { roughness: .2, emissive: 0x1b2a33 });
+    const numberMat = M(0xffffff, {
+      roughness: .5,
+      map: tex(128, 128, (g, w, h) => { g.fillStyle = '#2c4f9e'; g.fillRect(0, 0, w, h); g.strokeStyle = '#fff'; g.lineWidth = 5; g.strokeRect(8, 8, w - 16, h - 16); g.fillStyle = '#fff'; g.font = 'bold 84px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('7', w / 2, h / 2 + 4); })
+    });
 
     // ---------- sectional garage door
     function garageTex(kind) {
@@ -204,13 +202,16 @@ window.N7 = window.N7 || {};
       B(-0.02, WL, 0.02, 0.05, -D, 0.02, floorMat, false); // concrete floor under the carport
       B(WL, 14, 0, 1.25, -0.3, 0, rBrick);                 // neighbour's low brick wall
       B(0, 0.1, HH - 0.15, HH, -D, 0, steel);              // wall ledger
-      B(-0.02, 0.08, HH + T, HH + T + 0.12, -D - 0.1, 0.14, steel); // wall flashing
+      B(-0.02, 0.08, HH + T, HH + T + 0.12, -D - 0.1, 0.14, trim); // wall flashing
 
       d.rafterZ.forEach(z => slopeX(0, HH - 0.06, W, HL - 0.06, z - 0.03, z + 0.03, FIX.rafterH, steel));
       B(W - 0.1, W, HL - 0.14, HL - 0.02, -D, 0, steel); // side beam
       d.sideZ.forEach(z => B(W - 0.1, W, 0.05, HL - 0.14, z - 0.05, z + 0.05, steel));
       d.sideZ.forEach(z => B(W - 0.14, W + 0.04, 0.05, 0.07, z - 0.09, z + 0.09, steel)); // base plates
-      B(post.x0, post.x1, 0.05, roofY(post.x1) - FIX.rafterH, -0.1, 0, steel); // front post (garage jamb)
+      // posts on the pročelje up to the front rafter, plus lintels over the two openings
+      d.frontPosts.forEach(q => { B(q.x0, q.x1, 0.05, q.h, -0.1, 0, steel); B(q.x0 - 0.04, q.x1 + 0.04, 0.05, 0.07, -0.14, 0.04, steel); });
+      B(FIX.door.x0 - FIX.postW, FIX.door.x1 + FIX.postW, FIX.door.h, FIX.door.h + 0.08, -0.1, 0, steel);
+      B(gx - FIX.postW, post.x1, GH, GH + 0.08, -0.1, 0, steel);
       B(0, post.x1, 0.02, 0.08, 0.03, FIX.drivewayLen + 0.05, driveMat, false); // driveway
       car.position.set(gx + GW / 2, 0.05, -0.6);
 
@@ -235,10 +236,22 @@ window.N7 = window.N7 || {};
       });
       const fm = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.03, bevelEnabled: false }), fasciaMat); fm.position.z = 0.02; fm.castShadow = fm.receiveShadow = true; dyn.add(fm);
 
-      B(FIX.pillar.x0, FIX.pillar.x1, 0.05, GH, -0.22, 0.02, pillarMat); // pillar as tall as the garage door
+      { // intercom and house number on the sheet between the door post and the garage post
+        const ic = d.intercomX;
+        B(ic - 0.075, ic + 0.075, 1.3, 1.52, 0.05, 0.08, intercomMat);
+        B(ic - 0.045, ic + 0.045, 1.42, 1.49, 0.08, 0.082, screenMat);
+        const n = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.16), numberMat); n.position.set(ic, 1.75, 0.055); dyn.add(n);
+      }
       gPanels.forEach(m => { m.geometry.dispose(); m.geometry = new THREE.PlaneGeometry(GW, GH / NP); });
-      [gx - 0.03, gx + GW + 0.01].forEach(x => { B(x, x + 0.02, 0.05, GH, GZ - 0.05, GZ - 0.02, steel, false); B(x, x + 0.02, GH + TR, GH + TR + 0.02, GZ - 2.2, GZ - 0.02, steel, false); });
+      [gx - 0.03, gx + GW + 0.01].forEach(x => { B(x, x + 0.02, 0.05, GH, GZ - 0.05, GZ - 0.02, trim, false); B(x, x + 0.02, GH + TR, GH + TR + 0.02, GZ - 2.2, GZ - 0.02, trim, false); });
       target = null;
+      applyFrameOnly();
+    }
+
+    // "samo čelik": hide everything except the load-bearing steel and the ground it stands on
+    let frameOnly = false;
+    function applyFrameOnly() {
+      scene.traverse(o => { if (o.isMesh) o.visible = !frameOnly || o.material === steel || o === gnd; });
     }
 
     // ---------- views
@@ -289,6 +302,7 @@ window.N7 = window.N7 || {};
         else { fasciaMat.map = fasciaAnth; fasciaMat.metalness = .3; fasciaMat.roughness = .5; }
         fasciaMat.needsUpdate = true;
       },
+      setFrameOnly(v) { frameOnly = v; applyFrameOnly(); },
       toggleDoor(key) { const st = doors[key]; st.tgt = st.tgt ? 0 : 1; if (reduce) st.cur = st.tgt; return !!st.tgt; }
     };
   };
