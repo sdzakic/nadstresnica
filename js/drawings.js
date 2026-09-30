@@ -161,10 +161,15 @@ window.N7 = window.N7 || {};
     for (let u = 0.2; u < D; u += 0.33) b += `<line x1="${U(u)}" y1="${Y(HH + T)}" x2="${U(u)}" y2="${Y(ye + T)}" class="ln thin" stroke="#8a8f93"/>`;
     b += txt(U(D / 2), Y((HH + ye) / 2 + T) + 5, 'krov (pad prema promatraču)', 's', 'middle', 'style="fill:#333"');
     b += rect(U(-0.14), Y(ye + 0.03), (D + 0.24) * S, 13, 'fill="#333"');
-    b += rect(U(0), Y(HL - 0.02), D * S, 12, 'fill="#222"');
+    if (d.st.beam.s.truss) { // lattice side beam seen from the neighbour
+      const bt = d.st.beam.s.truss, ch = bt.chord.h / 1000, h = bt.h / 1000, yt = HL - 0.02, he = h - ch, n = Math.max(2, Math.round(D / he));
+      b += rect(U(0), Y(yt), D * S, ch * S, 'fill="#222"') + rect(U(0), Y(yt - h + ch), D * S, ch * S, 'fill="#222"');
+      let path = ''; for (let k = 0; k <= n; k++) { const u = k * D / n, y = k % 2 ? yt - ch / 2 : yt - h + ch / 2; path += (k ? 'L' : 'M') + U(u) + ' ' + Y(y); }
+      b += `<path d="${path}" class="ln" stroke="#222" stroke-width="2.5"/>`;
+    } else b += rect(U(0), Y(HL - 0.02), D * S, 12, 'fill="#222"');
     d.sideZ.forEach(z => {
       const u = -z;
-      b += rect(U(u - 0.05), Y(HL - 0.14), 10, (HL - 0.19) * S, 'fill="#2a2a2a"');
+      b += rect(U(u - 0.05), Y(HL - 0.02 - d.beamDepth), 10, (HL - 0.07 - d.beamDepth) * S, 'fill="#2a2a2a"');
       b += rect(U(u - 0.1), Y(0.07), 20, 2, 'fill="#111"');
       b += rect(U(u - d.st.footing / 2), G, d.st.footing * S, 80, 'class="ln thin dash" fill="none"');
     });
@@ -242,7 +247,7 @@ window.N7 = window.N7 || {};
     [-0.62, 0.62].forEach(o => { b += rect(X(gc + o - 0.12), Y(0.66), 24, 66, 'class="ln thin dot" fill="none"'); });
     b += txt(X(gc), Y(0.95), 'auto', 's');
     // structure
-    b += rect(X(W - 0.1), Y(HL - 0.14), 10, (HL - 0.19) * S, 'fill="#333"');
+    b += rect(X(W - 0.1), Y(HL - 0.02 - d.beamDepth), 10, (HL - 0.07 - d.beamDepth) * S, 'fill="#333"');
     b += rect(X(W - 0.15), Y(0.05), 20, 3, 'fill="#111"');
     const rh = d.rafterH;
     b += `<polygon points="${X(0)},${Y(HH)} ${X(W)},${Y(HL)} ${X(W)},${Y(HL - rh)} ${X(0)},${Y(HH - rh)}" fill="#6b6f72"/>`;
@@ -250,7 +255,10 @@ window.N7 = window.N7 || {};
       const ph = d.st.purlin.s.h / 1000, pb = d.st.purlin.s.b / 1000;
       for (let k = 1; k <= d.st.nPurlins; k++) { const x = k * W / d.st.nSpans; b += rect(X(x - pb / 2), Y(roofY(x)), pb * S, ph * S, 'fill="#111"'); }
     }
-    b += rect(X(W - 0.1), Y(HL - 0.02), 10, 12, 'fill="#111"');
+    if (d.st.beam.s.truss) { const bt = d.st.beam.s.truss, ch = bt.chord.h / 1000, h = bt.h / 1000;
+      b += rect(X(W - 0.05 - ch / 2), Y(HL - 0.02), ch * S, ch * S, 'fill="#111"') + rect(X(W - 0.05 - ch / 2), Y(HL - 0.02 - h + ch), ch * S, ch * S, 'fill="#111"');
+      b += `<line x1="${X(W - 0.05)}" y1="${Y(HL - 0.02 - ch)}" x2="${X(W - 0.05)}" y2="${Y(HL - 0.02 - h + ch)}" class="ln" stroke-width="2"/>`;
+    } else b += rect(X(W - 0.1), Y(HL - 0.02), 10, 12, 'fill="#111"');
     b += rect(X(0), Y(HH), 10, 15, 'fill="#111"');
     b += `<polygon points="${X(-0.02)},${Y(roofY(-0.02) + T)} ${X(x1)},${Y(roofY(x1) + T)} ${X(x1)},${Y(roofY(x1))} ${X(-0.02)},${Y(roofY(-0.02))}" fill="#aeb3b6" class="ln"/>`;
     b += rect(X(-0.02), Y(HH + T + 0.12), 10, 12, 'fill="#111"');

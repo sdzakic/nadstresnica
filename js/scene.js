@@ -329,8 +329,20 @@ window.N7 = window.N7 || {};
         const ph = d.st.purlin.s.h / 1000, pb = d.st.purlin.s.b / 1000;
         for (let k = 1; k <= d.st.nPurlins; k++) { const x = k * W / d.st.nSpans; B(x - pb / 2, x + pb / 2, roofY(x) - ph, roofY(x), -D, 0, steel); }
       }
-      B(W - 0.1, W, HL - 0.14, HL - 0.02, -D, 0, steel); // side beam
-      d.sideZ.forEach(z => B(W - 0.1, W, 0.05, HL - 0.14, z - 0.05, z + 0.05, steel));
+      const bt = d.st.beam.s.truss;
+      if (bt) {
+        // lattice side beam ("zmija") over the whole length, on the two corner posts
+        const ch = bt.chord.h / 1000, cb = bt.chord.b / 1000, h = bt.h / 1000, r = bt.bar.d / 2000, xc = W - 0.05, yt = HL - 0.02;
+        B(xc - cb / 2, xc + cb / 2, yt - ch, yt, -D, 0, steel);
+        B(xc - cb / 2, xc + cb / 2, yt - h, yt - h + ch, -D, 0, steel);
+        const he = h - ch, n = Math.max(2, Math.round(D / he));
+        for (let k = 0; k < n; k++) {
+          const za = -k * D / n, zb = -(k + 1) * D / n, ya = k % 2 ? yt - ch / 2 : yt - h + ch / 2, yb = k % 2 ? yt - h + ch / 2 : yt - ch / 2;
+          const len = Math.hypot(zb - za, yb - ya), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 6), steel);
+          m.position.set(xc, (ya + yb) / 2, (za + zb) / 2); m.rotation.x = Math.atan2(zb - za, yb - ya); m.castShadow = true; dyn.add(m);
+        }
+      } else B(W - 0.1, W, HL - 0.14, HL - 0.02, -D, 0, steel); // side beam
+      d.sideZ.forEach(z => B(W - 0.1, W, 0.05, HL - 0.02 - d.beamDepth, z - 0.05, z + 0.05, steel));
       d.sideZ.forEach(z => B(W - 0.14, W + 0.04, 0.05, 0.07, z - 0.09, z + 0.09, steel)); // base plates
       // posts on the pročelje up to the front rafter, plus lintels over the two openings
       d.frontPosts.forEach(q => { B(q.x0, q.x1, 0.05, q.h, -0.1, 0, steel); B(q.x0 - 0.04, q.x1 + 0.04, 0.05, 0.07, -0.14, 0.04, steel); });

@@ -17,17 +17,8 @@ window.N7 = window.N7 || {};
     ['img_2906', 'Mjerenje: 5,41 m od kuće do susjedovog sokla'],
     ['img_2798', 'Starije mjerenje visine (3,25 m)'],
     ['img_2799', 'Mjerenje: 5,52 m uz ulicu, do kraja žutog zida'],
-    ['img_2902', 'Prolaz prema ulici, susjedov sivi sokl i ograda'],
-    ['img_2903', 'Zabat susjedove kuće'],
     ['img_2842', 'Inspiracija: nadstrešnica u susjedstvu'],
     ['img_2843', 'Inspiracija: nadstrešnica i klizna kapija'],
-    ['img_2908', 'Dvorište: stari dio kuće s terasom'],
-    ['img_2914', 'Dvorište: stari dio uvučen iza kuće'],
-    ['img_2909', 'Dvorište: terasa i spremište'],
-    ['img_2910', 'Dvorište: kraj spremišta'],
-    ['img_2911', 'Dvorište: stara štala s drvenim zabatom'],
-    ['img_2912', 'Dvorište: susjedova stara zgrada od cigle'],
-    ['img_2913', 'Dvorište: susjedova stara zgrada izbliza'],
     ['primjer-3', 'Inspiracija: nadstrešnica između dviju kuća']
   ];
 

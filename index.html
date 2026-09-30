@@ -7,7 +7,7 @@
 <title>Nadstrešnica br. 7</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,500;112,700;100,400;100,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=23">
+<link rel="stylesheet" href="css/style.css?v=25">
 </head>
 <body>
 <div class="wrap">
@@ -46,6 +46,20 @@
         <div class="seg" id="o-view">
           <button data-v="all" aria-pressed="true">Sve</button>
           <button data-v="steel" aria-pressed="false">Samo čelična konstrukcija <small>stupovi, grede, rogovi</small></button>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-label">Bočna greda uz susjeda</div>
+        <div class="seg" id="o-beam">
+          <button data-v="box" aria-pressed="true">Kutijasti profil <small>na stupovima</small></button>
+          <button data-v="truss" aria-pressed="false">Rešetka (zmija) <small>samo 2 kutna stupa</small></button>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-label">Podrožnice</div>
+        <div class="seg" id="o-purlin">
+          <button data-v="cont" aria-pressed="true">Kontinuirane <small>iz jednog komada</small></button>
+          <button data-v="simple" aria-pressed="false">Po poljima <small>između rogova</small></button>
         </div>
       </div>
       <div class="opt">
@@ -255,13 +269,13 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="js/config.js?v=23"></script>
-<script src="js/statics.js?v=23"></script>
-<script src="js/scene.js?v=23"></script>
-<script src="js/elevation.js?v=23"></script>
-<script src="js/drawings.js?v=23"></script>
-<script src="js/materials.js?v=23"></script>
-<script src="js/gallery.js?v=23"></script>
-<script src="js/main.js?v=23"></script>
+<script src="js/config.js?v=25"></script>
+<script src="js/statics.js?v=25"></script>
+<script src="js/scene.js?v=25"></script>
+<script src="js/elevation.js?v=25"></script>
+<script src="js/drawings.js?v=25"></script>
+<script src="js/materials.js?v=25"></script>
+<script src="js/gallery.js?v=25"></script>
+<script src="js/main.js?v=25"></script>
 </body>
 </html>

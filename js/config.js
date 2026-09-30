@@ -36,7 +36,7 @@ window.N7 = window.N7 || {};
   };
 
   const MEASURED = { HH: 3.18, D: 7.8, WL: 5.41, gap: 0.50 };
-  const DEFAULTS = Object.assign({ mode: 'high', HL: 2.70, GW: FIX.garage.w, gx: null, roof: 'sandwich', sk: 1.25, qp: 0.50, doorH: 2.10, parapet: false }, MEASURED); // gx null = as far from the entrance as possible
+  const DEFAULTS = Object.assign({ mode: 'high', HL: 2.70, GW: FIX.garage.w, gx: null, roof: 'sandwich', sk: 1.25, qp: 0.50, doorH: 2.10, parapet: false, beamType: 'box', purlinType: 'cont' }, MEASURED); // gx null = as far from the entrance as possible
 
   const fmt = (n, dec = 2) => n.toFixed(dec).replace('.', ',');
   const floorTo = (v, step) => Math.floor(v / step + 1e-6) * step;
@@ -66,12 +66,13 @@ window.N7 = window.N7 || {};
     const roofY = x => HH - drop * x / W;
     const pitchDeg = Math.atan2(drop, W) * 180 / Math.PI;
     const slopeLen = Math.hypot(W, drop);
-    const nSide = Math.ceil(p.D / FIX.sidePostMaxSpacing) + 1;
+    // a lattice side beam spans the whole length on the two corner posts
+    const nSide = p.beamType === 'truss' ? 2 : Math.ceil(p.D / FIX.sidePostMaxSpacing) + 1;
     const nRafters = Math.ceil(p.D / FIX.rafterMaxSpacing) + 1;
     const sideZ = spread(nSide, -0.05, -p.D + 0.05);
 
     // static check first: it picks the rafter section, whose depth sets the headroom under the roof
-    const st = N7.statics({ HH, HL, W, D: p.D, slopeLen, pitchDeg, sideZ, nRafters, roof: p.roof || 'sandwich', sk: p.sk, qp: p.qp, houseEave: FIX.houseEave, houseRoofRun: FIX.houseRoofRun });
+    const st = N7.statics({ HH, HL, W, D: p.D, slopeLen, pitchDeg, sideZ, nRafters, roof: p.roof || 'sandwich', beamType: p.beamType || 'box', purlinType: p.purlinType || 'cont', sk: p.sk, qp: p.qp, houseEave: FIX.houseEave, houseRoofRun: FIX.houseRoofRun });
     const rafterH = st.rafter.s.h / 1000;
 
     // garage door hangs between a post on its left and either the corner post by the neighbour
@@ -104,7 +105,10 @@ window.N7 = window.N7 || {};
     }
     const gRight = gx + GW;
     const post = attached ? { x0: cornerIn, x1: W } : { x0: gRight, x1: gRight + pw }; // right jamb
-    const { GH, low: lowHeadroom } = doorH(post.x0);
+    let { GH, low: lowHeadroom } = doorH(post.x0);
+    // on the corner post the garage door runs under the side beam: a deep lattice girder lowers it
+    const beamDepth = st.beam.s.h / 1000;
+    if (attached && st.beam.s.truss) GH = Math.min(GH, floorTo(HL - 0.02 - beamDepth - 0.06, 0.05));
 
     // posts on the pročelje, all up to the underside of the front rafter
     const dr = FIX.door;
@@ -161,7 +165,7 @@ window.N7 = window.N7 || {};
     return {
       HH, HL, D: p.D, WL: p.WL, gap: p.gap, W, drop, roofY, pitchDeg, pitchPct: drop / W * 100, slopeLen,
       intercomX, GW, gx, gxMin, gxMax, gRight, attached, post, frontPosts, GH, lowHeadroom, tail, fenceW, front,
-      st, rafterH, doorH: entryH, doorMax, parapet: !!p.parapet, roof: p.roof || 'sandwich',
+      st, rafterH, beamDepth, doorH: entryH, doorMax, parapet: !!p.parapet, roof: p.roof || 'sandwich',
       nSide, sideZ,
       nRafters, rafterZ: spread(nRafters, -0.04, -p.D + 0.04),
       warnings, FIX

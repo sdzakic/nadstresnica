@@ -23,6 +23,27 @@ window.N7 = window.N7 || {};
   const RAFTERS = [rhs(120, 60, 3), rhs(120, 60, 4), rhs(140, 80, 4), rhs(160, 80, 4), rhs(180, 100, 4), rhs(200, 100, 5)];
   const BEAMS = [rhs(100, 100, 4), rhs(120, 120, 4), rhs(140, 140, 5), rhs(160, 160, 5)];
   const POSTS = [rhs(100, 100, 4), rhs(120, 120, 4), rhs(140, 140, 5)];
+  // lattice girder ("zmija"): two chords and one zig-zag round bar welded between them at 45°
+  const BEAM_TRUSS_DEPTHS = [300, 350, 400, 450, 500];
+  const CHORDS = [rhs(40, 40, 3), rhs(50, 50, 3), rhs(60, 60, 3), rhs(60, 60, 4), rhs(80, 80, 4), rhs(100, 100, 4)];
+  const BARS = [12, 14, 16, 20];
+  function roundBar(d) { const A = Math.PI * d * d / 4; return { d, A, i: d / 4, kg: A * 7.85e-3 }; }
+  function chi(lam) { const phi = 0.5 * (1 + 0.49 * (lam - 0.2) + lam * lam); return Math.min(1, 1 / (phi + Math.sqrt(phi * phi - lam * lam))); }
+  // check one truss for the bending moment, end shear and deflection of the rafter; Lout = purlin spacing (top chord bracing)
+  function checkTruss(h, ch, bar, M, V, deflPerEI, L, Lout) {
+    const he = h - ch.h;                                   // distance between chord axes, mm
+    const N = M * 1e6 / he;                                 // chord force, N
+    const uT = N / (ch.A * FY);
+    const LcrC = Math.max(2 * he, Lout * 1000);             // top chord: between nodes in plane, between purlins out of plane
+    const uC = N / (chi(LcrC / ch.i / 93.9) * ch.A * FY);
+    const Nd = V * 1000 * Math.SQRT2;                       // diagonal force at the support
+    const uD = Nd / (chi(he * Math.SQRT2 / bar.i / 93.9) * bar.A * FY);
+    const I = 2 * ch.A * (he / 2) ** 2;
+    const w = deflPerEI / (E * I) * 1000 * 1.15;            // +15 % for shear deformation of the lattice
+    const uW = w / (L * 1000 / 200);
+    const kg = 2 * ch.kg + Math.SQRT2 * bar.kg;
+    return { uM: Math.max(uT, uC), uT, uC, uD, uW, w, kg };
+  }
 
   // pick the first section whose bending stress and deflection pass
   function pickBeam(list, M_Ed, deflPerEI, L) {
@@ -75,13 +96,17 @@ window.N7 = window.N7 || {};
     const nPurlins = nSpans - 1;                    // intermediate purlins (the wall beam and side beam are the end supports)
     const a = c.slopeLen / nSpans;
 
-    // ---------- purlins: single span between rafters, loaded by the strip a at the wall
+    // ---------- purlins between the rafters, loaded by the strip a at the wall.
+    // Continuous purlins (one piece over all rafters, welded to each) have ≈ qL²/10 and much less deflection
+    // than purlins cut between rafters (qL²/8, 5/384).
     let purlin = null;
+    const contP = (c.purlinType || 'cont') === 'cont';
     if (nPurlins > 0) {
       const gP = roof.g + 0.03;
       const qd = (1.35 * gP + 1.5 * sWall) * a, qk = (gP + sWall) * a;
-      purlin = pickBeam(PURLINS, qd * sR * sR / 8, 5 * qk * (sR * 1000) ** 4 / 384 / 1000, sR);
-      purlin.qd = qd;
+      const kM = contP ? 1 / 10 : 1 / 8, kW = contP ? 2.6 / 384 : 5 / 384;
+      purlin = pickBeam(PURLINS, qd * sR * sR * kM, kW * qk * (sR * 1000) ** 4 / 1000, sR);
+      purlin.qd = qd; purlin.cont = contP;
     }
 
     // ---------- rafters: simply supported between the wall beam and the side beam, trapezoidal snow
@@ -110,10 +135,29 @@ window.N7 = window.N7 || {};
     const Lb = Math.max(...spans);
     const wb = rl.Rbeam / sR;                        // ULS line load from the rafters [kN/m]
     const wbk = wb / 1.45;                           // ≈ SLS
-    const beam = pickBeam(BEAMS, wb * Lb * Lb / 8, 5 * wbk * (Lb * 1000) ** 4 / 384 / 1000, Lb);
+    const beamTruss = c.beamType === 'truss';
+    let beam;
+    if (beamTruss) {
+      // lattice girder ("zmija") over the whole length on the two corner posts; top chord held by the rafters
+      const M = wb * Lb * Lb / 8, V = wb * Lb / 2, defl = 5 * wbk * (Lb * 1000) ** 4 / 384 / 1000;
+      for (const h of BEAM_TRUSS_DEPTHS) {
+        let best = null;
+        for (const ch of CHORDS) for (const d of BARS) {
+          const bar = roundBar(d), r = checkTruss(h, ch, bar, M, V, defl, Lb, sR);
+          if (r.uM <= 0.9 && r.uD <= 0.9 && r.uW <= 1 && (!best || r.kg < best.r.kg)) best = { r, ch, bar };
+        }
+        if (best) { beam = Object.assign({ s: { name: `rešetka ${h / 10} cm (pojasnice ${best.ch.name}, zmija Ø${best.bar.d})`, h, b: best.ch.b, kg: best.r.kg, truss: { h, chord: best.ch, bar: best.bar } } }, best.r); break; }
+      }
+      if (!beam) {
+        const h = BEAM_TRUSS_DEPTHS[BEAM_TRUSS_DEPTHS.length - 1], ch = CHORDS[CHORDS.length - 1], bar = roundBar(BARS[BARS.length - 1]);
+        beam = Object.assign({ fail: true, s: { name: `rešetka ${h / 10} cm (pojasnice ${ch.name}, zmija Ø${bar.d})`, h, b: ch.b, kg: 0, truss: { h, chord: ch, bar } } }, checkTruss(h, ch, bar, M, V, defl, Lb, sR));
+        beam.s.kg = beam.kg;
+      }
+    } else beam = pickBeam(BEAMS, wb * Lb * Lb / 8, 5 * wbk * (Lb * 1000) ** 4 / 384 / 1000, Lb);
 
     // ---------- posts: axial load, pinned at both ends (the frame is held by the house through the rafters)
-    const N = wb * Lb + beam.s.kg * gm * Lb * 1.35;
+    const trib = beamTruss ? Lb / 2 : Lb;            // corner posts of a lattice girder carry half its span
+    const N = wb * trib + beam.s.kg * gm * trib * 1.35;
     let post = null;
     for (const s of POSTS) { const b = buckling(s, N, c.HL); if (b.u <= 1) { post = Object.assign({ s }, b); break; } }
     if (!post) { const s = POSTS[POSTS.length - 1]; post = Object.assign({ s, fail: true }, buckling(s, N, c.HL)); }
@@ -124,14 +168,14 @@ window.N7 = window.N7 || {};
     const gAll = rl.g;
     const netUp = Math.max(0, 1.5 * wUp - 1.0 * gAll);   // kN/m² upward
     const Twall = netUp * L / 2;                      // kN per metre of wall
-    const Tpost = netUp * (L / 2) * Lb;               // kN per post
+    const Tpost = netUp * (L / 2) * trib;             // kN per post
     // footing weight must hold the uplift (γc = 24 kN/m³, favourable factor 0,9), depth 0,80 m
     const Vreq = Tpost / (0.9 * 24);
     const footing = Math.max(0.40, Math.ceil(Math.sqrt(Vreq / 0.8) / 0.05 - 1e-6) * 0.05);
 
     const fail = [purlin, rafter, beam].some(r => r && r.fail) || post.fail;
     return {
-      roof, sk: c.sk, qp: c.qp, mu1, s1, muW, ls, sWall, sEnd, h, wUp, netUp,
+      roof, sk: c.sk, qp: c.qp, mu1, s1, muW, ls, sWall, sEnd, h, wUp, netUp, beamType: c.beamType || 'box', purlinType: c.purlinType || 'cont',
       spanAllow, nSpans, nPurlins, a, sR, purlin, rafter, rl, Lb, wb, beam, N, post,
       anchorStep, Vwall, Twall, Vanchor: Vwall * anchorStep, Tanchor: Twall * anchorStep, Tpost, footing, fail
     };
@@ -155,9 +199,10 @@ window.N7 = window.N7 || {};
     });
     const rows = [];
     rows.push(['Razmak podrožnica', `${f(st.a)} m (${st.nPurlins} kom)`, `dozvoljeni raspon panela ≈ ${f(st.spanAllow)} m uz ${f(st.roof.g + st.sWall)} kN/m²`, 'ok']);
-    if (st.purlin) rows.push([`Podrožnice ${st.purlin.s.name}`, `savijanje ${pct(st.purlin.uM)} · progib ${pct(st.purlin.uW)}`, `raspon ${f(st.sR)} m između rogova`, st.purlin.fail ? 'fail' : 'ok']);
+    if (st.purlin) rows.push([`Podrožnice ${st.purlin.s.name}`, `savijanje ${pct(st.purlin.uM)} · progib ${pct(st.purlin.uW)}`, `${st.purlin.cont ? 'kontinuirane preko svih rogova' : 'po poljima'}, raspon ${f(st.sR)} m između rogova`, st.purlin.fail ? 'fail' : 'ok']);
     rows.push([`Rogovi ${st.rafter.s.name}`, `savijanje ${pct(st.rafter.uM)} · progib ${pct(st.rafter.uW)}`, `raspon ${f(d.W)} m, razmak ${f(st.sR)} m, M = ${f(st.rl.M, 1)} kNm, progib ${Math.round(st.rafter.w)} mm (dop. ${Math.round(d.W * 1000 / 200)})`, st.rafter.fail ? 'fail' : 'ok']);
-    rows.push([`Bočna greda ${st.beam.s.name}`, `savijanje ${pct(st.beam.uM)} · progib ${pct(st.beam.uW)}`, `raspon ${f(st.Lb)} m, opterećenje ${f(st.wb)} kN/m`, st.beam.fail ? 'fail' : 'ok']);
+    if (st.beam.s.truss) rows.push([`Bočna greda: ${st.beam.s.name}`, `pojasnice ${pct(st.beam.uM)} · zmija ${pct(st.beam.uD)} · progib ${pct(st.beam.uW)}`, `jedan raspon ${f(st.Lb)} m na 2 kutna stupa, opterećenje ${f(st.wb)} kN/m, ${f(st.beam.s.kg, 1)} kg/m`, st.beam.fail ? 'fail' : 'ok']);
+    else rows.push([`Bočna greda ${st.beam.s.name}`, `savijanje ${pct(st.beam.uM)} · progib ${pct(st.beam.uW)}`, `raspon ${f(st.Lb)} m, opterećenje ${f(st.wb)} kN/m`, st.beam.fail ? 'fail' : 'ok']);
     rows.push([`Stupovi ${st.post.s.name}`, `izvijanje ${pct(st.post.u)}`, `N = ${kN(st.N)}, duljina izvijanja ${f(d.HL)} m, χ = ${f(st.post.chi)}`, st.post.fail ? 'fail' : 'ok']);
     groups.push({ title: 'Nosivi elementi (S235)', rows });
     groups.push({

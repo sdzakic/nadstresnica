@@ -34,20 +34,26 @@ window.N7 = window.N7 || {};
     const steelKg = d.nSide * sidePostL * kgPost + (frontSum + lintelDoor + lintelGar) * kgFront + d.nRafters * rafterL * kgRafter
       + d.D * kgBeam + d.D * 14.9 + fencePostL * KG.p80 + plates * 3.1 + (st.purlin ? purlinM * st.purlin.s.kg : 0);
     const perim = s_ => 2 * (s_.h + s_.b) / 1000;
-    const paintArea = d.nSide * sidePostL * perim(st.post.s) + (frontSum + lintelDoor + lintelGar) * 0.4 + d.nRafters * rafterL * perim(st.rafter.s)
-      + d.D * perim(st.beam.s) + d.D * 0.5 + fencePostL * 0.32 + (st.purlin ? purlinM * perim(st.purlin.s) : 0);
+    const rafterPerim = perim(st.rafter.s);
+    const bt = st.beam.s.truss, beamPerim = bt ? 2 * perim(bt.chord) + Math.SQRT2 * Math.PI * bt.bar.d / 1000 : perim(st.beam.s);
+    const paintArea = d.nSide * sidePostL * perim(st.post.s) + (frontSum + lintelDoor + lintelGar) * 0.4 + d.nRafters * rafterL * rafterPerim
+      + d.D * beamPerim + d.D * 0.5 + fencePostL * 0.32 + (st.purlin ? purlinM * perim(st.purlin.s) : 0);
     const steelRows = [
       [`Stupovi uz susjeda ${st.post.s.name}`, `${kom(d.nSide)} × ${m(sidePostL)}`, d.attached ? 'prvi (kutni) nosi i garažna vrata' : 'nose bočnu gredu'],
       ['Stupovi na pročelju □100×100×4', `${kom(frontL.length)}: ${frontL.map(v => f(v)).join(' + ')} m`, d.frontPosts.map(q => q.role).join(', ') + ' · svi do roga'],
       ['Nadvoji □100×100×4', `${m(lintelDoor)} + ${m(lintelGar)}`, 'iznad ulaznih i garažnih vrata'],
-      [`Rogovi ${st.rafter.s.name}`, `${kom(d.nRafters)} × ${m(rafterL)}`, `razmak ≈ ${f(st.sR)} m · ukupno ${m(d.nRafters * rafterL, 1)} · prema statici`]
     ];
+    steelRows.push([`Rogovi ${st.rafter.s.name}`, `${kom(d.nRafters)} × ${m(rafterL)}`, `razmak ≈ ${f(st.sR)} m · ukupno ${m(d.nRafters * rafterL, 1)} · prema statici`]);
     if (st.purlin) steelRows.push([`Podrožnice ${st.purlin.s.name}`, `${kom(st.nPurlins)} × ${m(d.D)}`, `preko rogova, razmak ${f(st.a)} m (za ${st.roof.name.toLowerCase()})`]);
     steelRows.push(
-      [`Bočna greda ${st.beam.s.name}`, m(d.D), 'na stupovima uz susjeda'],
+      ...(bt ? [
+        [`Bočna greda: rešetka ${bt.h / 10} cm (zmija)`, m(d.D), 'jedan raspon na 2 kutna stupa, bez srednjih stupova'],
+        [`  pojasnice ${bt.chord.name}`, m(2 * d.D, 1), 'gornja i donja'],
+        [`  zmija, šipka Ø${bt.bar.d}`, m(Math.SQRT2 * d.D * 1.05, 1), 'savijena u cik-cak pod 45°, zavarena na pojasnice']
+      ] : [[`Bočna greda ${st.beam.s.name}`, m(d.D), 'na stupovima uz susjeda']]),
       ['Zidna greda □150×100×4', m(d.D), `na postojećim nosačima na zidu, na ${f(d.HH)} m`],
       ['Stup ograde □80×80×3', `${kom(1)} × ${m(fencePostL)}`, 'na kraju ograde uz susjeda, 60 cm u betonu'],
-      ['Dijagonale □40×40×3', `2 × ${m(up(Math.hypot(d.sideZ[0] - d.sideZ[1], d.HL - 0.3)))}`, 'ukruta u smjeru dužine, između prva dva stupa uz susjeda'],
+      ['Dijagonale □40×40×3', `2 × ${m(up(Math.hypot(d.sideZ[0] - d.sideZ[1], d.HL - 0.3)))}`, d.nSide > 2 ? 'ukruta u smjeru dužine, između prva dva stupa uz susjeda' : 'ukruta u smjeru dužine, kutni stup – rešetkasta greda'],
       ['Podložne ploče 200×200×10 mm', kom(plates), `ispod svakog stupa (${d.nSide} + ${d.frontPosts.length})`],
       ['Sidreni vijci M12 (ploče)', kom(plates * 4), 'u betonske temelje'],
       ['Kemijska sidra M12 (zidna greda)', kom(Math.ceil(d.D / st.anchorStep) + 1), `svakih ${Math.round(st.anchorStep * 100)} cm · ≈ ${f(st.Vanchor)} kN po sidru`],
