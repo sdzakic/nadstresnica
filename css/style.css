@@ -117,6 +117,17 @@ section{display:flex;flex-direction:column;gap:16px}
 .gx output{font:12px var(--mono);color:var(--muted)}
 .gx input[type=range]{width:100%;accent-color:var(--accent)}
 
+.st-inputs{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:14px}
+.st-inputs input{width:90px;font:13px var(--mono);padding:5px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);text-align:right}
+.st-inputs .s-note{flex-basis:100%}
+.st-summary{max-width:80ch;font-size:15px}
+.chip{display:inline-block;font:500 11px var(--mono);letter-spacing:.04em;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.chip.ok{background:#dcebdc;color:#1f5a2a}
+.chip.bad{background:#f6dcd6;color:#8a2414}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip.ok{background:#1f3a24;color:#a8dcb0}:root:not([data-theme="light"]) .chip.bad{background:#4a211a;color:#f2b3a6}}
+:root[data-theme="dark"] .chip.ok{background:#1f3a24;color:#a8dcb0}
+:root[data-theme="dark"] .chip.bad{background:#4a211a;color:#f2b3a6}
+
 /* bill of materials */
 .bom-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
 .bom{width:100%;border-collapse:collapse;font-size:14px;min-width:620px}

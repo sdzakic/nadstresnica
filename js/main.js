@@ -5,8 +5,8 @@
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const p = Object.assign({}, N7.DEFAULTS);
   p.HL = N7.resolveHL(p);
-  let roofKind = 'sandwich';
   let anim = null;
+  const look = { sheet: 'anth', garage: 'anth', door: 'anth' };
   let d = null;
 
   const scene = N7.createScene($('stage'));
@@ -14,10 +14,13 @@
   const INPUTS = {
     'in-D': { key: 'D', min: 2, max: 12 },
     'in-WL': { key: 'WL', min: 4.9, max: 8 },
-    'in-gap': { key: 'gap', min: 0, max: 1.5 },
+    'in-gap': { key: 'gap', min: 0.25, max: 1.5 },   // room for the gutter and the downpipe
     'in-HH': { key: 'HH', min: 2.4, max: 3.6 },
     'in-HL': { key: 'HL', min: 1.8, max: 3.6 },
-    'in-GW': { key: 'GW', min: N7.FIX.garage.minW, max: N7.FIX.garage.maxW }
+    'in-GW': { key: 'GW', min: N7.FIX.garage.minW, max: N7.FIX.garage.maxW },
+    'in-sk': { key: 'sk', min: 0.5, max: 5 },
+    'in-qp': { key: 'qp', min: 0.2, max: 2 },
+    'in-DH': { key: 'doorH', min: 1.9, max: 2.5 }
   };
 
   function pressed(group, v) { group.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v)); }
@@ -25,7 +28,7 @@
   function refresh(hl, light) {
     d = N7.derive(p, hl);
     scene.update(d);
-    N7.renderElevation($('elev'), d);
+    N7.renderElevation($('elev'), d, 'e', look);
     $('ro-plan').textContent = f(d.WL) + ' × ' + f(d.D) + ' m';
     $('ro-hh').textContent = f(d.HH) + ' m';
     $('ro-end').textContent = f(d.HL) + ' m';
@@ -44,8 +47,10 @@
     $('h-high-sub').textContent = f(N7.maxHL(p)) + ' m na kraju';
     $('warn').innerHTML = d.warnings.map(w => `<li>${w}</li>`).join('');
     $('warn').hidden = !d.warnings.length;
-    const groups = N7.materials(d, roofKind);
-    renderPrint(groups);
+    const groups = N7.materials(d, p.roof, look);
+    const stGroups = N7.staticsReport(d);
+    renderStatics(stGroups);
+    renderPrint(groups, stGroups);
     N7.renderMaterials($('bom'), groups);
     $('bom-copy').onclick = () => copyText(N7.materialsText(groups));
     Object.entries(INPUTS).forEach(([id, c]) => { if (document.activeElement !== $(id)) $(id).value = (c.key === 'HL' ? d.HL : p[c.key]).toFixed(2); });
@@ -71,8 +76,20 @@
   }
 
   // ---------- print sheet (two A4 landscape pages)
-  function renderPrint(groups) {
-    N7.renderElevation($('ps-front'), d, 'pf');
+  function statTable(groups) {
+    const chip = s => s === 'ok' ? '<span class="chip ok">prolazi</span>' : s === 'fail' ? '<span class="chip bad">ne prolazi</span>' : '';
+    return '<thead><tr><th scope="col">Provjera</th><th scope="col">Rezultat</th><th scope="col">Napomena</th><th scope="col"></th></tr></thead>' +
+      groups.map(g => `<tbody><tr class="grp"><th colspan="4" scope="colgroup">${g.title}</th></tr>${g.rows.map(r => `<tr><td>${r[0]}</td><td class="q">${r[1]}</td><td class="n">${r[2]}</td><td>${chip(r[3])}</td></tr>`).join('')}</tbody>`).join('');
+  }
+  function renderStatics(stGroups) {
+    $('st-table').innerHTML = statTable(stGroups);
+    const st = d.st;
+    $('st-summary').innerHTML = st.fail
+      ? '<b>Neki element ne prolazi</b> ni s najvećim profilom iz popisa. Smanji razmak rogova ili pitaj statičara.'
+      : `S ovim mjerama nosivi elementi prolaze uz rogove <b>${st.rafter.s.name}</b>${st.purlin ? `, ${st.nPurlins} podrožnice <b>${st.purlin.s.name}</b>` : ''}, bočnu gredu <b>${st.beam.s.name}</b> i stupove <b>${st.post.s.name}</b>. Najveće iskorištenje: ${Math.round(Math.max(st.rafter.uM, st.rafter.uW) * 100)} % (rogovi).`;
+  }
+  function renderPrint(groups, stGroups) {
+    N7.renderElevation($('ps-front'), d, 'pf', look);
     N7.renderSection($('ps-section'), d);
     N7.renderPlan($('ps-plan'), d);
     N7.renderSide($('ps-side'), d);
@@ -82,14 +99,17 @@
     const rows = [
       ['Tlocrt nadstrešnice', `${f(d.WL)} × ${f(d.D)} m`], ['Širina krova', `${f(d.W)} m (${f(d.gap)} m od susjeda)`],
       ['Visina uz kuću / na kraju', `${f(d.HH)} / ${f(d.HL)} m`], ['Pad krova', `${f(d.pitchDeg, 1)}° (${Math.round(d.pitchPct)} %)`],
-      ['Ulazna vrata', `${f(N7.FIX.door.x1 - N7.FIX.door.x0)} × ${f(N7.FIX.door.h)} m, ${f(N7.FIX.door.x0)} m od kuće, šarke desno`],
+      ['Ulazna vrata', `${f(N7.FIX.door.x1 - N7.FIX.door.x0)} × ${f(d.doorH)} m, ${f(N7.FIX.door.x0)} m od kuće, šarke desno`],
       ['Garažna vrata', `${f(d.GW)} × ${f(d.GH)} m, ${f(d.gx)} m od kuće${d.lowHeadroom ? ', niska nadvisina' : ''}`],
       ['Stupovi / rogovi', `${d.nSide} uz susjeda + ${d.frontPosts.length} na pročelju · ${d.nRafters} rogova`]
     ];
     $('ps-specs').innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
-    const roofName = { sandwich: 'sendvič panel 40 mm', poly: 'polikarbonat 16 mm', trap: 'trapezni lim' }[roofKind];
+    const roofName = { sandwich: 'sendvič panel 40 mm', sandwich30: 'sendvič panel 30 mm', trap: 'trapezni lim' }[p.roof];
     $('ps-bom').innerHTML = `<p class="ps-bom-meta">Krov: ${roofName} · tlocrt ${f(d.WL)} × ${f(d.D)} m · kraj krova ${f(d.HL)} m · garažna vrata ${f(d.GW)} × ${f(d.GH)} m</p>` +
       groups.map(g => `<table><thead><tr><th colspan="3">${g.title}</th></tr></thead><tbody>${g.rows.map(r => `<tr><td>${r[0]}</td><td class="q">${r[1]}</td><td class="n">${r[2]}</td></tr>`).join('')}</tbody></table>`).join('');
+    const st = d.st;
+    $('ps-static').innerHTML = `<p class="ps-bom-meta">Krov: ${roofName} · sₖ = ${f(st.sk)} kN/m² · qp = ${f(st.qp)} kN/m² · raspon rogova ${f(d.W)} m · pad ${f(d.pitchDeg, 1)}°</p>` +
+      stGroups.map(g => `<table><thead><tr><th colspan="3">${g.title}</th></tr></thead><tbody>${g.rows.map(r => `<tr><td>${r[0]}</td><td class="q">${r[1]}${r[3] === 'fail' ? ' ✗' : r[3] === 'ok' ? ' ✓' : ''}</td><td class="n">${r[2]}</td></tr>`).join('')}</tbody></table>`).join('');
   }
   // Inside an embedded preview the browser blocks printing, so the button opens the published site instead.
   const embedded = window.self !== window.top;
@@ -102,15 +122,17 @@
     const b = e.target.closest('button'); if (!b) return;
     const from = d.HL; p.mode = b.dataset.v; p.HL = N7.resolveHL(p); animateHL(from, p.HL);
   });
-  [['o-view', v => scene.setFrameOnly(v === 'steel')], ['o-roof', v => { roofKind = v; scene.setRoof(v); refresh(); }], ['o-garage', v => scene.setGarage(v)], ['o-fence', v => scene.setFence(v)]].forEach(([id, fn]) => {
+  [['o-view', v => scene.setFrameOnly(v === 'steel')], ['o-roof', v => { p.roof = v; scene.setRoof(v); refresh(); }], ['o-garage', v => { look.garage = v; scene.setGarage(v); refresh(); }], ['o-fence', v => { look.sheet = v; scene.setFence(v); refresh(); }], ['o-door', v => { look.door = v; scene.setDoor(v); refresh(); }]].forEach(([id, fn]) => {
     const g = $(id);
     g.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; pressed(g, b.dataset.v); fn(b.dataset.v); });
   });
+  Object.entries(INPUTS).forEach(([id, c]) => { $(id).min = c.min; $(id).max = c.max; });
   Object.entries(INPUTS).forEach(([id, c]) => {
     $(id).addEventListener('change', e => {
       const v = parseFloat(String(e.target.value).replace(',', '.'));
       if (!isFinite(v)) { refresh(); return; }
       p[c.key] = Math.min(c.max, Math.max(c.min, v));
+      e.target.value = p[c.key].toFixed(2);
       if (c.key === 'HL') p.mode = 'custom';
       else if (p.mode !== 'custom') p.HL = N7.resolveHL(p);
       refresh();

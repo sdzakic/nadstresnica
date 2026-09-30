@@ -3,7 +3,8 @@ window.N7 = window.N7 || {};
 (function (N7) {
   const S = 100; // px per metre
 
-  N7.renderElevation = function (el, d, pfx = 'e') {
+  N7.renderElevation = function (el, d, pfx = 'e', look = {}) {
+    const C = N7.COLORS, sheetC = C.sheet[look.sheet || 'anth'][1], garC = C.garage[look.garage || 'anth'][1], doorC = C.door[look.door || 'anth'][1];
     const FIX = N7.FIX, f = N7.fmt;
     const G = Math.round((d.HH + 0.5) * S);     // ground line
     const X = m => +(m * S).toFixed(1);
@@ -25,21 +26,21 @@ window.N7 = window.N7 || {};
       <text x="${anchor === 'end' ? x - 6 : x + 8}" y="${(Y(y0) + Y(y1)) / 2 + 4}" text-anchor="${anchor || 'start'}" class="t">${label}</text>`;
 
     el.innerHTML = `
-<svg viewBox="-100 -40 ${vbW} ${vbH}" role="img" aria-label="Nacrt pročelja nadstrešnice s kotama">
+<svg id="${pfx}-svg" viewBox="-100 -40 ${vbW} ${vbH}" role="img" aria-label="Nacrt pročelja nadstrešnice s kotama">
   <defs>
     <pattern id="${pfx}-seams" width="30" height="10" patternUnits="userSpaceOnUse">
-      <rect width="30" height="10" fill="var(--d-sheet)"/><rect x="0" width="1.6" height="10" fill="var(--d-seam)"/>
+      <rect width="30" height="10" fill="${sheetC}"/><rect x="0" width="1.6" height="10" fill="rgba(0,0,0,.28)"/>
     </pattern>
     <pattern id="${pfx}-garage" width="10" height="${secH}" patternUnits="userSpaceOnUse" y="${Y(GH)}">
-      <rect width="10" height="${secH}" fill="var(--d-garage)"/><rect y="${secH - 1.4}" width="10" height="1.4" fill="var(--d-seam)"/>
+      <rect width="10" height="${secH}" fill="${garC}"/><rect y="${secH - 1.4}" width="10" height="1.4" fill="rgba(0,0,0,.3)"/>
     </pattern>
     <marker id="${pfx}-tick" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto">
       <path d="M2 8 L8 2" stroke="var(--d-dim)" stroke-width="1.4"/>
     </marker>
   </defs>
   <style>
-    .t{font:12.5px var(--mono);fill:var(--ink)} .s{font:10.5px var(--mono);fill:var(--muted)}
-    .dim line{stroke:var(--d-dim);stroke-width:1;fill:none}
+    #${pfx}-svg .t{font:12.5px var(--mono);fill:var(--ink)} #${pfx}-svg .s{font:10.5px var(--mono);fill:var(--muted)}
+    #${pfx}-svg .dim line{stroke:var(--d-dim);stroke-width:1;fill:none}
   </style>
   <rect x="-100" y="-40" width="100" height="${G + 40}" fill="var(--d-house)"/>
   <text x="-50" y="${Y(d.HH) + 40}" text-anchor="middle" class="t">kuća</text>
@@ -49,9 +50,9 @@ window.N7 = window.N7 || {};
   <circle cx="${X(roofEnd + 0.04)}" cy="${Y(d.roofY(roofEnd) - 0.02)}" r="7.5" fill="var(--d-dim)"/>
   <rect x="${X(roofEnd + 0.04) - 5}" y="${Y(d.roofY(roofEnd) - 0.02)}" width="10" height="${X(d.roofY(roofEnd) - 0.02 - 0.14)}" fill="var(--d-dim)"/>
   <rect x="${X(roofEnd + 0.04) - 7}" y="${Y(0.2)}" width="14" height="${X(0.14)}" rx="3" fill="var(--d-dim)"/>
-  <text x="${(X(d.post.x1) + right) / 2}" y="${Y(d.tail / 2)}" text-anchor="middle" class="t" style="fill:#fff">lim</text>
+  ${d.WL - d.post.x1 > 0.6 ? `<text x="${(X(d.post.x1) + right) / 2}" y="${Y(d.tail / 2)}" text-anchor="middle" class="t" style="fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.35);stroke-width:3px">lim</text>` : ''}
 
-  <rect x="${X(FIX.door.x0)}" y="${Y(FIX.door.h)}" width="${X(FIX.door.x1 - FIX.door.x0)}" height="${X(FIX.door.h)}" fill="var(--d-door)"/>
+  <rect x="${X(FIX.door.x0)}" y="${Y(d.doorH)}" width="${X(FIX.door.x1 - FIX.door.x0)}" height="${X(d.doorH)}" fill="${doorC}" stroke="rgba(0,0,0,.25)"/>
   <rect x="${X(FIX.door.x0 + 0.62)}" y="${Y(1.9)}" width="10" height="${X(1.7)}" fill="var(--d-seam)" opacity=".9"/>
   <rect x="${X(FIX.door.x0 + 0.13)}" y="${Y(1.35)}" width="3" height="80" fill="var(--d-pillar)"/>
 
@@ -85,7 +86,7 @@ window.N7 = window.N7 || {};
     <line x1="${X(d.W) + 8}" y1="${Y(d.HL)}" x2="${right + 84}" y2="${Y(d.HL)}" stroke-dasharray="2 3"/>
     ${dimV(X(gc), 0, GH, '').replace(/<text[^]*<\/text>/, '')}
   </g>
-  <text x="${X(gc) + 6}" y="${Y(GH / 2)}" class="t" style="fill:#fff;font-size:11.5px">${f(GH)}</text>
+  <text x="${X(gc) + 6}" y="${Y(GH / 2)}" class="t" style="fill:#fff;font-size:11.5px;paint-order:stroke;stroke:rgba(0,0,0,.45);stroke-width:3px">${f(GH)}</text>
 </svg>`;
   };
 })(window.N7);

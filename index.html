@@ -7,7 +7,7 @@
 <title>Nadstrešnica br. 7</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,500;112,700;100,400;100,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=10">
+<link rel="stylesheet" href="css/style.css?v=15">
 </head>
 <body>
 <div class="wrap">
@@ -51,7 +51,7 @@
         <div class="opt-label">Krov (panel odozgo)</div>
         <div class="seg" id="o-roof">
           <button data-v="sandwich" aria-pressed="true">Sendvič panel <small>40 mm</small></button>
-          <button data-v="poly" aria-pressed="false">Polikarbonat <small>16 mm</small></button>
+          <button data-v="sandwich30" aria-pressed="false">Sendvič panel <small>30 mm</small></button>
           <button data-v="trap" aria-pressed="false">Trapezni lim <small>0,5 mm</small></button>
         </div>
       </div>
@@ -59,15 +59,29 @@
         <div class="opt-label">Garažna vrata</div>
         <div class="seg" id="o-garage">
           <button data-v="anth" aria-pressed="true">Antracit <small>RAL 7016</small></button>
-          <button data-v="wood" aria-pressed="false">Dekor drvo <small>zlatni hrast</small></button>
           <button data-v="white" aria-pressed="false">Bijela <small>RAL 9016</small></button>
+          <button data-v="silver" aria-pressed="false">Srebrna <small>RAL 9006</small></button>
+          <button data-v="brown" aria-pressed="false">Smeđa <small>RAL 8014</small></button>
+          <button data-v="wood" aria-pressed="false">Dekor drvo <small>zlatni hrast</small></button>
+          <button data-v="house" aria-pressed="false">Kao kuća <small>boja fasade</small></button>
         </div>
       </div>
       <div class="opt">
         <div class="opt-label">Ograda i lim (isti)</div>
         <div class="seg" id="o-fence">
           <button data-v="anth" aria-pressed="true">Antracit <small>kao susjedov balkon</small></button>
+          <button data-v="house" aria-pressed="false">Kao kuća <small>prefarban u boju fasade</small></button>
           <button data-v="wood" aria-pressed="false">Dekor drvo</button>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-label">Ulazna vrata</div>
+        <div class="seg" id="o-door">
+          <button data-v="anth" aria-pressed="true">Antracit <small>RAL 7016</small></button>
+          <button data-v="white" aria-pressed="false">Bijela <small>RAL 9016</small></button>
+          <button data-v="brown" aria-pressed="false">Smeđa <small>RAL 8014</small></button>
+          <button data-v="wood" aria-pressed="false">Dekor drvo</button>
+          <button data-v="house" aria-pressed="false">Kao kuća</button>
         </div>
       </div>
       <details class="opt dims">
@@ -79,6 +93,7 @@
           <label for="in-HH">Visina uz kuću</label><input id="in-HH" inputmode="decimal" type="number" step="0.05">
           <label for="in-HL">Visina na kraju</label><input id="in-HL" inputmode="decimal" type="number" step="0.05">
           <label for="in-GW">Širina garažnih vrata</label><input id="in-GW" inputmode="decimal" type="number" step="0.05">
+          <label for="in-DH">Visina ulaznih vrata</label><input id="in-DH" inputmode="decimal" type="number" step="0.05">
         </div>
         <div class="gx">
           <label for="in-GX">Položaj garažnih vrata <output id="gx-out"></output></label>
@@ -106,7 +121,7 @@
       <p>Mjere su u metrima. Širine vrata procijenjene su iz fotografija; točne treba izmjeriti na licu mjesta.</p>
       <div class="print-row">
         <a id="print-btn" class="btn" href="#ispis">Ispiši crteže</a>
-        <span class="s-note">Tri lista A4 (vodoravno): pročelje i presjek, tlocrt i bokocrt, popis materijala.</span>
+        <span class="s-note">Četiri lista A4 (vodoravno): pročelje i presjek, tlocrt i bokocrt, popis materijala, statički proračun.</span>
       </div>
     </div>
     <div class="drawing" id="elev"></div>
@@ -132,10 +147,10 @@
         <ul class="cons"><li>ispod je tamnije</li><li>skuplji od lima</li></ul>
       </div>
       <div class="card">
-        <h3>Polikarbonat</h3>
-        <div class="meta">saćasti, 16 mm, opal ili bronca · od 5°</div>
-        <ul class="pros"><li>propušta svjetlo, pa prolaz nije mračan</li><li>lagan, jednostavna konstrukcija</li></ul>
-        <ul class="cons"><li>prlja se i vidi se lišće odozgo</li><li>glasniji, s vremenom žuti</li></ul>
+        <h3>Sendvič panel 30 mm</h3>
+        <div class="meta">krovni, 3 rebra, 30 mm, antracit · od 5°</div>
+        <ul class="pros"><li>jeftiniji i lakši od 40 mm</li><li>i dalje tih i bez kondenzacije</li></ul>
+        <ul class="cons"><li>manji dozvoljeni raspon, pa treba više podrožnica</li><li>slabija toplinska izolacija (za nadstrešnicu nije bitno)</li></ul>
       </div>
       <div class="card">
         <h3>Trapezni lim</h3>
@@ -144,7 +159,7 @@
         <ul class="cons"><li>glasan na kiši</li><li>kondenzacija kaplje ispod (treba filc)</li><li>ne preporučuje se na najvišoj varijanti</li></ul>
       </div>
     </div>
-    <p class="note">Krov završava prije susjeda, a lim uz susjeda ide do visine krova. Oluk ima pad prema ulici i vertikalu na pročelju, pa voda curi van, a ne u dvorište.<br><br><b>Najviša</b> varijanta drži krov uz kuću na 3,25 m (iznad je prozor od staklene opeke) i spušta ga najmanjim padom za sendvič panel i polikarbonat, 5°. Tako garažna vrata, pomaknuta što dalje od ulaza, mogu biti oko 2,45 m visoka sa standardnim okovom. <b>Niža</b> varijanta (1,90 m na kraju) spušta krov iznad garaže, pa vrata od 2,68 m ne mogu biti visoka 2,00 m; treba ih suziti ili podići kraj krova. Dozvoljenu visinu uz među sa susjedom provjeri u općini.</p>
+    <p class="note">Krov završava prije susjeda, a lim uz susjeda ide do visine krova. Oluk ima pad prema ulici i vertikalu na pročelju, pa voda curi van, a ne u dvorište.<br><br><b>Najviša</b> varijanta drži krov uz kuću na postojećim nosačima (3,18 m; iznad je prozor od staklene opeke) i spušta ga najmanjim padom za sendvič panel, 5°. Tako se garažna vrata kače na kutni stup i mogu biti oko 2,30 m visoka sa standardnim okovom. <b>Niža</b> varijanta (1,90 m na kraju) spušta krov iznad garaže, pa vrata od 2,68 m ne mogu biti visoka 2,00 m; treba ih suziti ili podići kraj krova. Dozvoljenu visinu uz među sa susjedom provjeri u općini.</p>
   </section>
 
   <section>
@@ -159,11 +174,26 @@
   </section>
 
   <section>
+    <div class="sec-head">
+      <h2>Statički proračun</h2>
+      <p>Pojednostavljena provjera prema Eurokodovima za odabrani krov i trenutne mjere: snijeg (s nanosom uz viši zid kuće), vjetar koji podiže krov, rogovi, podrožnice, bočna greda, stupovi, sidra i temelji. Profili u popisu materijala uzeti su odavde. Ovo je procjena za razgovor s bravarom; za gradnju treba potpisan proračun ovlaštenog statičara.</p>
+    </div>
+    <div class="st-inputs">
+      <label for="in-sk">Snijeg na tlu sₖ (kN/m²)</label><input id="in-sk" inputmode="decimal" type="number" step="0.05">
+      <label for="in-qp">Tlak vjetra qp (kN/m²)</label><input id="in-qp" inputmode="decimal" type="number" step="0.05">
+      <span class="s-note">Vrijednosti za lokaciju očitaj s karte snijega i vjetra (nacionalni dodatak) ili pitaj statičara.</span>
+    </div>
+    <p id="st-summary" class="st-summary"></p>
+    <div class="bom-wrap"><table class="bom st" id="st-table"></table></div>
+  </section>
+
+  <section>
     <div class="sec-head"><h2>Izmjerene mjere</h2></div>
     <dl class="specs">
       <div><dt>Dužina bočnog zida kuće</dt><dd>7,80 m</dd></div>
-      <div><dt>Visina sidrenja na zidu</dt><dd>3,25 m</dd></div>
-      <div><dt>Širina kuća → susjed</dt><dd>5,52 m</dd></div>
+      <div><dt>Visina postojećih nosača na zidu</dt><dd>3,18 m</dd></div>
+      <div><dt>Kuća → susjedov sokl</dt><dd>5,41 m</dd></div>
+      <div><dt>Kuća → kraj žutog zida uz ulicu</dt><dd>5,52 m</dd></div>
       <div><dt>Kraj krova, niža varijanta</dt><dd>1,90 m</dd></div>
       <div><dt>Razmak krova od susjeda</dt><dd>0,50 m</dd></div>
     </dl>
@@ -180,7 +210,7 @@
 
 <div id="print-sheet" aria-hidden="true">
   <div class="ps-page">
-    <header class="ps-head"><b>Nadstrešnica br. 7 · idejni prikaz</b><span class="ps-meta"></span><span>list 1/3</span></header>
+    <header class="ps-head"><b>Nadstrešnica br. 7 · idejni prikaz</b><span class="ps-meta"></span><span>list 1/4</span></header>
     <div class="ps-cols">
       <figure><figcaption>1 · Pročelje s ulice (nacrt)</figcaption><div id="ps-front"></div></figure>
       <figure><figcaption>2 · Poprečni presjek A–A (pogled prema ulici)</figcaption><div id="ps-section"></div></figure>
@@ -188,7 +218,7 @@
     <footer class="ps-foot">Mjere u metrima · crteži nisu u mjerilu, vrijede kote · širine vrata procijenjene iz fotografija</footer>
   </div>
   <div class="ps-page">
-    <header class="ps-head"><b>Nadstrešnica br. 7 · idejni prikaz</b><span class="ps-meta"></span><span>list 2/3</span></header>
+    <header class="ps-head"><b>Nadstrešnica br. 7 · idejni prikaz</b><span class="ps-meta"></span><span>list 2/4</span></header>
     <div class="ps-cols ps-cols-2">
       <figure><figcaption>3 · Tlocrt</figcaption><div id="ps-plan"></div></figure>
       <figure><figcaption>4 · Bokocrt (pogled od susjeda)</figcaption><div id="ps-side"></div><dl class="ps-specs" id="ps-specs"></dl></figure>
@@ -196,9 +226,14 @@
     <footer class="ps-foot">Mjere u metrima · crteži nisu u mjerilu, vrijede kote · dozvoljenu visinu uz među provjeriti u općini</footer>
   </div>
   <div class="ps-page">
-    <header class="ps-head"><b>Nadstrešnica br. 7 · popis materijala</b><span class="ps-meta"></span><span>list 3/3</span></header>
+    <header class="ps-head"><b>Nadstrešnica br. 7 · popis materijala</b><span class="ps-meta"></span><span>list 3/4</span></header>
     <div class="ps-bom" id="ps-bom"></div>
     <footer class="ps-foot">Količine su procjena iz trenutnih mjera, za ponude; bez cijena · rezerva za rezanje uračunata samo gdje piše</footer>
+  </div>
+  <div class="ps-page">
+    <header class="ps-head"><b>Nadstrešnica br. 7 · statički proračun (procjena)</b><span class="ps-meta"></span><span>list 4/4</span></header>
+    <div class="ps-bom" id="ps-static"></div>
+    <footer class="ps-foot">Pojednostavljena provjera, S235, EN 1990/1991/1993 · nije zamjena za potpisani statički proračun</footer>
   </div>
 </div>
 
@@ -219,12 +254,13 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="js/config.js?v=10"></script>
-<script src="js/scene.js?v=10"></script>
-<script src="js/elevation.js?v=10"></script>
-<script src="js/drawings.js?v=10"></script>
-<script src="js/materials.js?v=10"></script>
-<script src="js/gallery.js?v=10"></script>
-<script src="js/main.js?v=10"></script>
+<script src="js/config.js?v=15"></script>
+<script src="js/statics.js?v=15"></script>
+<script src="js/scene.js?v=15"></script>
+<script src="js/elevation.js?v=15"></script>
+<script src="js/drawings.js?v=15"></script>
+<script src="js/materials.js?v=15"></script>
+<script src="js/gallery.js?v=15"></script>
+<script src="js/main.js?v=15"></script>
 </body>
 </html>

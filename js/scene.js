@@ -80,13 +80,55 @@ window.N7 = window.N7 || {};
     plane(1.0, 0.36, M(0xd6dde0, { roughness: .2, metalness: .1 }), 0.012, 3.72, -1.8, Math.PI / 2); // glass block window
     plane(0.34, 0.5, M(0xe6e2d6), 0.012, 1.55, -0.75, Math.PI / 2); // meter box
 
-    // ---------- neighbour house
-    B(6.4, 14, 0, 6.3, -13, -2.6, M(0xecebe6, { roughness: .9 }));
-    B(6.38, 14.02, 0, 1.1, -13.02, -2.58, M(0x6c7073, { roughness: .9 }));
-    {
-      const rise = 2.3, half = 5.2, a = Math.atan2(rise, half), L = Math.hypot(half, rise) + 0.5, dark = M(0x4f3d36, { roughness: .9 });
-      const r1 = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.16, L), dark); r1.position.set(10.2, 6.3 + rise / 2 + 0.02, -2.6 - half / 2 + 0.2); r1.rotation.x = -a; r1.castShadow = true; scene.add(r1);
-      const r2 = r1.clone(); r2.position.z = -13 + half / 2 - 0.2; r2.rotation.x = a; scene.add(r2);
+    // ---------- neighbour house: two storeys, gable end facing the carport, ridge parallel to the street.
+    // Its wall stands right behind the grey panel fence on the boundary, so it is rebuilt with the width (WL).
+    const NB = {
+      wall: M(0xefeeea, { roughness: .9 }),
+      tiles: M(0x4d4744, { roughness: .85 }),
+      board: M(0xf4f4f1, { roughness: .6 }),
+      gutter: M(0xdcdcd8, { metalness: .3, roughness: .5 }),
+      pipe: M(0xd9c9a3, { roughness: .6 }),
+      frame: M(0xf6f6f3, { roughness: .4 }),
+      glass: M(0x3a3230, { roughness: .2 }),
+      fence: M(0x3b4045, { roughness: .6, metalness: .3 }),
+      stone: M(0xffffff, {
+        roughness: .95,
+        map: tex(256, 64, (g, W_, H_) => {
+          g.fillStyle = '#6f7478'; g.fillRect(0, 0, W_, H_); let s = 11; const r = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+          for (let row = 0; row < 4; row++) for (let x = -r() * 40; x < W_; ) {
+            const w2 = 28 + r() * 46, y = row * 16;
+            g.fillStyle = `hsl(210,4%,${36 + r() * 16}%)`; g.fillRect(x + 1, y + 1, w2 - 2, 14); x += w2;
+          }
+        }, 6, 1)
+      })
+    };
+    function buildNeighbour(WL) {
+      const add = m => { m.castShadow = m.receiveShadow = true; (target || scene).add(m); return m; };
+      const fenceT = 0.03, x0 = WL + fenceT, x1 = x0 + 7.6, z0 = -13, z1 = -2.6, He = 6.0, rise = 2.7;
+      const zc = (z0 + z1) / 2, half = (z1 - z0) / 2, a = Math.atan2(rise, half);
+      B(x0, x1, 0, He, z0, z1, NB.wall);
+      const gs = new THREE.Shape(); gs.moveTo(z0, He); gs.lineTo(z1, He); gs.lineTo(zc, He + rise); gs.lineTo(z0, He);
+      const gm = add(new THREE.Mesh(new THREE.ExtrudeGeometry(gs, { depth: x1 - x0, bevelEnabled: false }), NB.wall));
+      gm.rotation.y = -Math.PI / 2; gm.position.x = x1;
+      // roof: dark tiles, 35 cm over the gables, 50 cm over the eaves, white boards along the gable edges
+      const ov = 0.35, L = Math.hypot(half, rise) + 0.5, t = 0.18, w = x1 - x0 + 2 * ov;
+      [1, -1].forEach(side => {
+        const dir = new THREE.Vector3(0, -Math.sin(a), side * Math.cos(a));
+        const nrm = new THREE.Vector3(0, Math.cos(a), side * Math.sin(a));
+        const c = new THREE.Vector3((x0 + x1) / 2, He + rise, zc).addScaledVector(dir, L / 2).addScaledVector(nrm, t / 2 + 0.02);
+        const r = add(new THREE.Mesh(new THREE.BoxGeometry(w, t, L), NB.tiles)); r.position.copy(c); r.rotation.x = side * a;
+        [x0 - ov + 0.02, x1 + ov - 0.02].forEach(bx => {
+          const b = add(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.24, L), NB.board)); b.position.set(bx, c.y - 0.08, c.z); b.rotation.x = side * a;
+        });
+        const g = add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, w, 12), NB.gutter));
+        g.rotation.z = Math.PI / 2; g.position.set((x0 + x1) / 2, He + rise - L * Math.sin(a) - 0.05, zc + side * (half + 0.5));
+      });
+      B(x0 - 0.03, x1 + 0.03, 0, 0.85, z0 - 0.03, z1 + 0.03, NB.stone);           // grey stone-look plinth
+      B(x0 - 0.05, x0 - 0.02, 3.05, 3.09, z0 + 0.4, z1 - 0.2, NB.pipe);            // gas pipe on the side wall
+      [[0.5, NB.frame, 0.012], [0.36, NB.glass, 0.014]].forEach(([sz, mat, off]) => {
+        const m = add(new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), mat)); m.position.set(x0 - off, 3.5, -7.6); m.rotation.y = -Math.PI / 2;
+      });
+      B(WL, x0, 0, 2.0, z1, -0.3, NB.fence);   // dark grey panel fence on the boundary, from the house front to the street wall
     }
     const rBrick = M(0x9a5a44, { roughness: 1 });
 
@@ -98,7 +140,7 @@ window.N7 = window.N7 || {};
     const roofMats = {
       sandwich: M(0xffffff, { map: ribTex('#3b4146', '#2c3134', 0.33), roughness: .55, metalness: .25 }),
       trap: M(0xffffff, { map: ribTex('#7d8286', '#5f6468', 0.2), roughness: .4, metalness: .6 }),
-      poly: new THREE.MeshStandardMaterial({ color: 0xe7e2d4, map: ribTex('#ffffff', '#d9d6cc', 0.032), transparent: true, opacity: .42, roughness: .25, depthWrite: false, side: THREE.DoubleSide })
+      sandwich30: M(0xffffff, { map: ribTex('#40464b', '#2f3437', 0.33), roughness: .55, metalness: .25 })
     };
     let roofKind = 'sandwich', roof = null;
     const gutMat = M(0x3a3f43, { metalness: .5, roughness: .4, side: THREE.DoubleSide });
@@ -107,17 +149,21 @@ window.N7 = window.N7 || {};
     const fasciaMat = M(0xffffff, { map: seamTex('#3b4146', '#2b3033'), roughness: .5, metalness: .3 });
 
     // ---------- entrance door (hinged on the right, opens inwards)
-    const doorTex = tex(200, 420, (g, w, h) => {
-      g.fillStyle = '#33393d'; g.fillRect(0, 0, w, h); g.strokeStyle = '#23272a'; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6);
+    const doorTex = kind => tex(200, 420, (g, w, h) => {
+      const base = N7.COLORS.door[kind][1];
+      if (kind === 'wood') grain(g, w, h, base, '#4d2e17', 'v'); else { g.fillStyle = base; g.fillRect(0, 0, w, h); }
+      const light = kind === 'white' || kind === 'house';
+      g.strokeStyle = light ? 'rgba(0,0,0,.18)' : 'rgba(0,0,0,.35)'; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6);
       g.fillStyle = '#9aabb3'; g.fillRect(w * .62, h * .08, w * .1, h * .84); g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(w * .62, h * .08, w * .02, h * .84);
-      g.fillStyle = '#c9ccce'; g.fillRect(w * .13, h * .3, w * .035, h * .4); g.fillStyle = '#23272a'; for (let i = 1; i < 4; i++) g.fillRect(w * .22, h * i / 4, w * .34, 2);
+      g.fillStyle = '#c9ccce'; g.fillRect(w * .13, h * .3, w * .035, h * .4); g.fillStyle = light ? 'rgba(0,0,0,.18)' : 'rgba(0,0,0,.35)'; for (let i = 1; i < 4; i++) g.fillRect(w * .22, h * i / 4, w * .34, 2);
     });
     const dw = FIX.door.x1 - FIX.door.x0, dh = FIX.door.h;
+    const doorMat = M(0xffffff, { map: doorTex('anth'), roughness: .5, metalness: .2, side: THREE.DoubleSide });
     const doorPivot = new THREE.Group(); doorPivot.position.set(FIX.door.x1, 0, -0.05); scene.add(doorPivot);
     {
       // the texture has its handle on the left, away from the hinge
-      const dm = new THREE.Mesh(new THREE.PlaneGeometry(dw, dh), M(0xffffff, { map: doorTex, roughness: .5, metalness: .2, side: THREE.DoubleSide }));
-      dm.position.set(-dw / 2, dh / 2 + 0.05, 0); dm.castShadow = true; doorPivot.add(dm);
+      var doorMesh = new THREE.Mesh(new THREE.PlaneGeometry(dw, dh), doorMat);
+      doorMesh.position.set(-dw / 2, dh / 2 + 0.05, 0); doorMesh.castShadow = true; doorPivot.add(doorMesh);
     }
 
     // ---------- intercom + house number (mounted on the sheet in build())
@@ -131,16 +177,17 @@ window.N7 = window.N7 || {};
     // ---------- sectional garage door
     function garageTex(kind) {
       return tex(512, 382, (g, w, h) => {
-        const base = kind === 'wood' ? '#9a6a3e' : kind === 'white' ? '#eceee9' : '#3f454a';
+        const base = N7.COLORS.garage[kind][1];
         if (kind === 'wood') grain(g, w, h, base, '#4d2e17', 'h'); else { g.fillStyle = base; g.fillRect(0, 0, w, h); }
         const sec = 5;
         for (let i = 0; i < sec; i++) {
           const y = i * h / sec;
-          g.fillStyle = kind === 'white' ? 'rgba(0,0,0,.18)' : 'rgba(0,0,0,.45)'; g.fillRect(0, y, w, 3);
+          const light = kind === 'white' || kind === 'silver' || kind === 'house';
+          g.fillStyle = light ? 'rgba(0,0,0,.18)' : 'rgba(0,0,0,.45)'; g.fillRect(0, y, w, 3);
           g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(0, y + 3, w, 1.5);
-          if (kind !== 'wood') { g.fillStyle = kind === 'white' ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.04)'; for (let k = 8; k < h / sec; k += 8) g.fillRect(0, y + k, w, 1); }
+          if (kind !== 'wood') { g.fillStyle = light ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.04)'; for (let k = 8; k < h / sec; k += 8) g.fillRect(0, y + k, w, 1); }
         }
-        g.fillStyle = kind === 'white' ? '#b8bcbe' : '#222'; g.fillRect(w * .47, h * .9, w * .06, h * .02);
+        g.fillStyle = kind === 'white' || kind === 'silver' || kind === 'house' ? '#8a8f92' : '#222'; g.fillRect(w * .47, h * .9, w * .06, h * .02);
       });
     }
     const GZ = -0.08, NP = 5, TR = 0.04;
@@ -200,17 +247,25 @@ window.N7 = window.N7 || {};
       const { HH, HL, W, WL, D, GH, GW, gx, post, roofY } = d, T = FIX.T;
 
       B(-0.02, WL, 0.02, 0.05, -D, 0.02, floorMat, false); // concrete floor under the carport
-      B(WL, 14, 0, 1.25, -0.3, 0, rBrick);                 // neighbour's low brick wall
+      B(WL, WL + 8, 0, 1.25, -0.3, 0, rBrick);             // neighbour's low brick street wall, starts at the grey fence
+      buildNeighbour(WL);
       B(0, 0.1, HH - 0.15, HH, -D, 0, steel);              // wall ledger
       B(-0.02, 0.08, HH + T, HH + T + 0.12, -D - 0.1, 0.14, trim); // wall flashing
 
-      d.rafterZ.forEach(z => slopeX(0, HH - 0.06, W, HL - 0.06, z - 0.03, z + 0.03, FIX.rafterH, steel));
+      const rh = d.rafterH, rw = d.st.rafter.s.b / 1000;
+      d.rafterZ.forEach(z => slopeX(0, HH - rh / 2, W, HL - rh / 2, z - rw / 2, z + rw / 2, rh, steel));
+      // purlins across the rafters, flush with their top, at the spacing the roof panel needs
+      if (d.st.purlin) {
+        const ph = d.st.purlin.s.h / 1000, pb = d.st.purlin.s.b / 1000;
+        for (let k = 1; k <= d.st.nPurlins; k++) { const x = k * W / d.st.nSpans; B(x - pb / 2, x + pb / 2, roofY(x) - ph, roofY(x), -D, 0, steel); }
+      }
       B(W - 0.1, W, HL - 0.14, HL - 0.02, -D, 0, steel); // side beam
       d.sideZ.forEach(z => B(W - 0.1, W, 0.05, HL - 0.14, z - 0.05, z + 0.05, steel));
       d.sideZ.forEach(z => B(W - 0.14, W + 0.04, 0.05, 0.07, z - 0.09, z + 0.09, steel)); // base plates
       // posts on the pročelje up to the front rafter, plus lintels over the two openings
       d.frontPosts.forEach(q => { B(q.x0, q.x1, 0.05, q.h, -0.1, 0, steel); B(q.x0 - 0.04, q.x1 + 0.04, 0.05, 0.07, -0.14, 0.04, steel); });
-      B(FIX.door.x0 - FIX.postW, FIX.door.x1 + FIX.postW, FIX.door.h, FIX.door.h + 0.08, -0.1, 0, steel);
+      B(FIX.door.x0 - FIX.postW, FIX.door.x1 + FIX.postW, d.doorH, d.doorH + 0.08, -0.1, 0, steel);
+      doorMesh.geometry.dispose(); doorMesh.geometry = new THREE.PlaneGeometry(dw, d.doorH); doorMesh.position.y = d.doorH / 2 + 0.05;
       B(gx - FIX.postW, post.x1, GH, GH + 0.08, -0.1, 0, steel);
       B(0, post.x1, 0.02, 0.08, 0.03, FIX.drivewayLen + 0.05, driveMat, false); // driveway
       car.position.set(gx + GW / 2, 0.05, -0.6);
@@ -219,7 +274,7 @@ window.N7 = window.N7 || {};
       Object.values(roofMats).forEach(m => { m.map.repeat.set(1, (D + 0.25) / m.map.userData.px); });
       roof = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(x1 - x0, roofY(x0) - roofY(x1)), T, D + 0.25), roofMats[roofKind]);
       roof.position.set((x0 + x1) / 2, (roofY(x0) + roofY(x1)) / 2 + T / 2, -D / 2 + 0.02);
-      roof.rotation.z = -Math.atan2(HH - HL, W); roof.castShadow = roofKind !== 'poly'; roof.receiveShadow = true; dyn.add(roof);
+      roof.rotation.z = -Math.atan2(HH - HL, W); roof.castShadow = true; roof.receiveShadow = true; dyn.add(roof);
       // gutter falls towards the street and drains through a downpipe on the front, away from the yard
       const gz0 = -D - 0.1, gz1 = 0.14, gy = roofY(x1) - 0.02;
       const gut = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, gz1 - gz0, 16, 1, true, 0, Math.PI), gutMat);
@@ -288,20 +343,22 @@ window.N7 = window.N7 || {};
       controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop);
     }
 
-    const fasciaAnth = fasciaMat.map; let fasciaWood = null;
+    const fasciaAnth = fasciaMat.map; let fasciaWood = null, fasciaHouse = null;
     return {
       update(next) {
         d = next; build();
         if (!started) { started = true; go('street', true); requestAnimationFrame(loop); }
       },
       go,
-      setRoof(v) { roofKind = v; roof.material = roofMats[v]; roof.castShadow = v !== 'poly'; },
+      setRoof(v) { roofKind = v; roof.material = roofMats[v]; },
       setGarage(v) { garageBase.dispose(); garageBase = garageTex(v); mapPanels(); },
       setFence(v) {
         if (v === 'wood') { fasciaWood = fasciaWood || woodSeamTex(); fasciaMat.map = fasciaWood; fasciaMat.metalness = 0; fasciaMat.roughness = .8; }
+        else if (v === 'house') { fasciaHouse = fasciaHouse || seamTex('#a9b6a2', '#8e9a88'); fasciaMat.map = fasciaHouse; fasciaMat.metalness = .15; fasciaMat.roughness = .7; }
         else { fasciaMat.map = fasciaAnth; fasciaMat.metalness = .3; fasciaMat.roughness = .5; }
         fasciaMat.needsUpdate = true;
       },
+      setDoor(v) { doorMat.map.dispose(); doorMat.map = doorTex(v); doorMat.needsUpdate = true; },
       setFrameOnly(v) { frameOnly = v; applyFrameOnly(); },
       toggleDoor(key) { const st = doors[key]; st.tgt = st.tgt ? 0 : 1; if (reduce) st.cur = st.tgt; return !!st.tgt; }
     };

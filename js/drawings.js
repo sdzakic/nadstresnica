@@ -6,23 +6,24 @@ window.N7 = window.N7 || {};
   N7.sectionZ = d => -d.D / 2 - 0.4; // where section A–A cuts the carport
   const f = n => N7.fmt(n);
 
-  const STYLE = (k = 1) => `<style>
-    .ln{stroke:#1e1e1e;stroke-width:1.4;fill:none}
-    .thin{stroke-width:.8}
-    .bold{stroke-width:3.2}
-    .dash{stroke-dasharray:8 5}
-    .dot{stroke-dasharray:2 4}
-    .axis{stroke-dasharray:18 4 3 4;stroke-width:1.6}
-    .t{font:${15 * k}px "IBM Plex Mono",ui-monospace,monospace;fill:#111}
-    .s{font:${12 * k}px "IBM Plex Mono",ui-monospace,monospace;fill:#555}
-    .b{font:700 ${18 * k}px "Archivo",Arial,sans-serif;fill:#111}
-  </style>`;
+  // styles are scoped to each drawing: <style> inside inline SVG applies to the whole page
+  const STYLE = (k, id) => { const q = `#${id}-svg`; return `<style>
+    ${q} .ln{stroke:#1e1e1e;stroke-width:1.4;fill:none}
+    ${q} .thin{stroke-width:.8}
+    ${q} .bold{stroke-width:3.2}
+    ${q} .dash{stroke-dasharray:8 5}
+    ${q} .dot{stroke-dasharray:2 4}
+    ${q} .axis{stroke-dasharray:18 4 3 4;stroke-width:1.6}
+    ${q} .t{font:${15 * k}px "IBM Plex Mono",ui-monospace,monospace;fill:#111}
+    ${q} .s{font:${12 * k}px "IBM Plex Mono",ui-monospace,monospace;fill:#555}
+    ${q} .b{font:700 ${18 * k}px "Archivo",Arial,sans-serif;fill:#111}
+  </style>`; };
   const defs = id => `<defs>
     <pattern id="${id}-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#fff"/><line x1="0" y1="0" x2="0" y2="8" stroke="#444" stroke-width="1.2"/></pattern>
     <pattern id="${id}-conc" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="#efefec"/><circle cx="3" cy="4" r="1.1" fill="#999"/><circle cx="10" cy="10" r=".9" fill="#999"/><circle cx="11" cy="3" r=".6" fill="#aaa"/></pattern>
   </defs>`;
   const wrap = (id, vb, body, label, k) =>
-    `<svg viewBox="${vb.map(v => Math.round(v)).join(' ')}" role="img" aria-label="${label}" xmlns="http://www.w3.org/2000/svg">${STYLE(k)}${defs(id)}${body}</svg>`;
+    `<svg id="${id}-svg" viewBox="${vb.map(v => Math.round(v)).join(' ')}" role="img" aria-label="${label}" xmlns="http://www.w3.org/2000/svg">${STYLE(k || 1, id)}${defs(id)}${body}</svg>`;
 
   // ---------- dimension helpers (pixel coordinates)
   const tick = (x, y) => `<path d="M${x - 4} ${y + 4}L${x + 4} ${y - 4}" class="ln"/>`;
@@ -51,15 +52,17 @@ window.N7 = window.N7 || {};
     const { D, W, WL, gx, GW, post } = d;
     const x1 = W + oh, gc = gx + GW / 2;
     const top = Y(-D - 1.3), bottom = Y(FIX.drivewayLen + 1.9);
-    const vb = [X(-2.4), top, X(WL) + 260 + 240, bottom - top];
+    const vb = [X(-2.4), top, X(WL) + 240 + 320, bottom - top];
     let b = '';
 
     // surroundings
     b += rect(X(-2.2), Y(-FIX.houseLen), 220, FIX.houseLen * S, 'fill="#e7e9e4" class="ln"');
     b += `<path d="M${X(-2.2)} ${Y(-FIX.houseLen) - 10}l12 20l-12 20" class="ln thin"/>`;
     b += txt(X(-1.1), Y(-D / 2), 'kuća', 'b');
-    b += rect(X(6.4), Y(-D - 1.2), 240, (D + 1.2 - 2.6) * S, 'fill="#e7e9e4" class="ln thin"');
-    b += txt(X(7.6), Y(-D / 2 - 1.3), 'susjedova kuća', 's');
+    b += rect(X(WL + 0.03), Y(-D - 1.2), 120, (D + 1.2 - 2.6) * S, 'fill="#e7e9e4" class="ln thin"');
+    b += `<path d="M${X(WL + 0.03) + 120} ${Y(-D - 1.2)} v${(D + 1.2 - 2.6) * S}" class="ln thin dash"/>`;
+    b += rect(X(WL), Y(-2.6), 5, 2.3 * S, 'fill="#555"') + txt(X(WL) + 8, Y(-1.45), 'siva ograda', 's', 'start', `transform="rotate(-90 ${X(WL) + 8} ${Y(-1.45)})"`);
+    b += txt(X(WL + 0.63), Y(-D + 0.4), 'susjedova kuća', 's', 'end', `transform="rotate(-90 ${X(WL + 0.63)} ${Y(-D + 0.4)})"`);
     b += rect(X(WL), Y(-0.3), 200, 30, `fill="url(#pl-hatch)" class="ln thin"`);
     b += txt(X(WL) + 100, Y(-0.3) - 8, 'susjedov zid', 's');
     b += rect(X(0), Y(-D), WL * S, D * S, 'fill="#f6f6f3"');
@@ -83,15 +86,16 @@ window.N7 = window.N7 || {};
     b += rect(X(-0.02), Y(-D - 0.105), (x1 + 0.02) * S, (D + 0.25) * S, 'class="ln dash"');
     b += txt(X(W / 2), Y(-D - 0.105) - 8, 'rub krova', 's');
     d.rafterZ.forEach(z => { b += `<line x1="${X(0.1)}" y1="${Y(z)}" x2="${X(W - 0.1)}" y2="${Y(z)}" class="ln thin dot"/>`; });
+    if (d.st.purlin) for (let k = 1; k <= d.st.nPurlins; k++) { const x = k * W / d.st.nSpans; b += `<line x1="${X(x)}" y1="${Y(-D)}" x2="${X(x)}" y2="${Y(0)}" class="ln thin dash"/>`; }
     b += rect(X(0), Y(-D), 10, D * S, 'fill="#2a2a2a"');
     b += rect(X(W - 0.1), Y(-D), 10, D * S, 'class="ln thin" fill="#fff"');
     d.sideZ.forEach(z => { b += rect(X(W - 0.1), Y(z - 0.05), 10, 10, 'fill="#111"'); });
     d.frontPosts.forEach(q => { b += rect(X(q.x0), Y(-0.1), 10, 10, 'fill="#111"'); });
     b += `<line x1="${X(x1 + 0.04)}" y1="${Y(-D - 0.1)}" x2="${X(x1 + 0.04)}" y2="${Y(0.14)}" class="ln" stroke-width="4"/>`;
     b += `<circle cx="${X(x1 + 0.04)}" cy="${Y(0.13)}" r="6" fill="#111"/>`;
-    b += `<path d="M${X(x1 + 0.04) + 16} ${Y(-D / 2)} v70 m-6 -12 l6 12 l6 -12" class="ln thin"/>`;
-    b += txt(X(x1 + 0.04) + 22, Y(-D / 2) - 6, 'oluk, pad', 's', 'start');
-    b += txt(X(x1 + 0.04) + 22, Y(-D / 2) + 10, 'prema ulici', 's', 'start');
+    b += `<path d="M${X(W) - 22} ${Y(-6.4)} v70 m-6 -12 l6 12 l6 -12" class="ln thin"/>`;
+    b += txt(X(W) - 32, Y(-6.4) + 22, 'oluk, pad', 's', 'end');
+    b += txt(X(W) - 32, Y(-6.4) + 40, 'prema ulici', 's', 'end');
 
     // front line: sheet, door with swing, intercom, garage door and its tracks
     const seg = (a, c) => `<line x1="${X(a)}" y1="${Y(0.03)}" x2="${X(c)}" y2="${Y(0.03)}" class="ln" stroke-width="5"/>`;
@@ -122,11 +126,11 @@ window.N7 = window.N7 || {};
     b += dimH(X(0), X(WL), y2, f(WL), { ext: Y(0.03) });
     const yt = Y(-D - 0.105) - 50;
     b += dimH(X(0), X(W), yt, f(W) + ' krov') + dimH(X(W), X(WL), yt, f(d.gap), { cls: 's' });
-    const xr = X(WL) + 90, xr2 = xr + 70;
+    const xr = X(WL) + 175, xr2 = xr + 70;
     const zs = [0, ...d.sideZ.map(z => -z).slice(1, -1), D];
     for (let i = 0; i < zs.length - 1; i++) b += dimV(xr, Y(-zs[i]), Y(-zs[i + 1]), f(zs[i + 1] - zs[i]), { right: true });
     b += dimV(xr2, Y(0), Y(-D), f(D), { right: true, ext: X(W) });
-    b += txt(xr - 12, Y(0.5), 'razmak stupova', 's', 'start');
+    b += txt(xr - 12, Y(-D) - 14, 'razmak stupova', 's', 'start');
 
     el.innerHTML = wrap('pl', vb, b, 'Tlocrt nadstrešnice s kotama', 1.35);
   };
@@ -161,7 +165,7 @@ window.N7 = window.N7 || {};
       const u = -z;
       b += rect(U(u - 0.05), Y(HL - 0.14), 10, (HL - 0.19) * S, 'fill="#2a2a2a"');
       b += rect(U(u - 0.1), Y(0.07), 20, 2, 'fill="#111"');
-      b += rect(U(u - 0.2), G, 40, 80, 'class="ln thin dash" fill="none"');
+      b += rect(U(u - d.st.footing / 2), G, d.st.footing * S, 80, 'class="ln thin dash" fill="none"');
     });
     b += rect(U(-0.18), Y(ye - 0.05), 10, (ye - 0.25) * S, 'fill="#333"') + `<path d="M${U(-0.13)} ${Y(0.22)} l-18 12" class="ln" stroke-width="9" stroke="#333"/>`;
     b += txt(U(-0.3), Y(0.6), 'vertikala', 's', 'end');
@@ -218,9 +222,16 @@ window.N7 = window.N7 || {};
     b += `<line x1="${X(-1.5)}" y1="${G}" x2="${X(WL + 1.8)}" y2="${G}" class="ln bold"/>`;
     b += rect(X(0), G, WL * S, 12, `fill="url(#sc-conc)" class="ln thin"`);
     b += rect(X(0), G + 12, WL * S, 15, 'class="ln thin dot" fill="none"');
-    b += rect(X(W - 0.25), G, 40, 80, `fill="url(#sc-hatch)" class="ln"`);
+    b += rect(X(W - 0.05 - d.st.footing / 2), G, d.st.footing * S, 80, `fill="url(#sc-hatch)" class="ln"`);
     // neighbour boundary and wall beyond
-    b += rect(X(WL), Y(1.25), 1.2 * S, 1.25 * S, 'fill="#e6dccb" class="ln thin"');
+    { // neighbour's house right behind the boundary, cut by the section (wall hatched, clipped at the top of the sheet)
+      const top = Math.min(6.0, HH + 1.0);
+      b += rect(X(WL + 0.05), Y(top), 1.8 * S, top * S, 'fill="#eef0ec" class="ln thin"');
+      b += rect(X(WL + 0.05), Y(top), 35, top * S, `fill="url(#sc-hatch)" class="ln"`);
+      b += rect(X(WL + 0.03), Y(0.85), 4, 85, 'fill="#777"');
+      b += `<path d="M${X(WL + 0.05) - 6} ${Y(top) + 8} l12 -8 l0 16 l12 -8" class="ln thin"/>`;
+      b += txt(X(WL + 1.0), Y(top) + 26, 'susjedova kuća', 's');
+    }
     b += `<line x1="${X(WL)}" y1="${G + 60}" x2="${X(WL)}" y2="${Y(HH + 0.3)}" class="ln axis"/>`;
     b += txt(X(WL) + 8, Y(HH + 0.2), 'međa', 't', 'start');
     // garage door (beyond, dashed) and car
@@ -232,21 +243,26 @@ window.N7 = window.N7 || {};
     // structure
     b += rect(X(W - 0.1), Y(HL - 0.14), 10, (HL - 0.19) * S, 'fill="#333"');
     b += rect(X(W - 0.15), Y(0.05), 20, 3, 'fill="#111"');
-    b += `<polygon points="${X(0)},${Y(HH)} ${X(W)},${Y(HL)} ${X(W)},${Y(HL - 0.12)} ${X(0)},${Y(HH - 0.12)}" fill="#6b6f72"/>`;
+    const rh = d.rafterH;
+    b += `<polygon points="${X(0)},${Y(HH)} ${X(W)},${Y(HL)} ${X(W)},${Y(HL - rh)} ${X(0)},${Y(HH - rh)}" fill="#6b6f72"/>`;
+    if (d.st.purlin) { // purlins cut by the section, flush with the rafter top
+      const ph = d.st.purlin.s.h / 1000, pb = d.st.purlin.s.b / 1000;
+      for (let k = 1; k <= d.st.nPurlins; k++) { const x = k * W / d.st.nSpans; b += rect(X(x - pb / 2), Y(roofY(x)), pb * S, ph * S, 'fill="#111"'); }
+    }
     b += rect(X(W - 0.1), Y(HL - 0.02), 10, 12, 'fill="#111"');
     b += rect(X(0), Y(HH), 10, 15, 'fill="#111"');
     b += `<polygon points="${X(-0.02)},${Y(roofY(-0.02) + T)} ${X(x1)},${Y(roofY(x1) + T)} ${X(x1)},${Y(roofY(x1))} ${X(-0.02)},${Y(roofY(-0.02))}" fill="#aeb3b6" class="ln"/>`;
     b += rect(X(-0.02), Y(HH + T + 0.12), 10, 12, 'fill="#111"');
     const gy = Y(roofY(x1) - 0.02);
     b += `<path d="M${X(x1 + 0.04) - 7.5} ${gy} a7.5 7.5 0 0 0 15 0" class="ln" stroke-width="3"/>`;
-    b += rect(X(post.x0), Y(roofY(post.x1) - FIX.rafterH), 10, (roofY(post.x1) - FIX.rafterH) * S, 'class="ln thin dash" fill="none"');
+    b += rect(X(post.x0), Y(roofY(post.x1) - d.rafterH), 10, (roofY(post.x1) - d.rafterH) * S, 'class="ln thin dash" fill="none"');
 
     // labels along the roof
     const ang = -Math.atan2(HH - HL, W) * 180 / Math.PI;
     const mx = X(W * 0.45), my = Y(roofY(W * 0.45) + T) - 16;
     b += `<text x="${mx}" y="${my}" text-anchor="middle" class="t" transform="rotate(${ang} ${mx} ${my})">pad ${N7.fmt(d.pitchDeg, 1)}° (${Math.round(d.pitchPct)} %) · panel ${f(d.slopeLen + oh)} m</text>`;
-    const rx = X(W * 0.3), ry = Y(roofY(W * 0.3) - 0.12) + 34;
-    b += `<text x="${rx}" y="${ry}" text-anchor="middle" class="s" transform="rotate(${ang} ${rx} ${ry})">rog □120×60 · ${f(d.slopeLen)} m</text>`;
+    const rx = X(W * 0.3), ry = Y(roofY(W * 0.3) - rh) + 34;
+    b += `<text x="${rx}" y="${ry}" text-anchor="middle" class="s" transform="rotate(${ang} ${rx} ${ry})">rog ${d.st.rafter.s.name} · ${f(d.slopeLen)} m${d.st.purlin ? ` · ${d.st.nPurlins} podrožnice ${d.st.purlin.s.name}` : ''}</text>`;
 
     // dimensions
     const yb = G + 1.05 * S, yb2 = yb + 45;
@@ -255,7 +271,7 @@ window.N7 = window.N7 || {};
     b += dimH(X(0), X(WL), yb2, f(WL), { ext: G });
     b += dimV(X(-1.2), G, Y(HH), f(HH), { ext: X(0) });
     b += dimV(X(WL + 1.5), G, Y(HL), f(HL), { right: true, ext: X(W) });
-    const clear = roofY(post.x0) - FIX.rafterH;
+    const clear = roofY(post.x0) - d.rafterH;
     b += dimV(X(post.x0) - 16, G, Y(clear), f(clear), { cls: 's' });
     b += txt(X(post.x0) - 26, Y(clear * 0.62), 'slobodno ispod roga', 's', 'end');
     b += dimV(X(W + 0.3), G, G + 80, '0,80', { right: true, cls: 's' });

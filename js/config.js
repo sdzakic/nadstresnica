@@ -12,10 +12,11 @@ window.N7 = window.N7 || {};
     garage: { w: 2.68, minW: 2.2, maxW: 3.6, maxH: 2.50, minH: 2.00, cornerMinH: 2.10 },
     postW: 0.10,                               // steel posts on the pročelje, up to the front rafter
     cornerClear: 0.20,                         // keep a separate garage post clear of the corner post
-    rafterH: 0.12,
+    houseEave: 4.4,           // eave of the house above the carport (for snow drift)
+    houseRoofRun: 4.0,        // horizontal run of the house roof slope that drains towards the carport
     rafterMaxSpacing: 1.3,
     sidePostMaxSpacing: 2.7,
-    minPitchDeg: 5,           // lowest pitch for sandwich panel / polycarbonate
+    minPitchDeg: 5,           // lowest pitch for a sandwich roof panel
     trapMinPitchDeg: 8,       // below this a trapezoidal sheet is not recommended
     lowHL: 1.90,              // measured height for the "lower" variant
     headroomStd: 0.25,        // lintel needed by a standard sectional door
@@ -26,8 +27,16 @@ window.N7 = window.N7 || {};
     stairs: { z0: -4.60, z1: -3.30, rise: 0.18, inset: 0.05, widths: [1.30, 1.10, 0.90] }
   };
 
-  const MEASURED = { HH: 3.25, D: 7.8, WL: 5.52, gap: 0.50 };
-  const DEFAULTS = Object.assign({ mode: 'high', HL: 2.80, GW: FIX.garage.w, gx: null }, MEASURED); // gx null = as far from the entrance as possible
+  // HH: measured to the existing wall brackets; WL: measured from the house wall to the neighbour's stone plinth
+  // colour options for the sheet, garage door and entrance door (hex used by the model and the drawings)
+  const COLORS = {
+    sheet: { anth: ['Antracit', '#3b4146'], house: ['Kao kuća', '#a9b6a2'], wood: ['Dekor drvo', '#9a6a3e'] },
+    garage: { anth: ['Antracit', '#3f454a'], white: ['Bijela', '#eceee9'], silver: ['Srebrna', '#a9aeb2'], brown: ['Smeđa', '#5b4232'], wood: ['Dekor drvo', '#9a6a3e'], house: ['Kao kuća', '#a9b6a2'] },
+    door: { anth: ['Antracit', '#33393d'], white: ['Bijela', '#eef0ec'], brown: ['Smeđa', '#5b4232'], wood: ['Dekor drvo', '#9a6a3e'], house: ['Kao kuća', '#a9b6a2'] }
+  };
+
+  const MEASURED = { HH: 3.18, D: 7.8, WL: 5.41, gap: 0.50 };
+  const DEFAULTS = Object.assign({ mode: 'high', HL: 2.70, GW: FIX.garage.w, gx: null, roof: 'sandwich', sk: 1.25, qp: 0.50, doorH: 2.10 }, MEASURED); // gx null = as far from the entrance as possible
 
   const fmt = (n, dec = 2) => n.toFixed(dec).replace('.', ',');
   const floorTo = (v, step) => Math.floor(v / step + 1e-6) * step;
@@ -57,13 +66,20 @@ window.N7 = window.N7 || {};
     const roofY = x => HH - drop * x / W;
     const pitchDeg = Math.atan2(drop, W) * 180 / Math.PI;
     const slopeLen = Math.hypot(W, drop);
+    const nSide = Math.ceil(p.D / FIX.sidePostMaxSpacing) + 1;
+    const nRafters = Math.ceil(p.D / FIX.rafterMaxSpacing) + 1;
+    const sideZ = spread(nSide, -0.05, -p.D + 0.05);
+
+    // static check first: it picks the rafter section, whose depth sets the headroom under the roof
+    const st = N7.statics({ HH, HL, W, D: p.D, slopeLen, pitchDeg, sideZ, nRafters, roof: p.roof || 'sandwich', sk: p.sk, qp: p.qp, houseEave: FIX.houseEave, houseRoofRun: FIX.houseRoofRun });
+    const rafterH = st.rafter.s.h / 1000;
 
     // garage door hangs between a post on its left and either the corner post by the neighbour
     // (when the roof there still leaves at least 2,10 m of door) or its own post on the right
     const GW = p.GW, pw = FIX.postW;
     const minH = FIX.garage.minH;
     const doorH = xr => {
-      const under = roofY(xr) - FIX.rafterH;
+      const under = roofY(xr) - rafterH;
       const std = floorTo(under - FIX.headroomStd, 0.05);
       if (std >= minH) return { GH: Math.min(FIX.garage.maxH, std), low: false };
       return { GH: Math.min(minH, floorTo(under - FIX.headroomLow, 0.05)), low: true };
@@ -79,7 +95,7 @@ window.N7 = window.N7 || {};
       if (gx > gxMax - pw - 0.05) gx = gxMax;   // too close for its own post: snap onto the corner post
       attached = gx >= gxMax - 1e-6;
     } else {
-      const needY = minH + FIX.rafterH + FIX.headroomLow;
+      const needY = minH + rafterH + FIX.headroomLow;
       const xrRoof = drop > 0 ? (HH - needY) * W / drop : W;
       xrMax = Math.min(W - FIX.cornerClear - pw, xrRoof);
       gxMax = Math.max(gxMin, xrMax - GW);
@@ -92,8 +108,11 @@ window.N7 = window.N7 || {};
 
     // posts on the pročelje, all up to the underside of the front rafter
     const dr = FIX.door;
+    // entrance door height, limited by the lintel under the front rafter
+    const topAt = x => roofY(x) - rafterH;
+    const doorMax = floorTo(topAt(dr.x1 + pw) - 0.08 - 0.02, 0.05);
+    const entryH = Math.min(p.doorH || dr.h, doorMax);
     const intercomX = (dr.x1 + pw + gx - pw) / 2; // intercom + house number, centred on the sheet between the posts
-    const topAt = x => roofY(x) - FIX.rafterH;
     const frontPosts = [
       { x0: dr.x0 - pw, x1: dr.x0, role: 'ulazna vrata lijevo' },
       { x0: dr.x1, x1: dr.x1 + pw, role: 'ulazna vrata desno' },
@@ -104,12 +123,10 @@ window.N7 = window.N7 || {};
 
     const tail = HL; // the sheet by the neighbour goes up to the roof edge
     const fenceW = p.WL - post.x1;
-    const nSide = Math.ceil(p.D / FIX.sidePostMaxSpacing) + 1;
-    const nRafters = Math.ceil(p.D / FIX.rafterMaxSpacing) + 1;
 
     // outline of the front sheet: it comes down to the ground everywhere except over the openings
     // (door with its posts, garage with its posts), where it stops at the opening's top
-    const spans = [[dr.x0 - pw, dr.x1 + pw, dr.h], [gx - pw, post.x1, GH]];
+    const spans = [[dr.x0 - pw, dr.x1 + pw, entryH], [gx - pw, post.x1, GH]];
     const front = [[0, 0]];
     let lastX = 0;
     spans.forEach(([a, b, h]) => {
@@ -129,22 +146,27 @@ window.N7 = window.N7 || {};
 
     const warnings = [];
     if (drop <= 0) warnings.push('Kraj krova mora biti niži od visine uz kuću.');
-    else if (pitchDeg < FIX.minPitchDeg - 0.05) warnings.push('Pad je manji od 5°, što je premalo za sendvič panel i polikarbonat.');
+    else if (pitchDeg < FIX.minPitchDeg - 0.05) warnings.push('Pad je manji od 5°, što je premalo za sendvič panel.');
     if (GH < minH - 0.001) warnings.push(`Garažna vrata od ${fmt(GW)} m ne stanu uz visinu od 2,00 m. Suzi ih na najviše ${fmt(Math.max(0, floorTo(xrMax - gxMin, 0.05)))} m ili podigni kraj krova.`);
-    if (fenceW < 0.3) warnings.push('Za ogradu ostaje manje od 30 cm. Proširi širinu do susjeda.');
+    if ((p.doorH || dr.h) > doorMax + 1e-6) warnings.push(`Ulazna vrata mogu biti visoka najviše ${fmt(doorMax)} m ispod nadvoja.`);
+    if (fenceW < 0.25 - 1e-6) warnings.push('Za ogradu ostaje manje od 25 cm. Proširi širinu do susjeda.');
     if (p.D > FIX.houseLen + 0.001) warnings.push('Nadstrešnica je duža od bočnog zida kuće (7,80 m).');
-    if (HH > 3.30) warnings.push('Iznad 3,25 m uz kuću je prozor od staklene opeke.');
+    if (HH > 3.30) warnings.push('Iznad postojećih nosača (3,18 m) uz kuću je prozor od staklene opeke.');
+    if (p.roof === 'trap' && pitchDeg < FIX.trapMinPitchDeg) warnings.push(`Pad ${fmt(pitchDeg, 1)}° je premalen za trapezni lim (treba barem 8°).`);
+    if (st.fail) warnings.push('Statički proračun: neki element ne prolazi ni s najvećim profilom iz popisa.');
 
     return {
       HH, HL, D: p.D, WL: p.WL, gap: p.gap, W, drop, roofY, pitchDeg, pitchPct: drop / W * 100, slopeLen,
       intercomX, GW, gx, gxMin, gxMax, gRight, attached, post, frontPosts, GH, lowHeadroom, tail, fenceW, front,
-      nSide, sideZ: spread(nSide, -0.05, -p.D + 0.05),
+      st, rafterH, doorH: entryH, doorMax, roof: p.roof || 'sandwich',
+      nSide, sideZ,
       nRafters, rafterZ: spread(nRafters, -0.04, -p.D + 0.04),
       warnings, FIX
     };
   }
 
   N7.FIX = FIX;
+  N7.COLORS = COLORS;
   N7.MEASURED = MEASURED;
   N7.DEFAULTS = DEFAULTS;
   N7.derive = derive;
