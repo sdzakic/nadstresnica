@@ -133,12 +133,27 @@ section{display:flex;flex-direction:column;gap:16px}
 
 /* bill of materials */
 .bom-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
-.bom{width:100%;border-collapse:collapse;font-size:14px;min-width:620px}
+.bom{width:100%;border-collapse:collapse;font-size:14px;min-width:860px}
 .bom th,.bom td{text-align:left;padding:8px 14px;border-bottom:1px solid var(--line);vertical-align:top}
 .bom thead th{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .bom tr.grp th{font-stretch:112%;font-weight:700;font-size:15px;padding-top:18px;background:var(--chip)}
 .bom td.q{font-family:var(--mono);font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .bom td.n{color:var(--muted);font-size:13px}
+.bom td.pr label{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.bom td.pr input{width:72px;font:13px var(--mono);padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+.bom td.pr input.own{border-color:var(--accent)}
+.bom td.pr input:focus-visible,.bom-opts input:focus-visible{outline:2px solid var(--sage);outline-offset:1px}
+.bom td.pr span{font:12px var(--mono);color:var(--muted)}
+.bom .eur{text-align:right;font-family:var(--mono);font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bom thead th.eur{font:500 11px var(--mono)}
+.bom tfoot th{text-align:right;padding:12px 14px;font-weight:700;border-bottom:0}
+.bom tfoot th.eur{font-size:15px}
+.bom-opts{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;font-size:14px}
+.bom-opts .chk{display:flex;align-items:center;gap:8px;cursor:pointer}
+.bom-opts .chk input{accent-color:var(--accent);width:16px;height:16px}
+.bom-opts .mix input{width:52px;font:13px var(--mono);padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);text-align:right}
+.bom-opts .bom-sum{margin-left:auto;font-family:var(--mono)}
+.bom-btns{display:flex;flex-wrap:wrap;gap:10px}
 .btn{font:500 13px var(--mono);border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:4px;padding:8px 14px;cursor:pointer}
 .btn:hover{background:var(--chip)}
 
@@ -191,5 +206,7 @@ section{display:flex;flex-direction:column;gap:16px}
   .ps-bom td{border-bottom:.4pt solid #ccc;padding:.8mm 1.5mm .8mm 0;vertical-align:top}
   .ps-bom td.q{font:7.4pt "IBM Plex Mono",monospace;white-space:nowrap}
   .ps-bom td.n{color:#555}
+  .ps-bom .eur{text-align:right;white-space:nowrap;font:7.4pt "IBM Plex Mono",monospace;padding-right:0}
+  .ps-bom-total{column-span:all;margin:1mm 0 0;font:9pt "Archivo",Arial,sans-serif;text-align:right}
   .ps-foot{font:7.5pt "IBM Plex Mono",monospace;color:#555;border-top:.5pt solid #999;padding-top:1.5mm}
 }

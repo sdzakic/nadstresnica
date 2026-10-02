@@ -14,7 +14,7 @@ window.N7 = window.N7 || {};
     cornerClear: 0.20,                         // keep a separate garage post clear of the corner post
     houseEave: 4.4,           // eave of the house above the carport (for snow drift)
     houseRoofRun: 4.0,        // horizontal run of the house roof slope that drains towards the carport
-    rafterMaxSpacing: 1.3,
+    rafterMaxSpacing: { simple: 1.3, cont: 2.0 },   // continuous purlins carry over the rafters, so the rafters can be further apart
     sidePostMaxSpacing: 2.7,
     minPitchDeg: 5,           // lowest pitch for a sandwich roof panel
     trapMinPitchDeg: 8,       // below this a trapezoidal sheet is not recommended
@@ -68,7 +68,7 @@ window.N7 = window.N7 || {};
     const slopeLen = Math.hypot(W, drop);
     // a lattice side beam spans the whole length on the two corner posts
     const nSide = p.beamType === 'truss' ? 2 : Math.ceil(p.D / FIX.sidePostMaxSpacing) + 1;
-    const nRafters = Math.ceil(p.D / FIX.rafterMaxSpacing) + 1;
+    const nRafters = Math.ceil(p.D / FIX.rafterMaxSpacing[p.purlinType === 'simple' ? 'simple' : 'cont']) + 1;
     const sideZ = spread(nSide, -0.05, -p.D + 0.05);
 
     // static check first: it picks the rafter section, whose depth sets the headroom under the roof

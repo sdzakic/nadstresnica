@@ -7,7 +7,13 @@
   p.HL = N7.resolveHL(p);
   let anim = null;
   const look = { sheet: 'anth', garage: 'anth', door: 'anth' };
-  let d = null;
+  let d = null, groups = [];
+  // own unit prices, remembered per browser; a missing key means the default price
+  const PKEY = 'n7-prices';
+  let prices = {};
+  try { prices = JSON.parse(localStorage.getItem(PKEY)) || {}; } catch (e) { prices = {}; }
+  const savePrices = () => { try { localStorage.setItem(PKEY, JSON.stringify(prices)); } catch (e) { /* storage blocked */ } };
+  const bomOpt = { slab: true, mix: 3 };
 
   const scene = N7.createScene($('stage'));
 
@@ -47,12 +53,12 @@
     $('h-high-sub').textContent = f(N7.maxHL(p)) + ' m na kraju';
     $('warn').innerHTML = d.warnings.map(w => `<li>${w}</li>`).join('');
     $('warn').hidden = !d.warnings.length;
-    const groups = N7.materials(d, p.roof, look);
+    groups = N7.materials(d, p.roof, look, bomOpt);
     const stGroups = N7.staticsReport(d);
     renderStatics(stGroups);
     renderPrint(groups, stGroups);
-    N7.renderMaterials($('bom'), groups);
-    $('bom-copy').onclick = () => copyText(N7.materialsText(groups));
+    N7.renderMaterials($('bom'), groups, prices);
+    $('bom-sum').textContent = N7.euro(N7.costs(groups, prices).total);
     Object.entries(INPUTS).forEach(([id, c]) => { if (document.activeElement !== $(id)) $(id).value = (c.key === 'HL' ? d.HL : p[c.key]).toFixed(2); });
     pressed($('o-height'), p.mode);
   }
@@ -105,8 +111,10 @@
     ];
     $('ps-specs').innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
     const roofName = { sandwich: 'sendvič panel 40 mm', sandwich30: 'sendvič panel 30 mm', trap: 'trapezni lim' }[p.roof];
+    const cost = N7.costs(groups, prices);
     $('ps-bom').innerHTML = `<p class="ps-bom-meta">Krov: ${roofName} · tlocrt ${f(d.WL)} × ${f(d.D)} m · kraj krova ${f(d.HL)} m · garažna vrata ${f(d.GW)} × ${f(d.GH)} m</p>` +
-      groups.map(g => `<table><thead><tr><th colspan="3">${g.title}</th></tr></thead><tbody>${g.rows.map(r => `<tr><td>${r[0]}</td><td class="q">${r[1]}</td><td class="n">${r[2]}</td></tr>`).join('')}</tbody></table>`).join('');
+      groups.map((g, gi) => `<table><thead><tr><th colspan="3">${g.title}</th><th class="eur">${cost.groups[gi] ? N7.euro(cost.groups[gi]) : ''}</th></tr></thead><tbody>${g.rows.map(r => `<tr><td>${r[0]}</td><td class="q">${r[1]}</td><td class="n">${r[2]}</td><td class="eur">${r[3] ? N7.euro(N7.rowCost(r[3], prices)) : ''}</td></tr>`).join('')}</tbody></table>`).join('') +
+      `<p class="ps-bom-total">Ukupno materijal, okvirno s PDV-om, bez rada i dostave: <b>${N7.euro(cost.total)}</b></p>`;
     const st = d.st;
     $('ps-static').innerHTML = `<p class="ps-bom-meta">Krov: ${roofName} · sₖ = ${f(st.sk)} kN/m² · qp = ${f(st.qp)} kN/m² · raspon rogova ${f(d.W)} m · pad ${f(d.pitchDeg, 1)}°</p>` +
       stGroups.map(g => `<table><thead><tr><th colspan="3">${g.title}</th></tr></thead><tbody>${g.rows.map(r => `<tr><td>${r[0]}</td><td class="q">${r[1]}${r[3] === 'fail' ? ' ✗' : r[3] === 'ok' ? ' ✓' : ''}</td><td class="n">${r[2]}</td></tr>`).join('')}</tbody></table>`).join('');
@@ -130,6 +138,32 @@
   [['o-garage', v => { look.garage = v; scene.setGarage(v); }], ['o-fence', v => { look.sheet = v; scene.setFence(v); }], ['o-door', v => { look.door = v; scene.setDoor(v); }]].forEach(([id, fn]) => {
     $(id).addEventListener('change', e => { fn(e.target.value); refresh(); });
   });
+  // ---------- prices: typing updates the sums in place, without re-rendering the table
+  $('bom-copy').onclick = () => copyText(N7.materialsText(groups, prices));
+  function updateSums() {
+    const c = N7.costs(groups, prices);
+    document.querySelectorAll('#bom td.eur[data-k]').forEach(td => { td.textContent = N7.euro(N7.rowCost({ k: td.dataset.k, q: +td.dataset.q }, prices)); });
+    document.querySelectorAll('#bom th.eur[data-g]').forEach(th => { const v = c.groups[+th.dataset.g]; th.textContent = v ? N7.euro(v) : ''; });
+    $('bom-total').textContent = $('bom-sum').textContent = N7.euro(c.total);
+  }
+  $('bom').addEventListener('input', e => {
+    const k = e.target.dataset.k; if (!k) return;
+    const v = parseFloat(e.target.value.replace(/\s/g, '').replace(',', '.'));
+    if (isFinite(v) && v >= 0) prices[k] = v; else delete prices[k];
+    // the same section can appear in several rows (posts and lintels)
+    document.querySelectorAll(`#bom input[data-k="${CSS.escape(k)}"]`).forEach(i => { i.classList.toggle('own', prices[k] != null); if (i !== e.target) i.value = N7.fmt(prices[k] != null ? prices[k] : N7.priceDefault(k), 2); });
+    savePrices(); updateSums();
+  });
+  $('bom').addEventListener('change', e => { const k = e.target.dataset.k; if (k) e.target.value = N7.fmt(prices[k] != null ? prices[k] : N7.priceDefault(k), 2); });
+  window.addEventListener('beforeprint', () => refresh());
+  $('price-reset').addEventListener('click', () => { prices = {}; savePrices(); refresh(); });
+  $('in-slab').addEventListener('change', e => { bomOpt.slab = e.target.checked; refresh(); });
+  $('in-mix').addEventListener('change', e => {
+    const v = parseFloat(String(e.target.value).replace(',', '.'));
+    bomOpt.mix = isFinite(v) ? Math.min(8, Math.max(1, v)) : 3;
+    e.target.value = N7.fmt(bomOpt.mix, bomOpt.mix % 1 ? 1 : 0); refresh();
+  });
+
   $('d-parapet').addEventListener('click', e => { p.parapet = !p.parapet; e.currentTarget.setAttribute('aria-pressed', p.parapet); refresh(); });
   Object.entries(INPUTS).forEach(([id, c]) => { $(id).min = c.min; $(id).max = c.max; });
   Object.entries(INPUTS).forEach(([id, c]) => {

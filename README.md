@@ -10,7 +10,7 @@ css/style.css     stilovi
 js/config.js      mjere i pravila (sve se računa odavde: visina krova, garažna vrata, broj stupova…)
 js/scene.js       Three.js 3D model
 js/elevation.js   nacrt pročelja (SVG) s kotama
-js/materials.js   popis materijala
+js/materials.js   popis materijala, cement i šljunak, okvirne cijene
 js/gallery.js     galerija slika
 js/main.js        povezivanje kontrola, modela, nacrta i popisa
 galerija/         slike (+ sličice *-t.jpg)

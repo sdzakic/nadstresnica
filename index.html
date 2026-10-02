@@ -7,7 +7,7 @@
 <title>Nadstrešnica br. 7</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,500;112,700;100,400;100,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=25">
+<link rel="stylesheet" href="css/style.css?v=27">
 </head>
 <body>
 <div class="wrap">
@@ -180,12 +180,17 @@
   <section>
     <div class="sec-head">
       <h2>Popis materijala</h2>
-      <p>Količine se računaju iz trenutnih mjera, visine krova i odabranog krovnog panela. Služe kao orijentacija za ponude; cijene nisu uključene.</p>
+      <p>Količine se računaju iz trenutnih mjera, visine krova i odabranog krovnog panela. Služe kao orijentacija za ponude. Jedinične cijene su okvirne maloprodajne cijene s PDV-om iz hrvatskih web trgovina (jesen 2026.), bez rada i dostave; svaku možeš prepisati svojom iz ponude i zbroj se odmah preračuna. Tvoje cijene pamti ovaj preglednik.</p>
+    </div>
+    <div class="bom-opts">
+      <label class="chk"><input type="checkbox" id="in-slab" checked> Radi se i betonska ploča ispod nadstrešnice</label>
+      <label class="mix">Omjer betona, cement : šljunak = 1 : <input type="text" inputmode="decimal" id="in-mix" value="3" aria-label="Dijelova šljunka na jedan dio cementa"></label>
+      <span class="bom-sum">Ukupno: <b id="bom-sum">—</b></span>
     </div>
     <div class="bom-wrap">
       <table class="bom" id="bom"></table>
     </div>
-    <div><button id="bom-copy" class="btn">Kopiraj popis</button></div>
+    <div class="bom-btns"><button id="bom-copy" class="btn">Kopiraj popis</button><button id="price-reset" class="btn">Vrati zadane cijene</button></div>
   </section>
 
   <section>
@@ -269,13 +274,13 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="js/config.js?v=25"></script>
-<script src="js/statics.js?v=25"></script>
-<script src="js/scene.js?v=25"></script>
-<script src="js/elevation.js?v=25"></script>
-<script src="js/drawings.js?v=25"></script>
-<script src="js/materials.js?v=25"></script>
-<script src="js/gallery.js?v=25"></script>
-<script src="js/main.js?v=25"></script>
+<script src="js/config.js?v=27"></script>
+<script src="js/statics.js?v=27"></script>
+<script src="js/scene.js?v=27"></script>
+<script src="js/elevation.js?v=27"></script>
+<script src="js/drawings.js?v=27"></script>
+<script src="js/materials.js?v=27"></script>
+<script src="js/gallery.js?v=27"></script>
+<script src="js/main.js?v=27"></script>
 </body>
 </html>
