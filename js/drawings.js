@@ -250,7 +250,14 @@ window.N7 = window.N7 || {};
     b += rect(X(W - 0.1), Y(HL - 0.02 - d.beamDepth), 10, (HL - 0.07 - d.beamDepth) * S, 'fill="#333"');
     b += rect(X(W - 0.15), Y(0.05), 20, 3, 'fill="#111"');
     const rh = d.rafterH;
-    b += `<polygon points="${X(0)},${Y(HH)} ${X(W)},${Y(HL)} ${X(W)},${Y(HL - rh)} ${X(0)},${Y(HH - rh)}" fill="#6b6f72"/>`;
+    const tr = d.st.rafter.s.truss;
+    if (tr) { // lattice rafter beyond the cut: top chord, level bottom tube and the zig-zag web
+      const tv = tr.top.h / 1000 * d.slopeLen / W, rt = d.rt;
+      b += `<polygon points="${X(0)},${Y(HH)} ${X(W)},${Y(HL)} ${X(W)},${Y(HL - tv)} ${X(0)},${Y(HH - tv)}" fill="#6b6f72"/>`;
+      b += rect(X(0.02), Y(rt.botTop), (W - 0.12) * S, (rt.botTop - rt.yB) * S, 'fill="#6b6f72"');
+      b += rt.web.map(([xa, ya, xb, yb]) => `<line x1="${X(xa)}" y1="${Y(ya)}" x2="${X(xb)}" y2="${Y(yb)}" stroke="#6b6f72" stroke-width="${Math.max(1.5, tr.web.b / 10)}"/>`).join('');
+      b += dimV(X(0.25), Y(rt.yB), Y(HH - 0.0), f(rt.hWall), { cls: 's' });
+    } else b += `<polygon points="${X(0)},${Y(HH)} ${X(W)},${Y(HL)} ${X(W)},${Y(HL - rh)} ${X(0)},${Y(HH - rh)}" fill="#6b6f72"/>`;
     if (d.st.purlin) { // purlins cut by the section, flush with the rafter top
       const ph = d.st.purlin.s.h / 1000, pb = d.st.purlin.s.b / 1000;
       for (let k = 1; k <= d.st.nPurlins; k++) { const x = k * W / d.st.nSpans; b += rect(X(x - pb / 2), Y(roofY(x)), pb * S, ph * S, 'fill="#111"'); }
@@ -264,14 +271,14 @@ window.N7 = window.N7 || {};
     b += rect(X(-0.02), Y(HH + T + 0.12), 10, 12, 'fill="#111"');
     const gy = Y(roofY(x1) - 0.02);
     b += `<path d="M${X(x1 + 0.04) - 7.5} ${gy} a7.5 7.5 0 0 0 15 0" class="ln" stroke-width="3"/>`;
-    b += rect(X(post.x0), Y(roofY(post.x1) - d.rafterH), 10, (roofY(post.x1) - d.rafterH) * S, 'class="ln thin dash" fill="none"');
+    b += rect(X(post.x0), Y(d.underAt(post.x1)), 10, d.underAt(post.x1) * S, 'class="ln thin dash" fill="none"');
 
     // labels along the roof
     const ang = -Math.atan2(HH - HL, W) * 180 / Math.PI;
     const mx = X(W * 0.45), my = Y(roofY(W * 0.45) + T) - 16;
     b += `<text x="${mx}" y="${my}" text-anchor="middle" class="t" transform="rotate(${ang} ${mx} ${my})">pad ${N7.fmt(d.pitchDeg, 1)}° (${Math.round(d.pitchPct)} %) · panel ${f(d.slopeLen + oh)} m</text>`;
-    const rx = X(W * 0.3), ry = Y(roofY(W * 0.3) - rh) + 34;
-    b += `<text x="${rx}" y="${ry}" text-anchor="middle" class="s" transform="rotate(${ang} ${rx} ${ry})">rog ${d.st.rafter.s.name} · ${f(d.slopeLen)} m${d.st.purlin ? ` · ${d.st.nPurlins} podrožnice ${d.st.purlin.s.name}` : ''}</text>`;
+    const rx = tr ? X(W * 0.5) : X(W * 0.3), ry = tr ? Y(d.rt.yB) + 18 : Y(roofY(W * 0.3) - rh) + 34;
+    b += tr ? `<text x="${rx}" y="${ry}" text-anchor="middle" class="s">rog: ${d.st.rafter.s.name}</text><text x="${rx}" y="${ry + 15}" text-anchor="middle" class="s">${tr.top.name} / ${tr.bot.name} / zmija ${tr.web.name}${d.st.purlin ? ` · podrožnice ${d.st.purlin.s.name}` : ''}</text>` : `<text x="${rx}" y="${ry}" text-anchor="middle" class="s" transform="rotate(${ang} ${rx} ${ry})">rog ${d.st.rafter.s.name} · ${f(d.slopeLen)} m${d.st.purlin ? ` · ${d.st.nPurlins} podrožnice ${d.st.purlin.s.name}` : ''}</text>`;
 
     // dimensions
     const yb = G + 1.05 * S, yb2 = yb + 45;
@@ -280,9 +287,9 @@ window.N7 = window.N7 || {};
     b += dimH(X(0), X(WL), yb2, f(WL), { ext: G });
     b += dimV(X(-1.2), G, Y(HH), f(HH), { ext: X(0) });
     b += dimV(X(WL + 1.5), G, Y(HL), f(HL), { right: true, ext: X(W) });
-    const clear = roofY(post.x0) - d.rafterH;
+    const clear = d.underAt(post.x0);
     b += dimV(X(post.x0) - 16, G, Y(clear), f(clear), { cls: 's' });
-    b += txt(X(post.x0) - 26, Y(clear * 0.62), 'slobodno ispod roga', 's', 'end');
+    b += txt(X(post.x0) - 26, Y(clear * 0.62), tr ? 'slobodno ispod rešetke' : 'slobodno ispod roga', 's', 'end');
     b += dimV(X(W + 0.3), G, G + 80, '0,80', { right: true, cls: 's' });
 
     el.innerHTML = wrap('sc', vb, b, 'Poprečni presjek A–A s kotama');

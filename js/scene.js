@@ -322,8 +322,20 @@ window.N7 = window.N7 || {};
       B(0, 0.1, HH - 0.15, HH, -D, 0, steel);              // wall ledger
       B(-0.02, 0.08, HH + T, HH + T + 0.12, -D - 0.1, 0.14, trim); // wall flashing
 
-      const rh = d.rafterH, rw = d.st.rafter.s.b / 1000;
-      d.rafterZ.forEach(z => slopeX(0, HH - rh / 2, W, HL - rh / 2, z - rw / 2, z + rw / 2, rh, steel));
+      const tr = d.st.rafter.s.truss;
+      if (tr) {
+        // lattice rafters: sloping top chord, level bottom tube, zig-zag web; one longitudinal tie at mid-span
+        const th = tr.top.h / 1000, tb = tr.top.b / 1000, tv = th * Math.hypot(W, HH - HL) / W, bh = tr.bot.h / 1000, bb = tr.bot.b / 1000, ww = tr.web.b / 1000, rt = d.rt;
+        d.rafterZ.forEach(z => {
+          slopeX(0, HH - tv / 2, W, HL - tv / 2, z - tb / 2, z + tb / 2, th, steel);
+          B(0.02, W - 0.1, rt.yB, rt.botTop, z - bb / 2, z + bb / 2, steel);
+          rt.web.forEach(([xa, ya, xb, yb]) => slopeX(xa, ya, xb, yb, z - ww / 2, z + ww / 2, ww, steel));
+        });
+        B(W / 2 - bb / 2, W / 2 + bb / 2, rt.yB, rt.botTop, d.rafterZ[d.rafterZ.length - 1], d.rafterZ[0], steel);
+      } else {
+        const rh = d.rafterH, rw = d.st.rafter.s.b / 1000;
+        d.rafterZ.forEach(z => slopeX(0, HH - rh / 2, W, HL - rh / 2, z - rw / 2, z + rw / 2, rh, steel));
+      }
       // purlins across the rafters, flush with their top, at the spacing the roof panel needs
       if (d.st.purlin) {
         const ph = d.st.purlin.s.h / 1000, pb = d.st.purlin.s.b / 1000;

@@ -27,7 +27,12 @@ window.N7 = window.N7 || {};
   const BEAM_TRUSS_DEPTHS = [300, 350, 400, 450, 500];
   const CHORDS = [rhs(40, 40, 3), rhs(50, 50, 3), rhs(60, 60, 3), rhs(60, 60, 4), rhs(80, 80, 4), rhs(100, 100, 4)];
   const BARS = [12, 14, 16, 20];
-  function roundBar(d) { const A = Math.PI * d * d / 4; return { d, A, i: d / 4, kg: A * 7.85e-3 }; }
+  function roundBar(d) { const A = Math.PI * d * d / 4; return { d, A, i: d / 4, kg: A * 7.85e-3, name: `Ø${d}`, h: d, b: d, round: true }; }
+  // lattice rafter with a level bottom tube: outer depth at the low end, chords and web members
+  const RT_END = [0.15, 0.20, 0.25, 0.30];
+  const RT_TOP = [rhs(50, 50, 3), rhs(60, 60, 3), rhs(60, 60, 4), rhs(80, 80, 4)];
+  const RT_BOT = [rhs(40, 40, 2), rhs(40, 40, 3), rhs(50, 50, 3), rhs(60, 60, 3), rhs(60, 60, 4)];
+  const RT_WEB = [12, 14, 16, 20].map(roundBar).concat([rhs(30, 30, 2), rhs(40, 40, 2), rhs(40, 40, 3), rhs(50, 50, 3)]);
   function chi(lam) { const phi = 0.5 * (1 + 0.49 * (lam - 0.2) + lam * lam); return Math.min(1, 1 / (phi + Math.sqrt(phi * phi - lam * lam))); }
   // check one truss for the bending moment, end shear and deflection of the rafter; Lout = purlin spacing (top chord bracing)
   function checkTruss(h, ch, bar, M, V, deflPerEI, L, Lout) {
@@ -66,11 +71,74 @@ window.N7 = window.N7 || {};
     return { chi, Nb, u: N_Ed / Nb, lam };
   }
 
+  // Geometry of a lattice rafter with a level bottom tube (m): the sloping top chord is the rafter, the bottom tube
+  // runs level at the height of the low end, and one zig-zag web connects them; the truss is deepest at the house.
+  // Top nodes sit at every purlin. Shared by the static check, the 3D model and the drawings.
+  N7.rafterTrussGeom = function (W, HH, HL, tr) {
+    const drop = HH - HL, cosA = W / Math.hypot(W, drop), roofY = x => HH - drop * x / W;
+    const th = tr.top.h / 1000 / cosA, bh = tr.bot.h / 1000;
+    const yB = HL - tr.de, botTop = yB + bh;
+    const topU = x => roofY(x) - th;
+    const he = x => roofY(x) - th / 2 - (yB + bh / 2);         // distance between the chord axes
+    const n = 2 * tr.nP, xs = [];
+    for (let k = 0; k <= n; k++) xs.push(k === 0 ? 0.05 : k === n ? W - 0.05 : k * W / n);
+    const pt = k => [xs[k], k % 2 ? botTop : topU(xs[k])];
+    const web = [[xs[0], botTop, xs[0], topU(xs[0])], [xs[n], botTop, xs[n], topU(xs[n])]];
+    for (let k = 0; k < n; k++) web.push([...pt(k), ...pt(k + 1)]);
+    const webLen = web.reduce((a, [x1, y1, x2, y2]) => a + Math.hypot(x2 - x1, y2 - y1), 0);
+    return { yB, botTop, topU, he, web, webLen, p2: W / n, hWall: roofY(0) - yB };
+  };
+
+  // choose the shallowest end depth that works, then the lightest chords and web for it
+  function pickRafterTruss(c, L, rafterLoads, nSpans, a, wUp, sR) {
+    let best = null, last = null;
+    for (const de of RT_END) {
+      for (const top of RT_TOP) for (const bot of RT_BOT) for (const web of RT_WEB) {
+        const g0 = N7.rafterTrussGeom(L, c.HH, c.HL, { de, top, bot, nP: nSpans });
+        const k = Math.max(1, Math.round(L / nSpans / (1.5 * g0.he(L / 2))));
+        const tr = { de, top, bot, web, nP: nSpans * k };
+        const g = k === 1 ? g0 : N7.rafterTrussGeom(L, c.HH, c.HL, tr);
+        if (g.he(L) < 0.04) continue;
+        const kg = top.kg * c.slopeLen + bot.kg * (L - 0.1) + web.kg * g.webLen;
+        const rl = rafterLoads(kg / c.slopeLen);
+        // chord forces from the moment over the varying depth
+        let N = 0, Nup = 0;
+        const up = Math.max(0, 1.5 * wUp - 1.0 * rl.g) * sR;
+        for (let i = 1; i < 40; i++) {
+          const x = i * L / 40, he = g.he(x);
+          const M = (rl.Rwall * x - rl.qdEnd * x * x / 2 - rl.qdTri * (x * x / 2 - x ** 3 / (6 * L)));
+          N = Math.max(N, M / he); Nup = Math.max(Nup, up * x * (L - x) / 2 / he);
+        }
+        const cosA = L / c.slopeLen;
+        const LcrTop = Math.max(2 * g.p2 / cosA, a) * 1000;    // between nodes in plane, between purlins out of plane
+        const uC = N * 1000 / (chi(LcrTop / top.i / 93.9) * top.A * FY);
+        const uT = N * 1000 / (bot.A * FY);
+        // wind uplift turns the bottom tube into a strut; one longitudinal tie holds it at mid-span
+        const uB = Nup * 1000 / (chi(L / 2 * 1000 / bot.i / 93.9) * bot.A * FY);
+        const diag = (V, he) => { const ld = Math.hypot(g.p2, he); return V * ld / he * 1000 / (chi(ld * 1000 / web.i / 93.9) * web.A * FY); };
+        const uD = Math.max(diag(rl.Rwall, g.he(0.05)), diag(rl.Rbeam, g.he(L - 0.05)));
+        const he = g.he(0.55 * L) * 1000, I = top.A * bot.A / (top.A + bot.A) * he * he;
+        const w = rl.defl / (E * I) * 1000 * 1.15;            // +15 % for shear deformation of the lattice
+        const uW = w / (L * 1000 / 200);
+        const r = {
+          s: { name: `rešetka (zmija) ${Math.round(g.hWall * 100)}–${Math.round(de * 100)} cm`, h: de * 1000, b: top.b, kg: kg / c.slopeLen, truss: Object.assign(tr, { kg, webLen: g.webLen, hWall: g.hWall }) },
+          uM: Math.max(uC, uT, uB), uC, uT, uB, uD, uW, w, N, Nup, rl
+        };
+        last = r;
+        if (Math.max(uC, uT, uB, uD, uW) <= 1 && (!best || kg < best.s.truss.kg)) best = r;
+      }
+      if (best) break;
+    }
+    const r = best || Object.assign(last, { fail: true });
+    return { rafter: r, rl: r.rl };
+  }
+
   // c: { HH, HL, W, D, slopeLen, pitchDeg, sideZ, nRafters, roof, sk, qp, houseEave, houseRoofRun }
   N7.statics = function (c) {
     const roof = ROOFS[c.roof] || ROOFS.sandwich;
     const L = c.W;                                   // rafter span (horizontal projection)
-    const sR = c.D / (c.nRafters - 1);               // rafter spacing
+    // rafter spacing; when the rafters skip the house side door the widest gap governs
+    const sR = c.rafterZ ? Math.max(...c.rafterZ.slice(1).map((z, i) => c.rafterZ[i] - z)) : c.D / (c.nRafters - 1);
     const gm = 9.81e-3;                              // kg/m → kN/m
 
     // ---------- snow: μ1 on the canopy plus drift against the taller house wall (EN 1991-1-3, 5.3.6)
@@ -123,7 +191,8 @@ window.N7 = window.N7 || {};
       };
     }
     let rafter = null, rl = null;
-    for (const s of RAFTERS) { // self weight depends on the section, so check each one with its own weight
+    if (c.rafterType === 'truss') ({ rafter, rl } = pickRafterTruss(c, L, rafterLoads, nSpans, a, wUp, sR));
+    else for (const s of RAFTERS) { // self weight depends on the section, so check each one with its own weight
       rl = rafterLoads(s.kg);
       const r = pickBeam([s], rl.M, rl.defl, L);
       if (!r.fail) { rafter = r; break; }
@@ -175,7 +244,7 @@ window.N7 = window.N7 || {};
 
     const fail = [purlin, rafter, beam].some(r => r && r.fail) || post.fail;
     return {
-      roof, sk: c.sk, qp: c.qp, mu1, s1, muW, ls, sWall, sEnd, h, wUp, netUp, beamType: c.beamType || 'box', purlinType: c.purlinType || 'cont',
+      roof, sk: c.sk, qp: c.qp, rafterType: c.rafterType || 'box', mu1, s1, muW, ls, sWall, sEnd, h, wUp, netUp, beamType: c.beamType || 'box', purlinType: c.purlinType || 'cont',
       spanAllow, nSpans, nPurlins, a, sR, purlin, rafter, rl, Lb, wb, beam, N, post,
       anchorStep, Vwall, Twall, Vanchor: Vwall * anchorStep, Tanchor: Twall * anchorStep, Tpost, footing, fail
     };
@@ -200,7 +269,9 @@ window.N7 = window.N7 || {};
     const rows = [];
     rows.push(['Razmak podrožnica', `${f(st.a)} m (${st.nPurlins} kom)`, `dozvoljeni raspon panela ≈ ${f(st.spanAllow)} m uz ${f(st.roof.g + st.sWall)} kN/m²`, 'ok']);
     if (st.purlin) rows.push([`Podrožnice ${st.purlin.s.name}`, `savijanje ${pct(st.purlin.uM)} · progib ${pct(st.purlin.uW)}`, `${st.purlin.cont ? 'kontinuirane preko svih rogova' : 'po poljima'}, raspon ${f(st.sR)} m između rogova`, st.purlin.fail ? 'fail' : 'ok']);
-    rows.push([`Rogovi ${st.rafter.s.name}`, `savijanje ${pct(st.rafter.uM)} · progib ${pct(st.rafter.uW)}`, `raspon ${f(d.W)} m, razmak ${f(st.sR)} m, M = ${f(st.rl.M, 1)} kNm, progib ${Math.round(st.rafter.w)} mm (dop. ${Math.round(d.W * 1000 / 200)})`, st.rafter.fail ? 'fail' : 'ok']);
+    const tr = st.rafter.s.truss;
+    if (tr) rows.push([`Rogovi: ${st.rafter.s.name}`, `gornja ${pct(st.rafter.uC)} · donja ${pct(Math.max(st.rafter.uT, st.rafter.uB))} · zmija ${pct(st.rafter.uD)} · progib ${pct(st.rafter.uW)}`, `pojasnice ${tr.top.name} / ${tr.bot.name}, zmija ${tr.web.name}; sila u pojasnicama ${kN(st.rafter.N)}, kod podizanja vjetrom ${kN(st.rafter.Nup)} tlaka u donjoj cijevi; progib ${Math.round(st.rafter.w)} mm (dop. ${Math.round(d.W * 1000 / 200)}); ≈ ${Math.round(tr.kg)} kg po rogu`, st.rafter.fail ? 'fail' : 'ok']);
+    else rows.push([`Rogovi ${st.rafter.s.name}`, `savijanje ${pct(st.rafter.uM)} · progib ${pct(st.rafter.uW)}`, `raspon ${f(d.W)} m, razmak ${f(st.sR)} m, M = ${f(st.rl.M, 1)} kNm, progib ${Math.round(st.rafter.w)} mm (dop. ${Math.round(d.W * 1000 / 200)})`, st.rafter.fail ? 'fail' : 'ok']);
     if (st.beam.s.truss) rows.push([`Bočna greda: ${st.beam.s.name}`, `pojasnice ${pct(st.beam.uM)} · zmija ${pct(st.beam.uD)} · progib ${pct(st.beam.uW)}`, `jedan raspon ${f(st.Lb)} m na 2 kutna stupa, opterećenje ${f(st.wb)} kN/m, ${f(st.beam.s.kg, 1)} kg/m`, st.beam.fail ? 'fail' : 'ok']);
     else rows.push([`Bočna greda ${st.beam.s.name}`, `savijanje ${pct(st.beam.uM)} · progib ${pct(st.beam.uW)}`, `raspon ${f(st.Lb)} m, opterećenje ${f(st.wb)} kN/m`, st.beam.fail ? 'fail' : 'ok']);
     rows.push([`Stupovi ${st.post.s.name}`, `izvijanje ${pct(st.post.u)}`, `N = ${kN(st.N)}, duljina izvijanja ${f(d.HL)} m, χ = ${f(st.post.chi)}`, st.post.fail ? 'fail' : 'ok']);

@@ -92,7 +92,7 @@
     const st = d.st;
     $('st-summary').innerHTML = st.fail
       ? '<b>Neki element ne prolazi</b> ni s najvećim profilom iz popisa. Smanji razmak rogova ili pitaj statičara.'
-      : `S ovim mjerama nosivi elementi prolaze uz rogove <b>${st.rafter.s.name}</b>${st.purlin ? `, ${st.nPurlins} podrožnice <b>${st.purlin.s.name}</b>` : ''}, bočnu gredu <b>${st.beam.s.name}</b> i stupove <b>${st.post.s.name}</b>. Najveće iskorištenje: ${Math.round(Math.max(st.rafter.uM, st.rafter.uW) * 100)} % (rogovi).`;
+      : `S ovim mjerama nosivi elementi prolaze uz rogove <b>${st.rafter.s.name}</b>${st.purlin ? `, ${st.nPurlins} podrožnice <b>${st.purlin.s.name}</b>` : ''}, bočnu gredu <b>${st.beam.s.name}</b> i stupove <b>${st.post.s.name}</b>. Najveće iskorištenje: ${Math.round(Math.max(st.rafter.uM, st.rafter.uW, st.rafter.uD || 0) * 100)} % (rogovi).`;
   }
   function renderPrint(groups, stGroups) {
     N7.renderElevation($('ps-front'), d, 'pf', look);
@@ -130,7 +130,7 @@
     const b = e.target.closest('button'); if (!b) return;
     const from = d.HL; p.mode = b.dataset.v; p.HL = N7.resolveHL(p); animateHL(from, p.HL);
   });
-  [['o-view', v => scene.setFrameOnly(v === 'steel')], ['o-roof', v => { p.roof = v; scene.setRoof(v); refresh(); }], ['o-beam', v => { p.beamType = v; refresh(); }], ['o-purlin', v => { p.purlinType = v; refresh(); }]].forEach(([id, fn]) => {
+  [['o-view', v => scene.setFrameOnly(v === 'steel')], ['o-roof', v => { p.roof = v; scene.setRoof(v); refresh(); }], ['o-beam', v => { p.beamType = v; refresh(); }], ['o-purlin', v => { p.purlinType = v; refresh(); }], ['o-rafter', v => { p.rafterType = v; refresh(); }], ['o-skip', v => { p.skipDoor = v === 'skip'; refresh(); }]].forEach(([id, fn]) => {
     const g = $(id);
     g.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; pressed(g, b.dataset.v); fn(b.dataset.v); });
   });

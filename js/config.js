@@ -36,7 +36,7 @@ window.N7 = window.N7 || {};
   };
 
   const MEASURED = { HH: 3.18, D: 7.8, WL: 5.41, gap: 0.50 };
-  const DEFAULTS = Object.assign({ mode: 'high', HL: 2.70, GW: FIX.garage.w, gx: null, roof: 'sandwich', sk: 1.25, qp: 0.50, doorH: 2.10, parapet: false, beamType: 'box', purlinType: 'cont' }, MEASURED); // gx null = as far from the entrance as possible
+  const DEFAULTS = Object.assign({ mode: 'high', HL: 2.70, GW: FIX.garage.w, gx: null, roof: 'sandwich', sk: 1.25, qp: 0.50, doorH: 2.10, parapet: false, beamType: 'box', purlinType: 'cont', rafterType: 'box', skipDoor: false }, MEASURED); // gx null = as far from the entrance as possible
 
   const fmt = (n, dec = 2) => n.toFixed(dec).replace('.', ',');
   const floorTo = (v, step) => Math.floor(v / step + 1e-6) * step;
@@ -68,19 +68,28 @@ window.N7 = window.N7 || {};
     const slopeLen = Math.hypot(W, drop);
     // a lattice side beam spans the whole length on the two corner posts
     const nSide = p.beamType === 'truss' ? 2 : Math.ceil(p.D / FIX.sidePostMaxSpacing) + 1;
-    const nRafters = Math.ceil(p.D / FIX.rafterMaxSpacing[p.purlinType === 'simple' ? 'simple' : 'cont']) + 1;
+    // rafters evenly spread, or one on each side of the house side door with even spacing in between
+    const maxSp = FIX.rafterMaxSpacing[p.purlinType === 'simple' ? 'simple' : 'cont'];
+    const seg = (a, b) => spread(Math.ceil((a - b) / maxSp - 1e-6) + 1, a, b);
+    const zA = -0.04, zB = -p.D + 0.04, sd = FIX.sideDoor, rClear = 0.13; // half a rafter + 8 cm from the door frame
+    const doorSkip = !!p.skipDoor && sd.z1 + rClear < zA - 0.3 && sd.z0 - rClear > zB + 0.3;
+    const rafterZ = doorSkip ? seg(zA, sd.z1 + rClear).concat(seg(sd.z0 - rClear, zB)) : seg(zA, zB);
+    const nRafters = rafterZ.length;
     const sideZ = spread(nSide, -0.05, -p.D + 0.05);
 
     // static check first: it picks the rafter section, whose depth sets the headroom under the roof
-    const st = N7.statics({ HH, HL, W, D: p.D, slopeLen, pitchDeg, sideZ, nRafters, roof: p.roof || 'sandwich', beamType: p.beamType || 'box', purlinType: p.purlinType || 'cont', sk: p.sk, qp: p.qp, houseEave: FIX.houseEave, houseRoofRun: FIX.houseRoofRun });
+    const st = N7.statics({ HH, HL, W, D: p.D, slopeLen, pitchDeg, sideZ, nRafters, rafterZ, rafterType: p.rafterType || 'box', roof: p.roof || 'sandwich', beamType: p.beamType || 'box', purlinType: p.purlinType || 'cont', sk: p.sk, qp: p.qp, houseEave: FIX.houseEave, houseRoofRun: FIX.houseRoofRun });
     const rafterH = st.rafter.s.h / 1000;
+    // underside of the rafters: a lattice rafter has its level bottom tube there, a box rafter follows the slope
+    const tr = st.rafter.s.truss, rt = tr ? N7.rafterTrussGeom(W, HH, HL, tr) : null;
+    const underAt = x => rt ? rt.yB : roofY(x) - rafterH;
 
     // garage door hangs between a post on its left and either the corner post by the neighbour
     // (when the roof there still leaves at least 2,10 m of door) or its own post on the right
     const GW = p.GW, pw = FIX.postW;
     const minH = FIX.garage.minH;
     const doorH = xr => {
-      const under = roofY(xr) - rafterH;
+      const under = underAt(xr);
       const std = floorTo(under - FIX.headroomStd, 0.05);
       if (std >= minH) return { GH: Math.min(FIX.garage.maxH, std), low: false };
       return { GH: Math.min(minH, floorTo(under - FIX.headroomLow, 0.05)), low: true };
@@ -97,7 +106,7 @@ window.N7 = window.N7 || {};
       attached = gx >= gxMax - 1e-6;
     } else {
       const needY = minH + rafterH + FIX.headroomLow;
-      const xrRoof = drop > 0 ? (HH - needY) * W / drop : W;
+      const xrRoof = rt ? (rt.yB + rafterH >= needY ? W : 0) : drop > 0 ? (HH - needY) * W / drop : W;
       xrMax = Math.min(W - FIX.cornerClear - pw, xrRoof);
       gxMax = Math.max(gxMin, xrMax - GW);
       gx = Math.min(gxMax, Math.max(gxMin, p.gx == null ? gxMax : p.gx));
@@ -113,7 +122,7 @@ window.N7 = window.N7 || {};
     // posts on the pročelje, all up to the underside of the front rafter
     const dr = FIX.door;
     // entrance door height, limited by the lintel under the front rafter
-    const topAt = x => roofY(x) - rafterH;
+    const topAt = underAt;
     const doorMax = floorTo(topAt(dr.x1 + pw) - 0.08 - 0.02, 0.05);
     const entryH = Math.min(p.doorH || dr.h, doorMax);
     const intercomX = (dr.x1 + pw + gx - pw) / 2; // intercom + house number, centred on the sheet between the posts
@@ -154,20 +163,22 @@ window.N7 = window.N7 || {};
     const warnings = [];
     if (drop <= 0) warnings.push('Kraj krova mora biti niži od visine uz kuću.');
     else if (pitchDeg < FIX.minPitchDeg - 0.05) warnings.push('Pad je manji od 5°, što je premalo za sendvič panel.');
-    if (GH < minH - 0.001) warnings.push(`Garažna vrata od ${fmt(GW)} m ne stanu uz visinu od 2,00 m. Suzi ih na najviše ${fmt(Math.max(0, floorTo(xrMax - gxMin, 0.05)))} m ili podigni kraj krova.`);
+    const gwFit = floorTo(xrMax - gxMin, 0.05);
+    if (GH < minH - 0.001) warnings.push(gwFit >= FIX.garage.minW ? `Garažna vrata od ${fmt(GW)} m ne stanu uz visinu od 2,00 m. Suzi ih na najviše ${fmt(gwFit)} m ili podigni kraj krova.` : 'Uz ovu visinu krova garažna vrata ne mogu biti visoka 2,00 m. Podigni kraj krova.');
     if ((p.doorH || dr.h) > doorMax + 1e-6) warnings.push(`Ulazna vrata mogu biti visoka najviše ${fmt(doorMax)} m ispod nadvoja.`);
     if (fenceW < 0.25 - 1e-6) warnings.push('Za ogradu ostaje manje od 25 cm. Proširi širinu do susjeda.');
     if (p.D > FIX.houseLen + 0.001) warnings.push('Nadstrešnica je duža od bočnog zida kuće (7,80 m).');
     if (HH > 3.30) warnings.push('Iznad postojećih nosača (3,18 m) uz kuću je prozor od staklene opeke.');
     if (p.roof === 'trap' && pitchDeg < FIX.trapMinPitchDeg) warnings.push(`Pad ${fmt(pitchDeg, 1)}° je premalen za trapezni lim (treba barem 8°).`);
+    if (rt && rt.yB < 2.2) warnings.push(`Donja cijev rešetke rogova je na samo ${fmt(rt.yB)} m. Uz ovu visinu krova rešetka s vodoravnom donjom cijevi nema smisla.`);
+    if (rt && !doorSkip && rafterZ.some(z => z < sd.z1 + 0.06 && z > sd.z0 - 0.06)) warnings.push(`Jedna rešetka roga pada točno na bočna vrata kuće: donja cijev je na ${fmt(rt.yB)} m, a vrh vrata na ${fmt(sd.y1)} m. Uključi "Zaobiđi bočna vrata".`);
     if (st.fail) warnings.push('Statički proračun: neki element ne prolazi ni s najvećim profilom iz popisa.');
 
     return {
       HH, HL, D: p.D, WL: p.WL, gap: p.gap, W, drop, roofY, pitchDeg, pitchPct: drop / W * 100, slopeLen,
       intercomX, GW, gx, gxMin, gxMax, gRight, attached, post, frontPosts, GH, lowHeadroom, tail, fenceW, front,
       st, rafterH, beamDepth, doorH: entryH, doorMax, parapet: !!p.parapet, roof: p.roof || 'sandwich',
-      nSide, sideZ,
-      nRafters, rafterZ: spread(nRafters, -0.04, -p.D + 0.04),
+      nSide, sideZ, nRafters, rafterZ, doorSkip, underAt, rt,
       warnings, FIX
     };
   }

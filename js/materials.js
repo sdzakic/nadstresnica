@@ -51,12 +51,15 @@ window.N7 = window.N7 || {};
     const posts100 = d.nSide * sidePostL + frontSum + lintelDoor + lintelGar;
     const kgPost = st.post.s.kg, kgFront = 11.7, kgBeam = st.beam.s.kg, kgRafter = st.rafter.s.kg;
     const purlinM = st.purlin ? st.nPurlins * d.D : 0;
-    const steelKg = d.nSide * sidePostL * kgPost + (frontSum + lintelDoor + lintelGar) * kgFront + d.nRafters * rafterL * kgRafter
+    const tr = st.rafter.s.truss, botL = up(d.W - 0.12);
+    const rafterKg = tr ? d.nRafters * tr.kg + d.D * tr.bot.kg : d.nRafters * rafterL * kgRafter;
+    const steelKg = d.nSide * sidePostL * kgPost + (frontSum + lintelDoor + lintelGar) * kgFront + rafterKg
       + d.D * kgBeam + d.D * 14.9 + fencePostL * KG.p80 + plates * 3.1 + (st.purlin ? purlinM * st.purlin.s.kg : 0);
     const perim = s_ => 2 * (s_.h + s_.b) / 1000;
     const rafterPerim = perim(st.rafter.s);
     const bt = st.beam.s.truss, beamPerim = bt ? 2 * perim(bt.chord) + Math.SQRT2 * Math.PI * bt.bar.d / 1000 : perim(st.beam.s);
-    const paintArea = d.nSide * sidePostL * perim(st.post.s) + (frontSum + lintelDoor + lintelGar) * 0.4 + d.nRafters * rafterL * rafterPerim
+    const rafterPaint = tr ? d.nRafters * (rafterL * perim(tr.top) + botL * perim(tr.bot) + tr.webLen * (tr.web.round ? Math.PI * tr.web.h / 1000 : perim(tr.web))) + d.D * perim(tr.bot) : d.nRafters * rafterL * rafterPerim;
+    const paintArea = d.nSide * sidePostL * perim(st.post.s) + (frontSum + lintelDoor + lintelGar) * 0.4 + rafterPaint
       + d.D * beamPerim + d.D * 0.5 + fencePostL * 0.32 + (st.purlin ? purlinM * perim(st.purlin.s) : 0);
     const nChem = Math.ceil(d.D / st.anchorStep) + 1;
     const diagL = up(Math.hypot(d.sideZ[0] - d.sideZ[1], d.HL - 0.3));
@@ -66,7 +69,15 @@ window.N7 = window.N7 || {};
       ['Stupovi na pročelju □100×100×4', `${kom(frontL.length)}: ${frontL.map(v => f(v)).join(' + ')} m`, d.frontPosts.map(q => q.role).join(', ') + ' · svi do roga', P(FRONT, frontSum, 'm')],
       ['Nadvoji □100×100×4', `${m(lintelDoor)} + ${m(lintelGar)}`, 'iznad ulaznih i garažnih vrata', P(FRONT, lintelDoor + lintelGar, 'm')],
     ];
-    steelRows.push([`Rogovi ${st.rafter.s.name}`, `${kom(d.nRafters)} × ${m(rafterL)}`, `razmak ≈ ${f(st.sR)} m · ukupno ${m(d.nRafters * rafterL, 1)} · prema statici`, steel(st.rafter.s, d.nRafters * rafterL)]);
+    const spacing = d.doorSkip ? `razmak do ${f(st.sR)} m, zaobilaze bočna vrata kuće` : `razmak ≈ ${f(st.sR)} m`;
+    if (tr) steelRows.push(
+      [`Rogovi: ${st.rafter.s.name}`, kom(d.nRafters), `${f(tr.hWall)} m visoki uz kuću, ${f(tr.de)} m na kraju · ${spacing} · ≈ ${Math.round(tr.kg)} kg po rogu`],
+      [`  gornja pojasnica (rog) ${tr.top.name}`, `${kom(d.nRafters)} × ${m(rafterL)}`, 'kosa, nosi podrožnice u čvorovima', steel(tr.top, d.nRafters * rafterL)],
+      [`  donja cijev ${tr.bot.name}`, `${kom(d.nRafters)} × ${m(botL)}`, `vodoravna, donji rub na ${f(d.rt.yB)} m`, steel(tr.bot, d.nRafters * botL)],
+      [`  zmija ${tr.web.name}`, m(d.nRafters * tr.webLen, 1), `${2 * tr.nP} kosih štapova + 2 vertikale po rogu`, steel(tr.web, d.nRafters * tr.webLen)],
+      [`Uzdužna veza donjih cijevi ${tr.bot.name}`, m(d.D), 'na sredini raspona; drži donje cijevi kad vjetar podiže krov', steel(tr.bot, d.D)]
+    );
+    else steelRows.push([`Rogovi ${st.rafter.s.name}`, `${kom(d.nRafters)} × ${m(rafterL)}`, `${spacing} · ukupno ${m(d.nRafters * rafterL, 1)} · prema statici`, steel(st.rafter.s, d.nRafters * rafterL)]);
     if (st.purlin) steelRows.push([`Podrožnice ${st.purlin.s.name}`, `${kom(st.nPurlins)} × ${m(d.D)}`, `preko rogova, razmak ${f(st.a)} m (za ${st.roof.name.toLowerCase()})`, steel(st.purlin.s, st.nPurlins * d.D)]);
     steelRows.push(
       ...(bt ? [
