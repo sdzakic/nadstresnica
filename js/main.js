@@ -34,6 +34,7 @@
   function refresh(hl, light) {
     d = N7.derive(p, hl);
     scene.update(d);
+    stlInfo();
     N7.renderElevation($('elev'), d, 'e', look);
     $('ro-plan').textContent = f(d.WL) + ' × ' + f(d.D) + ' m';
     $('ro-hh').textContent = f(d.HH) + ' m';
@@ -134,6 +135,25 @@
     const g = $(id);
     g.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; pressed(g, b.dataset.v); fn(b.dataset.v); });
   });
+  // STL of the steel for a 3D print: the info line follows the selection, the button downloads the file
+  function stlOpts() { return { scale: +$('stl-scale').value, minMm: +$('stl-min').value, part: $('stl-part').value }; }
+  function stlInfo() {
+    const o = stlOpts(), r = scene.exportSTL(Object.assign({ dry: true }, o));
+    if (!r || !r.members) { $('stl-info').textContent = ''; return; }
+    const [x, y, z] = r.size.map(Math.round);
+    const bed = x > 220 || y > 220 || z > 250;
+    $('stl-info').textContent = `${r.members} dijelova · ${x} × ${y} × ${z} mm · najtanji dio ${N7.fmt(o.minMm, 1)} mm${bed ? (o.part === 'all' ? ' · ne stane na 220 × 220 × 250 mm: izvezi po sklopovima ili smanji mjerilo' : ' · ne stane na 220 × 220 × 250 mm: smanji mjerilo') : ''}`;
+  }
+  ['stl-scale', 'stl-min', 'stl-part'].forEach(id => $(id).addEventListener('change', stlInfo));
+  $('stl-btn').addEventListener('click', () => {
+    const o = stlOpts(), r = scene.exportSTL(o);
+    if (!r || !r.blob) return;
+    const url = URL.createObjectURL(r.blob), a = document.createElement('a');
+    a.href = url; a.download = `nadstresnica-celik-${o.part}-1-${o.scale}.stl`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    stlInfo();
+  });
+  N7._scene = scene;
   // colour pickers are drop-downs
   [['o-garage', v => { look.garage = v; scene.setGarage(v); }], ['o-fence', v => { look.sheet = v; scene.setFence(v); }], ['o-door', v => { look.door = v; scene.setDoor(v); }]].forEach(([id, fn]) => {
     $(id).addEventListener('change', e => { fn(e.target.value); refresh(); });

@@ -7,7 +7,7 @@
 <title>Nadstrešnica br. 7</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,500;112,700;100,400;100,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=28">
+<link rel="stylesheet" href="css/style.css?v=29">
 </head>
 <body>
 <div class="wrap">
@@ -46,6 +46,29 @@
         <div class="seg" id="o-view">
           <button data-v="all" aria-pressed="true">Sve</button>
           <button data-v="steel" aria-pressed="false">Samo čelična konstrukcija <small>stupovi, grede, rogovi</small></button>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-label">3D ispis čelika (STL)</div>
+        <div class="stl">
+          <select id="stl-part" class="pick" title="Koji sklop izvesti">
+            <option value="all">Cijela konstrukcija</option>
+            <option value="roof">Rogovi, podrožnice i nosač na zidu</option>
+            <option value="front">Pročelje: stupovi i nadvoji</option>
+            <option value="side">Bok uz susjeda: stupovi i greda</option>
+          </select>
+          <select id="stl-scale" class="pick" title="Mjerilo ispisa">
+            <option value="25">Mjerilo 1:25</option>
+            <option value="30">Mjerilo 1:30</option>
+            <option value="50" selected>Mjerilo 1:50</option>
+          </select>
+          <select id="stl-min" class="pick" title="Najtanji dio koji printer može ispisati">
+            <option value="1.2">Najtanji dio 1,2 mm (FDM)</option>
+            <option value="0.8">Najtanji dio 0,8 mm (FDM, fino)</option>
+            <option value="0.5">Najtanji dio 0,5 mm (resin)</option>
+          </select>
+          <button id="stl-btn" type="button">Preuzmi STL</button>
+          <div class="stl-info" id="stl-info"></div>
         </div>
       </div>
       <div class="opt">
@@ -288,13 +311,13 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="js/config.js?v=28"></script>
-<script src="js/statics.js?v=28"></script>
-<script src="js/scene.js?v=28"></script>
-<script src="js/elevation.js?v=28"></script>
-<script src="js/drawings.js?v=28"></script>
-<script src="js/materials.js?v=28"></script>
-<script src="js/gallery.js?v=28"></script>
-<script src="js/main.js?v=28"></script>
+<script src="js/config.js?v=29"></script>
+<script src="js/statics.js?v=29"></script>
+<script src="js/scene.js?v=29"></script>
+<script src="js/elevation.js?v=29"></script>
+<script src="js/drawings.js?v=29"></script>
+<script src="js/materials.js?v=29"></script>
+<script src="js/gallery.js?v=29"></script>
+<script src="js/main.js?v=29"></script>
 </body>
 </html>

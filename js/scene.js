@@ -35,8 +35,10 @@ window.N7 = window.N7 || {};
     // ---------- helpers
     function tex(w, h, draw, rx, ry) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx || 1, ry || 1); t.anisotropy = 8; return t; }
     const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: .8, metalness: 0 }, o || {}));
-    function B(x0, x1, y0, y1, z0, z1, mat, cast) { const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), mat); m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); m.castShadow = cast !== false; m.receiveShadow = true; (target || scene).add(m); return m; }
-    function slopeX(xa, ya, xb, yb, z0, z1, h, mat) { const L = Math.hypot(xb - xa, yb - ya); const m = new THREE.Mesh(new THREE.BoxGeometry(L, h, z1 - z0), mat); m.position.set((xa + xb) / 2, (ya + yb) / 2, (z0 + z1) / 2); m.rotation.z = Math.atan2(yb - ya, xb - xa); m.castShadow = m.receiveShadow = true; (target || scene).add(m); return m; }
+    // steel members remember which assembly they belong to (roof, front, side) for the STL export
+    let curPart = '';
+    function B(x0, x1, y0, y1, z0, z1, mat, cast) { const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), mat); m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); m.castShadow = cast !== false; m.receiveShadow = true; m.userData.part = curPart; (target || scene).add(m); return m; }
+    function slopeX(xa, ya, xb, yb, z0, z1, h, mat) { const L = Math.hypot(xb - xa, yb - ya); const m = new THREE.Mesh(new THREE.BoxGeometry(L, h, z1 - z0), mat); m.position.set((xa + xb) / 2, (ya + yb) / 2, (z0 + z1) / 2); m.rotation.z = Math.atan2(yb - ya, xb - xa); m.castShadow = m.receiveShadow = true; m.userData.part = curPart; (target || scene).add(m); return m; }
     function plane(w, h, mat, x, y, z, ry) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); m.position.set(x, y, z); if (ry) m.rotation.y = ry; m.receiveShadow = true; scene.add(m); return m; }
     function grain(g, w, h, base, dark, dir) {
       g.fillStyle = base; g.fillRect(0, 0, w, h); let s = 7; const r = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
@@ -319,6 +321,7 @@ window.N7 = window.N7 || {};
       B(-0.02, WL, 0.02, 0.05, -D, 0.02, floorMat, false); // concrete floor under the carport
       B(WL, WL + 8, 0, 1.25, -0.3, 0, rBrick);             // neighbour's low brick street wall, starts at the grey fence
       buildNeighbour(WL);
+      curPart = 'roof';
       B(0, 0.1, HH - 0.15, HH, -D, 0, steel);              // wall ledger
       B(-0.02, 0.08, HH + T, HH + T + 0.12, -D - 0.1, 0.14, trim); // wall flashing
 
@@ -341,6 +344,7 @@ window.N7 = window.N7 || {};
         const ph = d.st.purlin.s.h / 1000, pb = d.st.purlin.s.b / 1000;
         for (let k = 1; k <= d.st.nPurlins; k++) { const x = k * W / d.st.nSpans; B(x - pb / 2, x + pb / 2, roofY(x) - ph, roofY(x), -D, 0, steel); }
       }
+      curPart = 'side';
       const bt = d.st.beam.s.truss;
       if (bt) {
         // lattice side beam ("zmija") over the whole length, on the two corner posts
@@ -351,16 +355,18 @@ window.N7 = window.N7 || {};
         for (let k = 0; k < n; k++) {
           const za = -k * D / n, zb = -(k + 1) * D / n, ya = k % 2 ? yt - ch / 2 : yt - h + ch / 2, yb = k % 2 ? yt - h + ch / 2 : yt - ch / 2;
           const len = Math.hypot(zb - za, yb - ya), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 6), steel);
-          m.position.set(xc, (ya + yb) / 2, (za + zb) / 2); m.rotation.x = Math.atan2(zb - za, yb - ya); m.castShadow = true; dyn.add(m);
+          m.position.set(xc, (ya + yb) / 2, (za + zb) / 2); m.rotation.x = Math.atan2(zb - za, yb - ya); m.castShadow = true; m.userData.part = 'side'; dyn.add(m);
         }
       } else B(W - 0.1, W, HL - 0.14, HL - 0.02, -D, 0, steel); // side beam
       d.sideZ.forEach(z => B(W - 0.1, W, 0.05, HL - 0.02 - d.beamDepth, z - 0.05, z + 0.05, steel));
       d.sideZ.forEach(z => B(W - 0.14, W + 0.04, 0.05, 0.07, z - 0.09, z + 0.09, steel)); // base plates
       // posts on the pročelje up to the front rafter, plus lintels over the two openings
+      curPart = 'front';
       d.frontPosts.forEach(q => { B(q.x0, q.x1, 0.05, q.h, -0.1, 0, steel); B(q.x0 - 0.04, q.x1 + 0.04, 0.05, 0.07, -0.14, 0.04, steel); });
       B(FIX.door.x0 - FIX.postW, FIX.door.x1 + FIX.postW, d.doorH, d.doorH + 0.08, -0.1, 0, steel);
       doorMesh.geometry.dispose(); doorMesh.geometry = new THREE.PlaneGeometry(dw, d.doorH); doorMesh.position.y = d.doorH / 2 + 0.05;
       B(gx - FIX.postW, post.x1, GH, GH + 0.08, -0.1, 0, steel);
+      curPart = '';
       B(0, post.x1, 0.02, 0.08, 0.03, FIX.drivewayLen + 0.05, driveMat, false); // driveway
       car.position.set(gx + GW / 2, 0.05, -0.6);
 
@@ -403,6 +409,49 @@ window.N7 = window.N7 || {};
     let frameOnly = false;
     function applyFrameOnly() {
       scene.traverse(o => { if (o.isMesh) o.visible = !frameOnly || o.material === steel || o === gnd; });
+    }
+
+    // ---------- STL export of the load-bearing steel for a 3D print
+    // scale 1:N, every member at least minMm thick at print size, part: all | roof | front | side.
+    // The model is y-up in metres; the STL is z-up in millimetres, standing on the base plates.
+    function exportSTL({ scale = 50, minMm = 1.2, part = 'all', dry = false } = {}) {
+      if (!dyn) return null;
+      const k = 1000 / scale, minM = minMm / k;
+      const pts = []; let members = 0;
+      dyn.updateMatrixWorld(true);
+      dyn.traverse(o => {
+        if (!o.isMesh || o.material !== steel) return;
+        if (part !== 'all' && o.userData.part !== part) return;
+        const p = o.geometry.parameters; let g;
+        if (o.geometry.type === 'BoxGeometry') g = new THREE.BoxGeometry(Math.max(p.width, minM), Math.max(p.height, minM), Math.max(p.depth, minM));
+        else if (o.geometry.type === 'CylinderGeometry') { const r = Math.max(p.radiusTop, minM / 2); g = new THREE.CylinderGeometry(r, r, p.height, 8); }
+        else g = o.geometry.clone();
+        if (g.index) g = g.toNonIndexed();
+        g.applyMatrix4(o.matrixWorld);
+        const a = g.attributes.position.array;
+        for (let i = 0; i < a.length; i += 3) pts.push(a[i] * k, -a[i + 2] * k, a[i + 1] * k);
+        g.dispose(); members++;
+      });
+      const n = pts.length / 9;
+      const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+      for (let i = 0; i < pts.length; i += 3) for (let c = 0; c < 3; c++) { lo[c] = Math.min(lo[c], pts[i + c]); hi[c] = Math.max(hi[c], pts[i + c]); }
+      const size = members ? [hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]] : [0, 0, 0];
+      if (dry || !members) return { members, triangles: n, size, blob: null };
+      const buf = new ArrayBuffer(84 + n * 50), dv = new DataView(buf);
+      new Uint8Array(buf, 0, 80).set(new TextEncoder().encode('Nadstresnica br. 7 - celik 1:' + scale).subarray(0, 80));
+      dv.setUint32(80, n, true);
+      let off = 84;
+      for (let i = 0; i < pts.length; i += 9) {
+        const ax = pts[i] - lo[0], ay = pts[i + 1] - lo[1], az = pts[i + 2] - lo[2];
+        const bx = pts[i + 3] - lo[0], by = pts[i + 4] - lo[1], bz = pts[i + 5] - lo[2];
+        const cx = pts[i + 6] - lo[0], cy = pts[i + 7] - lo[1], cz = pts[i + 8] - lo[2];
+        const ux = bx - ax, uy = by - ay, uz = bz - az, vx = cx - ax, vy = cy - ay, vz = cz - az;
+        let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+        const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+        [nx, ny, nz, ax, ay, az, bx, by, bz, cx, cy, cz].forEach((v, j) => dv.setFloat32(off + j * 4, v, true));
+        dv.setUint16(off + 48, 0, true); off += 50;
+      }
+      return { members, triangles: n, size, blob: new Blob([buf], { type: 'model/stl' }) };
     }
 
     // ---------- views
@@ -456,6 +505,7 @@ window.N7 = window.N7 || {};
       },
       setDoor(v) { doorMat.map.dispose(); doorMat.map = doorTex(v); doorMat.needsUpdate = true; },
       setFrameOnly(v) { frameOnly = v; applyFrameOnly(); },
+      exportSTL,
       toggleDoor(key) { const st = doors[key]; st.tgt = st.tgt ? 0 : 1; if (reduce) st.cur = st.tgt; return !!st.tgt; }
     };
   };

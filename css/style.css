@@ -130,6 +130,10 @@ section{display:flex;flex-direction:column;gap:16px}
 
 .pick{width:100%;font:500 14px var(--display);padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink)}
 .pick:focus-visible{outline:2px solid var(--sage);outline-offset:2px}
+/* STL export of the steel */
+.stl{display:flex;flex-direction:column;gap:6px}
+.stl button{font:500 14px var(--display);padding:8px 10px;border:1px solid var(--ink);background:var(--chip);color:var(--ink);border-radius:4px;cursor:pointer}
+.stl-info{font:12px var(--mono);color:var(--muted);min-height:1.2em}
 
 /* bill of materials */
 .bom-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
