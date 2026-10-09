@@ -8,7 +8,8 @@ window.N7 = window.N7 || {};
 
   // styles are scoped to each drawing: <style> inside inline SVG applies to the whole page
   const STYLE = (k, id) => { const q = `#${id}-svg`; return `<style>
-    ${q} .ln{stroke:#1e1e1e;stroke-width:1.4;fill:none}
+    ${q} .ln{stroke:#1e1e1e;stroke-width:1.4}
+    ${q} .ln:not([fill]){fill:none}
     ${q} .thin{stroke-width:.8}
     ${q} .bold{stroke-width:3.2}
     ${q} .dash{stroke-dasharray:8 5}
@@ -88,7 +89,14 @@ window.N7 = window.N7 || {};
     b += txt(X(W / 2), Y(-D - 0.105) - 8, 'rub krova', 's');
     d.rafterZ.forEach(z => { b += `<line x1="${X(0.1)}" y1="${Y(z)}" x2="${X(W - 0.1)}" y2="${Y(z)}" class="ln thin dot"/>`; });
     if (d.st.purlin) for (let k = 1; k <= d.st.nPurlins; k++) { const x = k * W / d.st.nSpans; b += `<line x1="${X(x)}" y1="${Y(-D)}" x2="${X(x)}" y2="${Y(0)}" class="ln thin dash"/>`; }
-    b += rect(X(0), Y(-D), 10, D * S, 'fill="#2a2a2a"');
+    b += rect(X(d.wallX0), Y(-D), 10, D * S, 'fill="#2a2a2a"');
+    { // existing wall brackets through the insulation, with their distances from the street
+      const zs = [0, ...d.brZ.filter(z => z <= D), D], xk = X(-0.55);
+      d.brZ.forEach(z => { if (z <= D) b += rect(X(-0.15), Y(-z - 0.03), (d.wallX0 + 0.15) * S, 6, 'fill="#7b2f2a"'); });
+      for (let i = 0; i < zs.length - 1; i++) if (zs[i + 1] - zs[i] > 0.01) b += dimV(xk, Y(-zs[i]), Y(-zs[i + 1]), f(zs[i + 1] - zs[i]), { cls: 's' });
+      b += txt(xk - 22, Y(-D) - 10, 'nosači na zidu', 's', 'start');
+      if (d.st.wallPosts) d.wallPostZ.forEach(z => { b += rect(X(d.wallX0), Y(-z - 0.05), 10, 10, 'fill="#111"'); });
+    }
     b += rect(X(W - 0.1), Y(-D), 10, D * S, 'class="ln thin" fill="#fff"');
     d.sideZ.forEach(z => { b += rect(X(W - 0.1), Y(z - 0.05), 10, 10, 'fill="#111"'); });
     d.frontPosts.forEach(q => { b += rect(X(q.x0), Y(-0.1), 10, 10, 'fill="#111"'); });
@@ -177,6 +185,14 @@ window.N7 = window.N7 || {};
     b += txt(U(-0.3), Y(0.6), 'vertikala', 's', 'end');
     b += `<line x1="${U(-0.02)}" y1="${G}" x2="${U(-0.02)}" y2="${Y(d.parapet ? HH + T : HL)}" class="ln" stroke-width="4"/>`;
     b += txt(U(-0.1), Y(HL + 0.25), 'lim pročelja', 's', 'end');
+    { // existing wall brackets on the house wall (behind the roof edge) and their positions
+      const bk = FIX.bracket, yk = Y(HH + T) - 34, zs = [0, ...d.brZ.filter(z => z <= D), D];
+      d.brZ.forEach(z => { if (z <= D) b += rect(U(z - bk.plateW / 2), Y(HH), bk.plateW * S, bk.plateH * S, 'fill="#7b2f2a" stroke="#fff" stroke-width="1"'); });
+      for (let i = 0; i < zs.length - 1; i++) if (zs[i + 1] - zs[i] > 0.01) b += dimH(U(zs[i]), U(zs[i + 1]), yk, f(zs[i + 1] - zs[i]), { cls: 's' });
+      if (d.st.braces) d.brZ.forEach(z => { if (z <= D) b += rect(U(z - 0.03), Y(HH - 0.15), 6, d.st.braces.drop * S, 'fill="#666"'); });
+      if (d.st.wallPosts) d.wallPostZ.forEach(z => { b += rect(U(z - 0.05), Y(HH - 0.15), 10, (HH - 0.2) * S, 'fill="#666"'); });
+      b += txt(U(0), yk - 26, `postojeći nosači na zidu, vrh na ${f(HH)} m (zidna greda na njima)`, 's', 'start');
+    }
 
     // dimensions
     const yb = G + 1.0 * S, yb2 = yb + 45;
@@ -193,6 +209,60 @@ window.N7 = window.N7 || {};
     el.innerHTML = wrap('sd', vb, b, 'Bokocrt nadstrešnice s kotama');
   };
 
+  // ---------- detail A: one existing wall bracket with the wall beam and a rafter, scale 1:5 (500 px/m)
+  function detailA(x0, y0, d) {
+    const bk = N7.FIX.bracket, K = 500, top = y0 + 90;
+    const X = x => x0 + 140 + x * K, Y = y => top + (d.HH - y) * K;    // x = 0 on the face of the insulation
+    const HH = d.HH, yb = HH - bk.plateH;
+    const fill = c => `style="fill:${c}"`;
+    let b = txt(x0, y0 + 14, 'Detalj A · postojeći nosač na zidu, 1 : 5', 't', 'start');
+    // masonry, insulation, roof panel
+    const wallH = d.st.braces ? 0.80 : 0.30;
+    b += rect(X(-bk.eps - 0.12), Y(HH + 0.08), 0.12 * K, wallH * K, `fill="url(#sc-hatch)" class="ln thin"`);
+    b += rect(X(-bk.eps), Y(HH + 0.08), bk.eps * K, wallH * K, `class="ln thin" ${fill('#f1f1ea')}`);
+    b += txt(X(-bk.eps - 0.06), Y(HH + 0.08) - 6, 'zid', 's') + txt(X(-bk.eps / 2), Y(HH + 0.08) - 6, 'stiropor', 's');
+    b += rect(X(-0.02), Y(HH + N7.FIX.T), 0.38 * K, N7.FIX.T * K, `class="ln thin" ${fill('#d5d8da')}`);
+    b += txt(X(0.17), Y(HH + N7.FIX.T) - 6, 'krovni panel', 's');
+    // wall plate with 4 anchors, tube through the insulation, end plate
+    b += rect(X(-bk.eps - bk.plateT), Y(HH), bk.plateT * K, bk.plateH * K, fill('#7b2f2a'));
+    [0.03, bk.plateH - 0.03].forEach(o => { b += `<line x1="${X(-bk.eps - 0.11)}" y1="${Y(HH - o)}" x2="${X(-bk.eps)}" y2="${Y(HH - o)}" class="ln" stroke-width="3"/>`; });
+    b += rect(X(-bk.eps), Y(HH - (bk.plateH - bk.tubeH) / 2), bk.tubeL * K, bk.tubeH * K, `class="ln thin" ${fill('#b5625a')}`);
+    b += rect(X(d.wallX0 - bk.plateT), Y(HH), bk.plateT * K, bk.plateH * K, fill('#7b2f2a'));
+    // wall beam bolted to the end plate, rafter flush with its top
+    b += rect(X(d.wallX0), Y(HH), 0.10 * K, 0.15 * K, `class="ln" ${fill('#fff')}`) + rect(X(d.wallX0) + 3, Y(HH) + 3, 0.10 * K - 6, 0.15 * K - 6, 'class="ln thin"');
+    [0.04, 0.11].forEach(o => { b += `<line x1="${X(d.wallX0 - 0.025)}" y1="${Y(HH - o)}" x2="${X(d.wallX0 + 0.03)}" y2="${Y(HH - o)}" class="ln" stroke-width="3"/>`; });
+    if (d.st.braces) { // knee brace into the wall, new plate with 2 anchors
+      const k = d.st.braces, xm = (d.wallX0 + d.wallX1) / 2, y1 = HH - 0.15 - k.drop;
+      b += `<line x1="${X(xm)}" y1="${Y(HH - 0.15)}" x2="${X(-bk.eps)}" y2="${Y(y1)}" stroke="#555" stroke-width="${k.s.b / 1000 * K * 0.6}"/>`;
+      b += rect(X(-bk.eps - bk.plateT), Y(y1 + bk.plateH / 2), bk.plateT * K, bk.plateH * K, fill('#333'));
+      [0.04, -0.04].forEach(o => { b += `<line x1="${X(-bk.eps - 0.10)}" y1="${Y(y1 + o)}" x2="${X(-bk.eps)}" y2="${Y(y1 + o)}" class="ln" stroke-width="3"/>`; });
+      b += txt(X(0.05), Y(y1) + 4, `kosnik ${k.s.name}, nova pločica s 2 sidra, ${Math.round(k.drop * 100)} cm niže`, 's', 'start');
+    }
+    if (d.st.wallPosts) {
+      b += rect(X(d.wallX0), Y(HH - 0.15), 0.10 * K, 0.18 * K, `class="ln" ${fill('#bbb')}`);
+      b += txt(X(d.wallX1) + 8, Y(HH - 0.27), `stup uz kuću ${d.st.wallPosts.s.name} ispod grede`, 's', 'start');
+    }
+    const rh = Math.min(d.rafterH, 0.2);
+    b += rect(X(d.wallX1), Y(HH), 0.16 * K, rh * K, fill('#6b6f72')) + txt(X(d.wallX1 + 0.08), Y(HH - rh) + 14, d.rt ? 'rešetka' : 'rog', 's');
+    // dimensions and labels
+    const yd = d.st.braces ? Y(HH - 0.72) + 30 : Y(yb) + 70;
+    b += dimH(X(-bk.eps), X(0), yd, Math.round(bk.eps * 100) + '', { cls: 's' });
+    b += dimH(X(d.wallX0), X(d.wallX1), yd, '10', { cls: 's' });
+    b += dimH(X(-bk.eps), X(-bk.eps + bk.tubeL), yd + 36, `cijev ${Math.round(bk.tubeH * 100)}×${Math.round(bk.tubeW * 100)}, ≥ ${Math.round(bk.tubeL * 100)}`, { cls: 's' });
+    b += dimV(X(d.wallX1 + 0.21), Y(HH), Y(yb), Math.round(bk.plateH * 100) + '', { right: true, cls: 's' });
+    const lx = X(d.wallX1 + 0.27);
+    b += txt(lx, Y(HH) + 4, `vrh nosača i grede ${N7.fmt(HH)} m`, 's', 'start');
+    b += txt(lx, Y(HH) + 22, 'zidna greda 150×100 na ploči nosača', 's', 'start');
+    b += txt(lx, Y(HH) + 40, 'ploče 15×10, svaka s 4 vijka', 's', 'start');
+    // front view of the end plate with its 4 bolt holes
+    const fx = lx + 330, fy = Y(HH);
+    b += rect(fx, fy, bk.plateW * K, bk.plateH * K, fill('#7b2f2a')) + rect(fx + (bk.plateW - bk.tubeW) / 2 * K, fy + (bk.plateH - bk.tubeH) / 2 * K, bk.tubeW * K, bk.tubeH * K, 'class="ln thin" stroke="#e8c9c4"');
+    [[0.02, 0.025], [0.08, 0.025], [0.02, 0.125], [0.08, 0.125]].forEach(([a, c]) => { b += `<circle cx="${fx + a * K}" cy="${fy + c * K}" r="4" fill="#fff"/>`; });
+    b += txt(fx + bk.plateW * K / 2, fy - 8, 'ploča', 's');
+    b += dimH(fx, fx + bk.plateW * K, fy + bk.plateH * K + 22, Math.round(bk.plateW * 100) + '', { cls: 's' });
+    return b;
+  }
+
   // ======================================================================= PRESJEK A–A (cross-section, looking towards the street)
   N7.renderSection = function (el, d) {
     const FIX = N7.FIX, oh = FIX.overhang, T = FIX.T;
@@ -200,7 +270,8 @@ window.N7 = window.N7 || {};
     const x1 = W + oh, gc = gx + GW / 2;
     const G = (HH + 1.1) * S;
     const X = x => x * S, Y = y => G - y * S;
-    const vb = [X(-1.5), -10, X(WL + 1.9) - X(-1.5), G + 1.75 * S];
+    const DET = G + 1.95 * S;                         // top of the band with detail A below the dimensions
+    const vb = [X(-1.5), -10, X(WL + 1.9) - X(-1.5), DET + (d.st.braces ? 4.4 : 3.0) * S];
     let b = '';
 
     // house: cut wall + the part beyond, glass block window above the carport
@@ -212,7 +283,7 @@ window.N7 = window.N7 || {};
       b += rect(X(-0.4), Y(4.4), 40, (4.4 - sd.y1) * S, `fill="url(#sc-hatch)" class="ln"`);
       b += rect(X(-0.12), Y(sd.y1), 6, (sd.y1 - sd.y0) * S, 'fill="#fff" class="ln thin"');
       b += txt(X(-0.45), Y((sd.y0 + sd.y1) / 2), 'bočni ulaz', 's', 'end');
-    } else b += rect(X(-0.4), Y(4.4), 40, 4.4 * S, `fill="url(#sc-hatch)" class="ln"`);
+    } else b += rect(X(-0.4), Y(4.4), 25, 4.4 * S, `fill="url(#sc-hatch)" class="ln"`) + rect(X(-0.15), Y(4.4), 15, 4.4 * S, 'class="ln thin" style="fill:#f4f4ef"');
     {
       const cut = zc > st.z0 && zc < st.z1;
       const pts = [[0, 0]];
@@ -253,11 +324,11 @@ window.N7 = window.N7 || {};
     const tr = d.st.rafter.s.truss;
     if (tr) { // lattice rafter beyond the cut: top chord, level bottom tube and the zig-zag web
       const tv = tr.top.h / 1000 * d.slopeLen / W, rt = d.rt;
-      b += `<polygon points="${X(0)},${Y(HH)} ${X(W)},${Y(HL)} ${X(W)},${Y(HL - tv)} ${X(0)},${Y(HH - tv)}" fill="#6b6f72"/>`;
-      b += rect(X(0.02), Y(rt.botTop), (W - 0.12) * S, (rt.botTop - rt.yB) * S, 'fill="#6b6f72"');
+      b += `<polygon points="${X(d.wallX1)},${Y(roofY(d.wallX1))} ${X(W)},${Y(HL)} ${X(W)},${Y(HL - tv)} ${X(d.wallX1)},${Y(roofY(d.wallX1) - tv)}" fill="#6b6f72"/>`;
+      b += rect(X(d.wallX1), Y(rt.botTop), (W - 0.1 - d.wallX1) * S, (rt.botTop - rt.yB) * S, 'fill="#6b6f72"');
       b += rt.web.map(([xa, ya, xb, yb]) => `<line x1="${X(xa)}" y1="${Y(ya)}" x2="${X(xb)}" y2="${Y(yb)}" stroke="#6b6f72" stroke-width="${Math.max(1.5, tr.web.b / 10)}"/>`).join('');
       b += dimV(X(0.25), Y(rt.yB), Y(HH - 0.0), f(rt.hWall), { cls: 's' });
-    } else b += `<polygon points="${X(0)},${Y(HH)} ${X(W)},${Y(HL)} ${X(W)},${Y(HL - rh)} ${X(0)},${Y(HH - rh)}" fill="#6b6f72"/>`;
+    } else b += `<polygon points="${X(d.wallX1)},${Y(roofY(d.wallX1))} ${X(W)},${Y(HL)} ${X(W)},${Y(HL - rh)} ${X(d.wallX1)},${Y(roofY(d.wallX1) - rh)}" fill="#6b6f72"/>`;
     if (d.st.purlin) { // purlins cut by the section, flush with the rafter top
       const ph = d.st.purlin.s.h / 1000, pb = d.st.purlin.s.b / 1000;
       for (let k = 1; k <= d.st.nPurlins; k++) { const x = k * W / d.st.nSpans; b += rect(X(x - pb / 2), Y(roofY(x)), pb * S, ph * S, 'fill="#111"'); }
@@ -266,7 +337,16 @@ window.N7 = window.N7 || {};
       b += rect(X(W - 0.05 - ch / 2), Y(HL - 0.02), ch * S, ch * S, 'fill="#111"') + rect(X(W - 0.05 - ch / 2), Y(HL - 0.02 - h + ch), ch * S, ch * S, 'fill="#111"');
       b += `<line x1="${X(W - 0.05)}" y1="${Y(HL - 0.02 - ch)}" x2="${X(W - 0.05)}" y2="${Y(HL - 0.02 - h + ch)}" class="ln" stroke-width="2"/>`;
     } else b += rect(X(W - 0.1), Y(HL - 0.02), 10, 12, 'fill="#111"');
-    b += rect(X(0), Y(HH), 10, 15, 'fill="#111"');
+    { // wall beam on the existing brackets (the nearest one beyond the cut is drawn), detail A below
+      const bk = FIX.bracket;
+      b += rect(X(0), Y(HH - (bk.plateH - bk.tubeH) / 2), (d.wallX0 - bk.plateT) * S, bk.tubeH * S, 'fill="#7b2f2a"');
+      b += rect(X(d.wallX0 - bk.plateT), Y(HH), bk.plateT * S + 1, bk.plateH * S, 'fill="#7b2f2a"');
+      b += rect(X(d.wallX0), Y(HH), 10, 15, 'fill="#111"');
+      if (d.st.braces) b += `<line x1="${X((d.wallX0 + d.wallX1) / 2)}" y1="${Y(HH - 0.15)}" x2="${X(0)}" y2="${Y(HH - 0.15 - d.st.braces.drop * ((d.wallX0 + d.wallX1) / 2 / ((d.wallX0 + d.wallX1) / 2 + bk.eps)))}" stroke="#333" stroke-width="6"/>`;
+      if (d.st.wallPosts) b += rect(X(d.wallX0), Y(HH - 0.15), 10, (HH - 0.2) * S, 'fill="#555"');
+      b += `<circle cx="${X(0.08)}" cy="${Y(HH - 0.07)}" r="22" class="ln thin"/>` + txt(X(0.08) + 20, Y(HH - 0.07) + 34, 'A', 'b', 'start');
+      b += detailA(X(-1.4), DET, d);
+    }
     b += `<polygon points="${X(-0.02)},${Y(roofY(-0.02) + T)} ${X(x1)},${Y(roofY(x1) + T)} ${X(x1)},${Y(roofY(x1))} ${X(-0.02)},${Y(roofY(-0.02))}" fill="#aeb3b6" class="ln"/>`;
     b += rect(X(-0.02), Y(HH + T + 0.12), 10, 12, 'fill="#111"');
     const gy = Y(roofY(x1) - 0.02);

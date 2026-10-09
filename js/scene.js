@@ -206,7 +206,8 @@ window.N7 = window.N7 || {};
 
     // ---------- materials of the carport
     const steel = M(0x363b3f, { metalness: .55, roughness: .45 });      // load-bearing steel only ("samo čelik" view)
-    const trim = M(0x363b3f, { metalness: .55, roughness: .45 });       // flashing, door rails: same look, not structure
+    const trim = M(0x363b3f, { metalness: .55, roughness: .45 });
+    const bracketMat = M(0x7b2f2a, { metalness: .4, roughness: .55 });  // existing wall brackets, painted red-brown       // flashing, door rails: same look, not structure
     const floorMat = M(0xbdbcb5, { roughness: .95 });
     function ribTex(base, rib, px) { const t = tex(8, 64, (g, w, h) => { g.fillStyle = base; g.fillRect(0, 0, w, h); g.fillStyle = rib; g.fillRect(0, h * .42, w, h * .16); g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(0, h * .4, w, h * .03); }); t.userData = { px }; return t; }
     const roofMats = {
@@ -322,7 +323,21 @@ window.N7 = window.N7 || {};
       B(WL, WL + 8, 0, 1.25, -0.3, 0, rBrick);             // neighbour's low brick street wall, starts at the grey fence
       buildNeighbour(WL);
       curPart = 'roof';
-      B(0, 0.1, HH - 0.15, HH, -D, 0, steel);              // wall ledger
+      // existing wall brackets (tube through the insulation + end plate) and the wall beam bolted to them
+      const bk = FIX.bracket;
+      d.brZ.forEach(u => {
+        B(0, d.wallX0 - bk.plateT, HH - (bk.plateH + bk.tubeH) / 2, HH - (bk.plateH - bk.tubeH) / 2, -u - bk.tubeW / 2, -u + bk.tubeW / 2, bracketMat);
+        B(d.wallX0 - bk.plateT, d.wallX0, HH - bk.plateH, HH, -u - bk.plateW / 2, -u + bk.plateW / 2, bracketMat);
+      });
+      B(d.wallX0, d.wallX1, HH - 0.15, HH, -D, 0, steel);  // wall beam 150 × 100
+      if (d.st.braces) { // knee brace under each bracket, from the bottom of the wall beam into the wall 45 cm lower
+        const k = d.st.braces, kb = k.s.b / 1000, xm = (d.wallX0 + d.wallX1) / 2;
+        d.brZ.forEach(u => { if (u <= D) slopeX(xm, HH - 0.15, -bk.eps, HH - 0.15 - k.drop, -u - kb / 2, -u + kb / 2, kb, steel); });
+      }
+      if (d.st.wallPosts) d.wallPostZ.forEach(u => { // posts under the wall beam
+        B(d.wallX0, d.wallX1, 0.05, HH - 0.15, -u - 0.05, -u + 0.05, steel);
+        B(d.wallX0 - 0.04, d.wallX1 + 0.04, 0.05, 0.07, -u - 0.09, -u + 0.09, steel);
+      });
       B(-0.02, 0.08, HH + T, HH + T + 0.12, -D - 0.1, 0.14, trim); // wall flashing
 
       const tr = d.st.rafter.s.truss;
@@ -331,13 +346,14 @@ window.N7 = window.N7 || {};
         const th = tr.top.h / 1000, tb = tr.top.b / 1000, tv = th * Math.hypot(W, HH - HL) / W, bh = tr.bot.h / 1000, bb = tr.bot.b / 1000, ww = tr.web.b / 1000, rt = d.rt;
         d.rafterZ.forEach(z => {
           slopeX(0, HH - tv / 2, W, HL - tv / 2, z - tb / 2, z + tb / 2, th, steel);
-          B(0.02, W - 0.1, rt.yB, rt.botTop, z - bb / 2, z + bb / 2, steel);
+          B(d.wallX1, W - 0.1, rt.yB, rt.botTop, z - bb / 2, z + bb / 2, steel);
           rt.web.forEach(([xa, ya, xb, yb]) => slopeX(xa, ya, xb, yb, z - ww / 2, z + ww / 2, ww, steel));
         });
         B(W / 2 - bb / 2, W / 2 + bb / 2, rt.yB, rt.botTop, d.rafterZ[d.rafterZ.length - 1], d.rafterZ[0], steel);
       } else {
         const rh = d.rafterH, rw = d.st.rafter.s.b / 1000;
-        d.rafterZ.forEach(z => slopeX(0, HH - rh / 2, W, HL - rh / 2, z - rw / 2, z + rw / 2, rh, steel));
+        const xa = d.wallX1, ya = d.roofY(xa);
+        d.rafterZ.forEach(z => slopeX(xa, ya - rh / 2, W, HL - rh / 2, z - rw / 2, z + rw / 2, rh, steel));
       }
       // purlins across the rafters, flush with their top, at the spacing the roof panel needs
       if (d.st.purlin) {
@@ -408,7 +424,7 @@ window.N7 = window.N7 || {};
     // "samo čelik": hide everything except the load-bearing steel and the ground it stands on
     let frameOnly = false;
     function applyFrameOnly() {
-      scene.traverse(o => { if (o.isMesh) o.visible = !frameOnly || o.material === steel || o === gnd; });
+      scene.traverse(o => { if (o.isMesh) o.visible = !frameOnly || o.material === steel || o.material === bracketMat || o === gnd; });
     }
 
     // ---------- STL export of the load-bearing steel for a 3D print

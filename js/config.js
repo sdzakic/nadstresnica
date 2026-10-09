@@ -23,6 +23,10 @@ window.N7 = window.N7 || {};
     headroomLow: 0.06,        // lintel needed with a low-headroom kit
     drivewayLen: 9.45,        // measured: front line to the road edge
     // existing side entrance of the house under the carport: door on the wall + three concrete steps
+    // existing wall brackets the roof hangs on (measured: top at 3,18 m). Each one: plate 15 × 10 cm on the masonry
+    // with 4 anchors, tube 12 × 6 cm at least 20 cm long through the 15 cm insulation, plate 15 × 10 cm for the wall beam.
+    // The wall beam (150 × 100) is bolted to the outer plates, flush with their top; the rafters hang flush with its top.
+    bracket: { plateH: 0.15, plateW: 0.10, plateT: 0.01, tubeH: 0.12, tubeW: 0.06, tubeL: 0.20, eps: 0.15, bolts: 4 },
     sideDoor: { z0: -4.45, z1: -3.45, y0: 0.55, y1: 2.60 },
     stairs: { z0: -4.60, z1: -3.30, rise: 0.18, inset: 0.05, widths: [1.30, 1.10, 0.90] }
   };
@@ -35,8 +39,9 @@ window.N7 = window.N7 || {};
     door: { anth: ['Antracit', '#33393d'], white: ['Bijela', '#eef0ec'], brown: ['Smeđa', '#5b4232'], wood: ['Dekor drvo', '#9a6a3e'], house: ['Kao kuća', '#a9b6a2'] }
   };
 
-  const MEASURED = { HH: 3.18, D: 7.8, WL: 5.41, gap: 0.50 };
-  const DEFAULTS = Object.assign({ mode: 'high', HL: 2.70, GW: FIX.garage.w, gx: null, roof: 'sandwich', sk: 1.25, qp: 0.50, doorH: 2.10, parapet: false, beamType: 'box', purlinType: 'cont', rafterType: 'box', skipDoor: false }, MEASURED); // gx null = as far from the entrance as possible
+  // brackets: distance of each existing wall bracket from the street corner of the house, estimated from IMG_2792
+  const MEASURED = { HH: 3.18, D: 7.8, WL: 5.41, gap: 0.50, brackets: [0.36, 2.36, 4.67, 7.48] };
+  const DEFAULTS = Object.assign({ mode: 'high', HL: 2.70, GW: FIX.garage.w, gx: null, roof: 'sandwich30', sk: 1.25, qp: 0.50, doorH: 2.10, parapet: false, beamType: 'box', purlinType: 'cont', rafterType: 'box', skipDoor: false, wallSupport: 'none' }, MEASURED); // gx null = as far from the entrance as possible
 
   const fmt = (n, dec = 2) => n.toFixed(dec).replace('.', ',');
   const floorTo = (v, step) => Math.floor(v / step + 1e-6) * step;
@@ -77,8 +82,18 @@ window.N7 = window.N7 || {};
     const nRafters = rafterZ.length;
     const sideZ = spread(nSide, -0.05, -p.D + 0.05);
 
+    // existing wall brackets (distance from the street); the wall beam sits in front of them
+    const brZ = (p.brackets || MEASURED.brackets).slice().sort((a, b) => a - b);
+    const bk = FIX.bracket, wallX0 = bk.tubeL - bk.eps + bk.plateT, wallX1 = wallX0 + 0.10;
+    // optional posts under the wall beam, one under each bracket, moved clear of the steps of the side entrance
+    const stp = FIX.stairs, wallSupport = p.wallSupport || 'none';
+    const wallPostZ = brZ.filter(z => z <= p.D).map(z => {
+      if (z > -stp.z1 - 0.06 && z < -stp.z0 + 0.06) z = z < (-stp.z1 - stp.z0) / 2 ? -stp.z1 - 0.06 : -stp.z0 + 0.06;
+      return Math.min(p.D - 0.05, Math.max(0.05, z));
+    });
+
     // static check first: it picks the rafter section, whose depth sets the headroom under the roof
-    const st = N7.statics({ HH, HL, W, D: p.D, slopeLen, pitchDeg, sideZ, nRafters, rafterZ, rafterType: p.rafterType || 'box', roof: p.roof || 'sandwich', beamType: p.beamType || 'box', purlinType: p.purlinType || 'cont', sk: p.sk, qp: p.qp, houseEave: FIX.houseEave, houseRoofRun: FIX.houseRoofRun });
+    const st = N7.statics({ HH, HL, W, D: p.D, slopeLen, pitchDeg, sideZ, nRafters, rafterZ, rafterType: p.rafterType || 'box', bracket: Object.assign({ z: brZ }, FIX.bracket), wallSupport, wallPostZ, roof: p.roof || 'sandwich', beamType: p.beamType || 'box', purlinType: p.purlinType || 'cont', sk: p.sk, qp: p.qp, houseEave: FIX.houseEave, houseRoofRun: FIX.houseRoofRun });
     const rafterH = st.rafter.s.h / 1000;
     // underside of the rafters: a lattice rafter has its level bottom tube there, a box rafter follows the slope
     const tr = st.rafter.s.truss, rt = tr ? N7.rafterTrussGeom(W, HH, HL, tr) : null;
@@ -172,13 +187,17 @@ window.N7 = window.N7 || {};
     if (p.roof === 'trap' && pitchDeg < FIX.trapMinPitchDeg) warnings.push(`Pad ${fmt(pitchDeg, 1)}° je premalen za trapezni lim (treba barem 8°).`);
     if (rt && rt.yB < 2.2) warnings.push(`Donja cijev rešetke rogova je na samo ${fmt(rt.yB)} m. Uz ovu visinu krova rešetka s vodoravnom donjom cijevi nema smisla.`);
     if (rt && !doorSkip && rafterZ.some(z => z < sd.z1 + 0.06 && z > sd.z0 - 0.06)) warnings.push(`Jedna rešetka roga pada točno na bočna vrata kuće: donja cijev je na ${fmt(rt.yB)} m, a vrh vrata na ${fmt(sd.y1)} m. Uključi "Zaobiđi bočna vrata".`);
+    if (brZ.filter(z => z <= p.D).length < 2) warnings.push('Zidna greda treba barem dva nosača na zidu unutar dužine nadstrešnice.');
+    if (st.brackets && st.brackets.anchorFail) warnings.push(wallSupport === 'none'
+      ? `Postojeći nosači na zidu: gornja sidra su računski preopterećena (${Math.round(st.brackets.uAnchor * 100)} %), jer krak kroz stiropor stvara velik moment. Odaberi "Oslonac zidne grede": kosnici ili stupovi uz kuću.`
+      : `Sidra postojećih nosača su i dalje preopterećena (${Math.round(st.brackets.uAnchor * 100)} %).`);
     if (st.fail) warnings.push('Statički proračun: neki element ne prolazi ni s najvećim profilom iz popisa.');
 
     return {
       HH, HL, D: p.D, WL: p.WL, gap: p.gap, W, drop, roofY, pitchDeg, pitchPct: drop / W * 100, slopeLen,
       intercomX, GW, gx, gxMin, gxMax, gRight, attached, post, frontPosts, GH, lowHeadroom, tail, fenceW, front,
       st, rafterH, beamDepth, doorH: entryH, doorMax, parapet: !!p.parapet, roof: p.roof || 'sandwich',
-      nSide, sideZ, nRafters, rafterZ, doorSkip, underAt, rt,
+      nSide, sideZ, nRafters, rafterZ, doorSkip, underAt, rt, brZ, wallX0, wallX1, wallSupport, wallPostZ,
       warnings, FIX
     };
   }

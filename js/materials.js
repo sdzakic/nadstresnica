@@ -51,17 +51,19 @@ window.N7 = window.N7 || {};
     const posts100 = d.nSide * sidePostL + frontSum + lintelDoor + lintelGar;
     const kgPost = st.post.s.kg, kgFront = 11.7, kgBeam = st.beam.s.kg, kgRafter = st.rafter.s.kg;
     const purlinM = st.purlin ? st.nPurlins * d.D : 0;
+    const wb = st.wallBeam ? st.wallBeam.s : { name: '□150×100×4', kg: 14.9 }, nBr = d.brZ.filter(z => z <= d.D).length;
     const tr = st.rafter.s.truss, botL = up(d.W - 0.12);
     const rafterKg = tr ? d.nRafters * tr.kg + d.D * tr.bot.kg : d.nRafters * rafterL * kgRafter;
     const steelKg = d.nSide * sidePostL * kgPost + (frontSum + lintelDoor + lintelGar) * kgFront + rafterKg
-      + d.D * kgBeam + d.D * 14.9 + fencePostL * KG.p80 + plates * 3.1 + (st.purlin ? purlinM * st.purlin.s.kg : 0);
+      + d.D * kgBeam + d.D * wb.kg + fencePostL * KG.p80 + plates * 3.1 + (st.purlin ? purlinM * st.purlin.s.kg : 0)
+      + (st.braces ? nBr * (st.braces.L + 0.05) * st.braces.s.kg + nBr * 1.2 : 0)
+      + (st.wallPosts ? d.wallPostZ.length * (st.wallPosts.L * st.wallPosts.s.kg + 3.1) : 0);
     const perim = s_ => 2 * (s_.h + s_.b) / 1000;
     const rafterPerim = perim(st.rafter.s);
     const bt = st.beam.s.truss, beamPerim = bt ? 2 * perim(bt.chord) + Math.SQRT2 * Math.PI * bt.bar.d / 1000 : perim(st.beam.s);
     const rafterPaint = tr ? d.nRafters * (rafterL * perim(tr.top) + botL * perim(tr.bot) + tr.webLen * (tr.web.round ? Math.PI * tr.web.h / 1000 : perim(tr.web))) + d.D * perim(tr.bot) : d.nRafters * rafterL * rafterPerim;
     const paintArea = d.nSide * sidePostL * perim(st.post.s) + (frontSum + lintelDoor + lintelGar) * 0.4 + rafterPaint
       + d.D * beamPerim + d.D * 0.5 + fencePostL * 0.32 + (st.purlin ? purlinM * perim(st.purlin.s) : 0);
-    const nChem = Math.ceil(d.D / st.anchorStep) + 1;
     const diagL = up(Math.hypot(d.sideZ[0] - d.sideZ[1], d.HL - 0.3));
     const FRONT = sec('□100×100×4', kgFront, 0).k;
     const steelRows = [
@@ -85,12 +87,22 @@ window.N7 = window.N7 || {};
         [`  pojasnice ${bt.chord.name}`, m(2 * d.D, 1), 'gornja i donja', steel(bt.chord, 2 * d.D)],
         [`  zmija, šipka Ø${bt.bar.d}`, m(Math.SQRT2 * d.D * 1.05, 1), 'savijena u cik-cak pod 45°, zavarena na pojasnice', sec(`šipka Ø${bt.bar.d}`, bt.bar.kg, Math.SQRT2 * d.D * 1.05)]
       ] : [[`Bočna greda ${st.beam.s.name}`, m(d.D), 'na stupovima uz susjeda', steel(st.beam.s, d.D)]]),
-      ['Zidna greda □150×100×4', m(d.D), `na postojećim nosačima na zidu, na ${f(d.HH)} m`, sec('□150×100×4', 14.9, d.D)],
+      [`Zidna greda ${wb.name}`, m(d.D), `na ${nBr} postojeća nosača (${d.brZ.filter(z => z <= d.D).map(z => f(z)).join(' · ')} m od ulice), vrh na ${f(d.HH)} m`, steel(wb, d.D)],
       ['Stup ograde □80×80×3', `${kom(1)} × ${m(fencePostL)}`, 'na kraju ograde uz susjeda, 60 cm u betonu', sec('□80×80×3', KG.p80, fencePostL)],
       ['Dijagonale □40×40×3', `2 × ${m(diagL)}`, d.nSide > 2 ? 'ukruta u smjeru dužine, između prva dva stupa uz susjeda' : 'ukruta u smjeru dužine, kutni stup – rešetkasta greda', sec('□40×40×3', 3.49, 2 * diagL)],
       ['Podložne ploče 200×200×10 mm', kom(plates), `ispod svakog stupa (${d.nSide} + ${d.frontPosts.length})`, P('plate', plates, 'kom')],
       ['Sidreni vijci M12 (ploče)', kom(plates * 4), 'u betonske temelje', P('bolt', plates * 4, 'kom')],
-      ['Kemijska sidra M12 (zidna greda)', kom(nChem), `svakih ${Math.round(st.anchorStep * 100)} cm · ≈ ${f(st.Vanchor)} kN po sidru`, P('chem', nChem, 'kom')],
+      ...(st.braces ? [
+        [`Kosnici ispod nosača ${st.braces.s.name}`, `${kom(nBr)} × ${m(up(st.braces.L + 0.05))}`, `od dna zidne grede u zid, ${Math.round(st.braces.drop * 100)} cm niže, kroz stiropor`, steel(st.braces.s, nBr * up(st.braces.L + 0.05))],
+        ['Pločice kosnika 150×100×10 mm', kom(nBr), 'na betonu ispod stiropora', P('plate', nBr, 'kom')],
+        ['Mehanička sidra M12 (pločice kosnika)', kom(nBr * 2), '2 po pločici, u beton', P('chem', nBr * 2, 'kom')]
+      ] : []),
+      ...(st.wallPosts ? [
+        [`Stupovi uz kuću ${st.wallPosts.s.name}`, `${kom(d.wallPostZ.length)} × ${m(up(st.wallPosts.L))}`, `ispod zidne grede, na ${d.wallPostZ.map(z => f(z)).join(' · ')} m od ulice`, steel(st.wallPosts.s, d.wallPostZ.length * up(st.wallPosts.L))],
+        ['Podložne ploče 200×200×10 mm (stupovi uz kuću)', kom(d.wallPostZ.length), '', P('plate', d.wallPostZ.length, 'kom')],
+        ['Sidreni vijci M12 (stupovi uz kuću)', kom(d.wallPostZ.length * 4), '', P('bolt', d.wallPostZ.length * 4, 'kom')]
+      ] : []),
+      ['Vijci M12 8.8 s maticom (zidna greda na nosače)', kom(nBr * 4), `4 kroz ploču svakog nosača (ili zavariti) · nosači i sidra u zidu već postoje${st.brackets ? `, gornje sidro ≈ ${f(st.brackets.Tbolt, 1)} kN računski` : ''}`, P('bolt', nBr * 4, 'kom')],
       ['Ukupno čelika', `≈ ${Math.round(steelKg / 10) * 10} kg`, 'orijentacijski, za ponudu bravara'],
       ['Temeljna boja + završna RAL 7016', `≈ ${f(paintArea * 2 * 0.12, 1)} L`, `${m2(paintArea)} površine, 2 sloja (ili plastifikacija)`, P('paint', Math.ceil(paintArea * 2 * 0.12), 'L')]
     );
@@ -143,7 +155,7 @@ window.N7 = window.N7 || {};
     });
 
     // ---------- concrete
-    const footings = d.nSide + d.frontPosts.length + 1; // side posts + pročelje posts + fence post
+    const footings = d.nSide + d.frontPosts.length + 1 + (st.wallPosts ? d.wallPostZ.length : 0); // side, pročelje, fence post (+ posts by the house)
     const fs = st.footing, fVol = footings * fs * fs * 0.8;
     const driveA = d.post.x1 * FIX.drivewayLen;
     const slabA = slab ? d.WL * d.D : 0;

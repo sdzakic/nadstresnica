@@ -47,11 +47,11 @@
     gxIn.min = d.gxMin.toFixed(2); gxIn.max = d.gxMax.toFixed(2); gxIn.value = d.gx.toFixed(2);
     gxIn.disabled = d.gxMax - d.gxMin < 0.01;
     $('gx-out').textContent = f(d.gx - N7.FIX.door.x1) + ' m od ulaznih vrata' + (d.attached ? ' · na kutnom stupu' : '');
+    syncHeight();
     if (light) return;
-    const label = p.mode === 'high' ? 'Najviša' : p.mode === 'low' ? 'Niža' : 'Vlastita';
+    const label = p.mode === 'high' ? 'Najviša' : p.mode === 'low' ? 'Najniža' : 'Vlastita';
     $('elev-note').textContent = `Prikazano: ${label} varijanta · kraj krova ${f(d.HL)} m · pad ${f(d.pitchDeg, 1)}° · garažna vrata ${f(d.GW)} × ${f(d.GH)} m${d.lowHeadroom ? ' (okov za nisku nadvisinu)' : ''}.`;
     $('pn-pitch').textContent = f(d.pitchDeg, 1) + '°';
-    $('h-high-sub').textContent = f(N7.maxHL(p)) + ' m na kraju';
     $('warn').innerHTML = d.warnings.map(w => `<li>${w}</li>`).join('');
     $('warn').hidden = !d.warnings.length;
     groups = N7.materials(d, p.roof, look, bomOpt);
@@ -61,7 +61,7 @@
     N7.renderMaterials($('bom'), groups, prices);
     $('bom-sum').textContent = N7.euro(N7.costs(groups, prices).total);
     Object.entries(INPUTS).forEach(([id, c]) => { if (document.activeElement !== $(id)) $(id).value = (c.key === 'HL' ? d.HL : p[c.key]).toFixed(2); });
-    pressed($('o-height'), p.mode);
+    if (document.activeElement !== $('in-BR')) $('in-BR').value = brText();
   }
 
   function animateHL(from, to) {
@@ -100,7 +100,7 @@
     N7.renderSection($('ps-section'), d);
     N7.renderPlan($('ps-plan'), d);
     N7.renderSide($('ps-side'), d);
-    const label = p.mode === 'high' ? 'najviša' : p.mode === 'low' ? 'niža' : 'vlastita';
+    const label = p.mode === 'high' ? 'najviša' : p.mode === 'low' ? 'najniža' : 'vlastita';
     const today = new Date().toLocaleDateString('hr-HR');
     document.querySelectorAll('.ps-meta').forEach(m => { m.textContent = `${label} varijanta krova · ${today}`; });
     const rows = [
@@ -127,11 +127,26 @@
   else pb.addEventListener('click', e => { e.preventDefault(); window.print(); });
 
   // ---------- controls
-  $('o-height').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    const from = d.HL; p.mode = b.dataset.v; p.HL = N7.resolveHL(p); animateHL(from, p.HL);
+  // roof height: a slider from the lowest (1,90 m at the end) to the highest the 5° pitch allows
+  function syncHeight() {
+    const hs = $('in-height'), lo = Math.min(N7.FIX.lowHL, p.HH), hi = N7.maxHL(p);
+    hs.min = lo.toFixed(2); hs.max = hi.toFixed(2);
+    if (document.activeElement !== hs) hs.value = d.HL.toFixed(2);
+    $('h-out').textContent = f(d.HL) + ' m';
+    $('h-low-sub').textContent = f(lo) + ' m'; $('h-high-sub').textContent = f(hi) + ' m';
+  }
+  $('in-height').addEventListener('input', e => {
+    const v = +e.target.value, lo = +e.target.min, hi = +e.target.max;
+    if (anim) { cancelAnimationFrame(anim); anim = null; }
+    p.mode = v >= hi - 1e-6 ? 'high' : v <= lo + 1e-6 ? 'low' : 'custom';
+    p.HL = N7.resolveHL(Object.assign({}, p, { HL: v }));
+    refresh(p.HL, true);
   });
-  [['o-view', v => scene.setFrameOnly(v === 'steel')], ['o-roof', v => { p.roof = v; scene.setRoof(v); refresh(); }], ['o-beam', v => { p.beamType = v; refresh(); }], ['o-purlin', v => { p.purlinType = v; refresh(); }], ['o-rafter', v => { p.rafterType = v; refresh(); }], ['o-skip', v => { p.skipDoor = v === 'skip'; refresh(); }]].forEach(([id, fn]) => {
+  $('in-height').addEventListener('change', () => refresh());
+  [['h-low', 'low'], ['h-high', 'high']].forEach(([id, mode]) => $(id).addEventListener('click', () => {
+    const from = d.HL; p.mode = mode; p.HL = N7.resolveHL(p); animateHL(from, p.HL);
+  }));
+  [['o-view', v => scene.setFrameOnly(v === 'steel')]].forEach(([id, fn]) => {
     const g = $(id);
     g.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; pressed(g, b.dataset.v); fn(b.dataset.v); });
   });
@@ -155,7 +170,7 @@
   });
   N7._scene = scene;
   // colour pickers are drop-downs
-  [['o-garage', v => { look.garage = v; scene.setGarage(v); }], ['o-fence', v => { look.sheet = v; scene.setFence(v); }], ['o-door', v => { look.door = v; scene.setDoor(v); }]].forEach(([id, fn]) => {
+  [['o-garage', v => { look.garage = v; scene.setGarage(v); }], ['o-fence', v => { look.sheet = v; scene.setFence(v); }], ['o-door', v => { look.door = v; scene.setDoor(v); }], ['o-wall', v => { p.wallSupport = v; }], ['o-roof', v => { p.roof = v; scene.setRoof(v); }], ['o-beam', v => { p.beamType = v; }], ['o-purlin', v => { p.purlinType = v; }], ['o-rafter', v => { p.rafterType = v; }], ['o-skip', v => { p.skipDoor = v === 'skip'; }]].forEach(([id, fn]) => {
     $(id).addEventListener('change', e => { fn(e.target.value); refresh(); });
   });
   // ---------- prices: typing updates the sums in place, without re-rendering the table
@@ -197,6 +212,13 @@
       refresh();
     });
   });
+  // existing wall brackets: a list of distances from the street
+  const brText = () => (p.brackets || N7.MEASURED.brackets).map(z => f(z)).join('; ');
+  $('in-BR').addEventListener('change', e => {
+    const v = (e.target.value.match(/\d+(?:[.,]\d+)?/g) || []).map(t => parseFloat(t.replace(',', '.'))).filter(z => z >= 0 && z <= 12);
+    if (v.length >= 2) p.brackets = [...new Set(v)].sort((a, b) => a - b);
+    e.target.value = brText(); refresh();
+  });
   $('in-GX').addEventListener('input', e => { p.gx = parseFloat(e.target.value); refresh(); });
   $('gx-auto').addEventListener('click', () => { p.gx = null; refresh(); });
   $('dims-reset').addEventListener('click', () => {
@@ -211,6 +233,7 @@
   });
 
   refresh();
+  scene.setRoof(p.roof);
   N7.initGallery($('gallery'), $('lb'));
   if (!embedded && location.hash === '#ispis') setTimeout(() => window.print(), 800);
 })(window.N7);

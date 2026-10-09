@@ -71,6 +71,58 @@ window.N7 = window.N7 || {};
     return { chi, Nb, u: N_Ed / Nb, lam };
   }
 
+  // Continuous beam on point supports (stiffness method, 2 DOF per node), units kN and m.
+  // supports and loads are positions along the beam [0, len]; returns support reactions, max |M| and max deflection.
+  function contBeam(len, supports, loads, EI) {
+    const xs = [...new Set([0, len, ...supports, ...loads.map(l => l[0])].map(x => Math.round(Math.min(len, Math.max(0, x)) * 1e4) / 1e4))].sort((a, b) => a - b);
+    const n = xs.length, N = 2 * n, K = Array.from({ length: N }, () => new Float64Array(N)), F = new Float64Array(N);
+    const idx = x => xs.indexOf(Math.round(Math.min(len, Math.max(0, x)) * 1e4) / 1e4);
+    for (let e = 0; e < n - 1; e++) {
+      const l = xs[e + 1] - xs[e], k = EI / l ** 3;
+      const ke = [[12, 6 * l, -12, 6 * l], [6 * l, 4 * l * l, -6 * l, 2 * l * l], [-12, -6 * l, 12, -6 * l], [6 * l, 2 * l * l, -6 * l, 4 * l * l]];
+      const dofs = [2 * e, 2 * e + 1, 2 * e + 2, 2 * e + 3];
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) K[dofs[i]][dofs[j]] += k * ke[i][j];
+    }
+    loads.forEach(([x, P]) => { F[2 * idx(x)] -= P; });
+    const fixed = new Set(supports.map(x => 2 * idx(x)));
+    const free = [...Array(N).keys()].filter(i => !fixed.has(i));
+    // Gaussian elimination on the free DOFs
+    const A = free.map(i => free.map(j => K[i][j])), bv = free.map(i => F[i]), m = free.length;
+    for (let c = 0; c < m; c++) {
+      let piv = c; for (let r = c + 1; r < m; r++) if (Math.abs(A[r][c]) > Math.abs(A[piv][c])) piv = r;
+      [A[c], A[piv]] = [A[piv], A[c]]; [bv[c], bv[piv]] = [bv[piv], bv[c]];
+      for (let r = c + 1; r < m; r++) { const fct = A[r][c] / A[c][c]; for (let k = c; k < m; k++) A[r][k] -= fct * A[c][k]; bv[r] -= fct * bv[c]; }
+    }
+    const u = new Float64Array(N), sol = new Float64Array(m);
+    for (let r = m - 1; r >= 0; r--) { let v = bv[r]; for (let k = r + 1; k < m; k++) v -= A[r][k] * sol[k]; sol[r] = v / A[r][r]; }
+    free.forEach((i, k) => { u[i] = sol[k]; });
+    const R = supports.map(x => { const i = 2 * idx(x); let v = -F[i]; for (let j = 0; j < N; j++) v += K[i][j] * u[j]; return v; });
+    let Mmax = 0;
+    for (let e = 0; e < n - 1; e++) {
+      const l = xs[e + 1] - xs[e], k = EI / l ** 3, [v1, t1, v2, t2] = [u[2 * e], u[2 * e + 1], u[2 * e + 2], u[2 * e + 3]];
+      const M1 = k * (6 * l * v1 + 4 * l * l * t1 - 6 * l * v2 + 2 * l * l * t2), M2 = k * (6 * l * v1 + 2 * l * l * t1 - 6 * l * v2 + 4 * l * l * t2);
+      Mmax = Math.max(Mmax, Math.abs(M1), Math.abs(M2));
+    }
+    let w = 0; for (let i = 0; i < n; i++) w = Math.max(w, Math.abs(u[2 * i]));
+    return { R, Mmax, w };
+  }
+  const WALL_BEAMS = [rhs(150, 100, 4), rhs(150, 100, 5), rhs(150, 100, 6)];
+  const BRACKET_TUBE = rhs(120, 60, 4);
+  // anchors of the existing wall plates in the concrete wall: mechanical (expansion) anchors M12, drilled at an angle.
+  // Assumed: embedment 80 mm, steel 5.8, uncracked concrete C20/25, pull-out 16 kN characteristic; holes 60 mm apart.
+  const ANCHOR = { d: 12, As: 84.3, fub: 500, hef: 80, fck: 20, NRkp: 16, s: 60 };
+  const BRACE = rhs(60, 60, 3), BRACE_DROP = 0.45;   // knee brace under each bracket: down to a new plate 45 cm lower
+  const WALL_POST = rhs(100, 100, 4);
+  function anchorResistance(a) {
+    const NRs = 0.9 * a.fub * a.As / 1.25 / 1000;                              // steel, kN
+    const scr = 3 * a.hef, gC = (scr + a.s) / scr / 2;                           // two anchors share one cone
+    const NRc = 7.7 * Math.sqrt(a.fck) * a.hef ** 1.5 / 1000 * gC / 1.5;         // concrete cone per anchor
+    const NRp = a.NRkp / 1.5;                                                    // pull-out of the expansion sleeve
+    const VRs = 0.6 * a.fub * a.As / 1.25 / 1000;
+    return { NRd: Math.min(NRs, NRc, NRp), NRs, NRc, NRp, VRd: VRs };
+  }
+  const interact = (T, V, ar) => ((T / ar.NRd) ** 1.5 + (V / ar.VRd) ** 1.5) ** (2 / 3); // as an equivalent utilisation
+
   // Geometry of a lattice rafter with a level bottom tube (m): the sloping top chord is the rafter, the bottom tube
   // runs level at the height of the low end, and one zig-zag web connects them; the truss is deepest at the house.
   // Top nodes sit at every purlin. Shared by the static check, the 3D model and the drawings.
@@ -81,7 +133,7 @@ window.N7 = window.N7 || {};
     const topU = x => roofY(x) - th;
     const he = x => roofY(x) - th / 2 - (yB + bh / 2);         // distance between the chord axes
     const n = 2 * tr.nP, xs = [];
-    for (let k = 0; k <= n; k++) xs.push(k === 0 ? 0.05 : k === n ? W - 0.05 : k * W / n);
+    for (let k = 0; k <= n; k++) xs.push(k === 0 ? 0.17 : k === n ? W - 0.05 : k * W / n); // starts at the face of the wall beam
     const pt = k => [xs[k], k % 2 ? botTop : topU(xs[k])];
     const web = [[xs[0], botTop, xs[0], topU(xs[0])], [xs[n], botTop, xs[n], topU(xs[n])]];
     for (let k = 0; k < n; k++) web.push([...pt(k), ...pt(k + 1)]);
@@ -116,7 +168,7 @@ window.N7 = window.N7 || {};
         // wind uplift turns the bottom tube into a strut; one longitudinal tie holds it at mid-span
         const uB = Nup * 1000 / (chi(L / 2 * 1000 / bot.i / 93.9) * bot.A * FY);
         const diag = (V, he) => { const ld = Math.hypot(g.p2, he); return V * ld / he * 1000 / (chi(ld * 1000 / web.i / 93.9) * web.A * FY); };
-        const uD = Math.max(diag(rl.Rwall, g.he(0.05)), diag(rl.Rbeam, g.he(L - 0.05)));
+        const uD = Math.max(diag(rl.Rwall, g.he(0.17)), diag(rl.Rbeam, g.he(L - 0.05)));
         const he = g.he(0.55 * L) * 1000, I = top.A * bot.A / (top.A + bot.A) * he * he;
         const w = rl.defl / (E * I) * 1000 * 1.15;            // +15 % for shear deformation of the lattice
         const uW = w / (L * 1000 / 200);
@@ -231,26 +283,95 @@ window.N7 = window.N7 || {};
     for (const s of POSTS) { const b = buckling(s, N, c.HL); if (b.u <= 1) { post = Object.assign({ s }, b); break; } }
     if (!post) { const s = POSTS[POSTS.length - 1]; post = Object.assign({ s, fail: true }, buckling(s, N, c.HL)); }
 
-    // ---------- wall anchors of the wall beam (every 0,5 m) and uplift
-    const anchorStep = 0.5;
+    // ---------- wall beam on the existing wall brackets, loaded by the rafters
     const Vwall = rl.Rwall / sR;                     // kN per metre of wall
     const gAll = rl.g;
     const netUp = Math.max(0, 1.5 * wUp - 1.0 * gAll);   // kN/m² upward
     const Twall = netUp * L / 2;                      // kN per metre of wall
+    const rz = (c.rafterZ || []).map(z => -z);
+    const loads = rz.map((z, i) => {                 // each rafter carries half of the gaps on either side
+      const a0 = i ? (z - rz[i - 1]) / 2 : z, a1 = i < rz.length - 1 ? (rz[i + 1] - z) / 2 : c.D - z;
+      return [z, Vwall * (a0 + a1)];
+    });
+    const br = c.bracket, bz = (br && br.z || []).filter(z => z >= 0 && z <= c.D);
+    const support = c.wallSupport || 'none';
+    // with posts by the house the wall beam bears on the posts; the brackets only hold it sideways
+    const sz = support === 'posts' ? (c.wallPostZ || bz) : bz;
+    let wallBeam = null, brackets = null, braces = null, wallPosts = null;
+    if (sz.length >= 2) {
+      for (const s of WALL_BEAMS) {
+        const EI = E * 1e3 * s.I * 1e-12;              // kN·m²
+        const r = contBeam(c.D, sz, loads, EI);
+        const spanMax = Math.max(...sz.slice(1).map((z, i) => z - sz[i]));
+        const uM = r.Mmax * 1e6 / s.W / FY, w = r.w / 1.4 * 1000, uW = w / (spanMax * 1000 / 200);
+        wallBeam = { s, uM, uW, w, Mmax: r.Mmax, R: r.R, spanMax };
+        if (uM <= 1 && uW <= 1) break;
+      }
+      wallBeam.fail = wallBeam.uM > 1 || wallBeam.uW > 1;
+      // lever arm of the vertical load from the concrete face: tube through 15 cm insulation + ~5 cm in front of it,
+      // end plate, then half of the 10 cm deep wall beam (the rafters' load acts at its centre)
+      const e = br.tubeL + br.plateT + 0.05;
+      const Rmax = Math.max(...wallBeam.R), Rup = Rmax * Twall / Vwall, ar = anchorResistance(ANCHOR);
+      const z = br.plateH - 0.04;                     // top bolts to the bottom edge of the plate pressing on the wall
+      if (support === 'posts') {
+        // vertical load goes down the posts; brackets keep the beam in place and take the wind uplift only
+        const Lp = c.HH - 0.15, b = buckling(WALL_POST, Rmax * 1.0, Lp);
+        wallPosts = Object.assign({ z: sz, s: WALL_POST, L: Lp, N: Rmax, R: wallBeam.R, fail: b.u > 1 }, b);
+        const Tbolt = Rup * e / z / 2 + Rup / br.bolts;
+        brackets = { z: bz, R: wallBeam.R.map(() => 0), Rmax: 0, Rup, e, M: 0, tube: BRACKET_TUBE, uTube: Rup * e * 1e6 / BRACKET_TUBE.W / FY, Tbolt, Vbolt: 0, TboltUp: Tbolt, anchor: ar, support };
+        brackets.uAnchor = interact(Tbolt, 0, ar);
+      } else if (support === 'brace') {
+        // bracket + knee brace form a triangle: the brace takes the vertical load in compression,
+        // the bracket becomes a horizontal tie and its 4 anchors share the pull evenly
+        const H = Rmax * e / BRACE_DROP, Lb = Math.hypot(e + br.eps, BRACE_DROP), C = Math.hypot(Rmax, H);
+        const b = buckling(BRACE, C, Lb);
+        const Tbolt = H / br.bolts, Vbolt = 0.1 * Rmax / br.bolts;
+        const Vlow = Rmax / 2, uLow = interact(0, Vlow, ar);   // new plate under the brace: 2 anchors in shear, pressed on the wall
+        braces = Object.assign({ s: BRACE, L: Lb, C, H, drop: BRACE_DROP, Vlow, uLow, fail: b.u > 1 || uLow > 1 }, b);
+        brackets = { z: bz, R: wallBeam.R, Rmax, Rup, e, M: 0, tube: BRACKET_TUBE, uTube: H * 1000 / (BRACKET_TUBE.A * FY), Tbolt, Vbolt, TboltUp: Rup * e / z / 2 + Rup / br.bolts, anchor: ar, support };
+        brackets.uAnchor = interact(Math.max(Tbolt, brackets.TboltUp), Vbolt, ar);
+      } else {
+        // each bracket is a cantilever from the concrete through the insulation
+        const M = Rmax * e, Tbolt = M / z / 2, Vbolt = Rmax / br.bolts;
+        brackets = { z: bz, R: wallBeam.R, Rmax, Rup, e, M, tube: BRACKET_TUBE, uTube: M * 1e6 / BRACKET_TUBE.W / FY, Tbolt, Vbolt, TboltUp: Rup * e / z / 2 + Rup / br.bolts, anchor: ar, support };
+        brackets.uAnchor = interact(Tbolt, Vbolt, ar);
+      }
+      brackets.fail = brackets.uTube > 1;
+      brackets.anchorFail = brackets.uAnchor > 1;
+    }
     const Tpost = netUp * (L / 2) * trib;             // kN per post
     // footing weight must hold the uplift (γc = 24 kN/m³, favourable factor 0,9), depth 0,80 m
     const Vreq = Tpost / (0.9 * 24);
     const footing = Math.max(0.40, Math.ceil(Math.sqrt(Vreq / 0.8) / 0.05 - 1e-6) * 0.05);
 
-    const fail = [purlin, rafter, beam].some(r => r && r.fail) || post.fail;
+    const fail = [purlin, rafter, beam, wallBeam, brackets, braces, wallPosts].some(r => r && r.fail) || post.fail;
     return {
       roof, sk: c.sk, qp: c.qp, rafterType: c.rafterType || 'box', mu1, s1, muW, ls, sWall, sEnd, h, wUp, netUp, beamType: c.beamType || 'box', purlinType: c.purlinType || 'cont',
       spanAllow, nSpans, nPurlins, a, sR, purlin, rafter, rl, Lb, wb, beam, N, post,
-      anchorStep, Vwall, Twall, Vanchor: Vwall * anchorStep, Tanchor: Twall * anchorStep, Tpost, footing, fail
+      Vwall, Twall, wallBeam, brackets, braces, wallPosts, wallSupport: support, Tpost, footing, fail
     };
   };
 
   N7.ROOFS = ROOFS;
+
+  function bracketRows(st, f, kN, pct) {
+    const b = st.brackets, a = b.anchor, rows = [];
+    const sup = { none: 'samo postojeći nosači', brace: 'nosači + kosnik ispod svakog', posts: 'stupovi uz kuću, nosači drže bočno' }[b.support];
+    rows.push([`Postojeći nosači na zidu (${b.z.length} kom)`, b.support === 'posts' ? 'bez vertikalnog tereta' : `reakcije ${b.R.map(r => f(r, 1)).join(' / ')} kN`, `${sup}; na ${b.z.map(z => f(z)).join(' · ')} m od ulice; krak do osi grede ${Math.round(b.e * 100)} cm`, '']);
+    if (b.support === 'none') rows.push([`Cijev nosača ${b.tube.name} (pretpostavljena debljina 4 mm)`, `savijanje ${pct(b.uTube)}`, `M = ${f(b.M)} kNm uz zid (kroz stiropor)`, b.fail ? 'fail' : 'ok']);
+    rows.push(['Sidra ploče nosača u betonu (4 × M12 mehanička)', `iskorištenje ${pct(b.uAnchor)}`,
+      `${b.support === 'brace' ? 'svako sidro' : 'gornje sidro'}: vlak ${kN(b.Tbolt)}, posmik ${kN(b.Vbolt)}; nosivost na vlak ≈ ${kN(a.NRd)}, posmik ≈ ${kN(a.VRd)}. Pretpostavka: dubina 80 mm, beton C20/25 bez pukotina; koso bušenje nije uzeto u obzir`, b.anchorFail ? 'fail' : 'ok']);
+    if (st.braces) {
+      const k = st.braces;
+      rows.push([`Kosnici ${k.s.name} (${b.z.length} kom)`, `izvijanje ${pct(k.u)}`, `tlak ${kN(k.C)}, duljina ${f(k.L)} m, do nove pločice ${Math.round(k.drop * 100)} cm ispod grede`, k.u > 1 ? 'fail' : 'ok']);
+      rows.push(['Nova pločica kosnika (2 × M12 mehanička)', `iskorištenje ${pct(k.uLow)}`, `posmik ${kN(k.Vlow)} po sidru, pločica se upire u beton`, k.uLow > 1 ? 'fail' : 'ok']);
+    }
+    if (st.wallPosts) {
+      const w = st.wallPosts;
+      rows.push([`Stupovi uz kuću ${w.s.name} (${w.z.length} kom)`, `izvijanje ${pct(w.u)}`, `N = ${kN(w.N)}, duljina ${f(w.L)} m; na ${w.z.map(z => f(z)).join(' · ')} m od ulice`, w.fail ? 'fail' : 'ok']);
+    }
+    return rows;
+  }
 
   // table groups for the page and the print sheet
   N7.staticsReport = function (d) {
@@ -274,12 +395,12 @@ window.N7 = window.N7 || {};
     else rows.push([`Rogovi ${st.rafter.s.name}`, `savijanje ${pct(st.rafter.uM)} · progib ${pct(st.rafter.uW)}`, `raspon ${f(d.W)} m, razmak ${f(st.sR)} m, M = ${f(st.rl.M, 1)} kNm, progib ${Math.round(st.rafter.w)} mm (dop. ${Math.round(d.W * 1000 / 200)})`, st.rafter.fail ? 'fail' : 'ok']);
     if (st.beam.s.truss) rows.push([`Bočna greda: ${st.beam.s.name}`, `pojasnice ${pct(st.beam.uM)} · zmija ${pct(st.beam.uD)} · progib ${pct(st.beam.uW)}`, `jedan raspon ${f(st.Lb)} m na 2 kutna stupa, opterećenje ${f(st.wb)} kN/m, ${f(st.beam.s.kg, 1)} kg/m`, st.beam.fail ? 'fail' : 'ok']);
     else rows.push([`Bočna greda ${st.beam.s.name}`, `savijanje ${pct(st.beam.uM)} · progib ${pct(st.beam.uW)}`, `raspon ${f(st.Lb)} m, opterećenje ${f(st.wb)} kN/m`, st.beam.fail ? 'fail' : 'ok']);
+    if (st.wallBeam) rows.push([`Zidna greda ${st.wallBeam.s.name}`, `savijanje ${pct(st.wallBeam.uM)} · progib ${pct(st.wallBeam.uW)}`, `kontinuirana preko postojećih nosača, najveći raspon ${f(st.wallBeam.spanMax)} m, M = ${f(st.wallBeam.Mmax, 1)} kNm`, st.wallBeam.fail ? 'fail' : 'ok']);
     rows.push([`Stupovi ${st.post.s.name}`, `izvijanje ${pct(st.post.u)}`, `N = ${kN(st.N)}, duljina izvijanja ${f(d.HL)} m, χ = ${f(st.post.chi)}`, st.post.fail ? 'fail' : 'ok']);
     groups.push({ title: 'Nosivi elementi (S235)', rows });
     groups.push({
       title: 'Spojevi i temelji', rows: [
-        ['Zidna greda: smicanje po sidru', kN(st.Vanchor), `sidra svakih ${f(st.anchorStep)} m; provjeriti nosivost zida i postojećih nosača`, ''],
-        ['Zidna greda: čupanje po sidru (vjetar)', kN(st.Tanchor), st.netUp > 0 ? `neto podizanje ${f(st.netUp)} kN/m²` : 'vlastita težina drži krov', ''],
+        ...(st.brackets ? bracketRows(st, f, kN, pct) : []),
         ['Podizanje po stupu', kN(st.Tpost), 'temelj ga mora držati svojom težinom', ''],
         ['Temelj stupa', `${Math.round(st.footing * 100)} × ${Math.round(st.footing * 100)} × 80 cm`, 'beton C25/30, sidreni vijci M12', 'ok'],
         ['Stabilnost u smjeru dužine', 'dijagonale', 'na bočnoj strani (između 2 stupa) ili upeti stupovi', '']

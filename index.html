@@ -7,7 +7,7 @@
 <title>Nadstrešnica br. 7</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,500;112,700;100,400;100,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=29">
+<link rel="stylesheet" href="css/style.css?v=31">
 </head>
 <body>
 <div class="wrap">
@@ -35,11 +35,9 @@
     </div>
     <div class="panel">
       <div class="opt">
-        <div class="opt-label">Visina krova</div>
-        <div class="seg" id="o-height">
-          <button id="h-high" data-v="high" aria-pressed="true">Najviša <small id="h-high-sub">2,80 m na kraju</small></button>
-          <button id="h-low" data-v="low" aria-pressed="false">Niža <small>1,90 m na kraju</small></button>
-        </div>
+        <label class="opt-label" for="in-height">Visina krova na kraju <output id="h-out"></output></label>
+        <input id="in-height" class="hslider" type="range" step="0.05">
+        <div class="hs-ends"><button type="button" id="h-low" class="link">Najniža <span id="h-low-sub">1,90 m</span></button><button type="button" id="h-high" class="link">Najviša <span id="h-high-sub">2,75 m</span></button></div>
       </div>
       <div class="opt">
         <div class="opt-label">Prikaz</div>
@@ -49,63 +47,48 @@
         </div>
       </div>
       <div class="opt">
-        <div class="opt-label">3D ispis čelika (STL)</div>
-        <div class="stl">
-          <select id="stl-part" class="pick" title="Koji sklop izvesti">
-            <option value="all">Cijela konstrukcija</option>
-            <option value="roof">Rogovi, podrožnice i nosač na zidu</option>
-            <option value="front">Pročelje: stupovi i nadvoji</option>
-            <option value="side">Bok uz susjeda: stupovi i greda</option>
-          </select>
-          <select id="stl-scale" class="pick" title="Mjerilo ispisa">
-            <option value="25">Mjerilo 1:25</option>
-            <option value="30">Mjerilo 1:30</option>
-            <option value="50" selected>Mjerilo 1:50</option>
-          </select>
-          <select id="stl-min" class="pick" title="Najtanji dio koji printer može ispisati">
-            <option value="1.2">Najtanji dio 1,2 mm (FDM)</option>
-            <option value="0.8">Najtanji dio 0,8 mm (FDM, fino)</option>
-            <option value="0.5">Najtanji dio 0,5 mm (resin)</option>
-          </select>
-          <button id="stl-btn" type="button">Preuzmi STL</button>
-          <div class="stl-info" id="stl-info"></div>
-        </div>
+        <label class="opt-label" for="o-beam">Bočna greda uz susjeda</label>
+        <select id="o-beam" class="pick">
+          <option value="box" selected>Kutijasti profil na stupovima</option>
+          <option value="truss">Rešetka (zmija), samo 2 kutna stupa</option>
+        </select>
       </div>
       <div class="opt">
-        <div class="opt-label">Bočna greda uz susjeda</div>
-        <div class="seg" id="o-beam">
-          <button data-v="box" aria-pressed="true">Kutijasti profil <small>na stupovima</small></button>
-          <button data-v="truss" aria-pressed="false">Rešetka (zmija) <small>samo 2 kutna stupa</small></button>
-        </div>
+        <label class="opt-label" for="o-rafter">Rogovi</label>
+        <select id="o-rafter" class="pick">
+          <option value="box" selected>Kutijasti profil</option>
+          <option value="truss">Rešetka (zmija) s vodoravnom donjom cijevi</option>
+        </select>
       </div>
       <div class="opt">
-        <div class="opt-label">Rogovi</div>
-        <div class="seg" id="o-rafter">
-          <button data-v="box" aria-pressed="true">Kutijasti profil <small>puni rog</small></button>
-          <button data-v="truss" aria-pressed="false">Rešetka (zmija) <small>s vodoravnom donjom cijevi</small></button>
-        </div>
+        <label class="opt-label" for="o-skip">Rogovi kod bočnih vrata kuće</label>
+        <select id="o-skip" class="pick">
+          <option value="even" selected>Ravnomjerno, jednaki razmaci</option>
+          <option value="skip">Zaobiđi vrata, rog sa svake strane</option>
+        </select>
       </div>
       <div class="opt">
-        <div class="opt-label">Rogovi kod bočnih vrata kuće</div>
-        <div class="seg" id="o-skip">
-          <button data-v="even" aria-pressed="true">Ravnomjerno <small>jednaki razmaci</small></button>
-          <button data-v="skip" aria-pressed="false">Zaobiđi vrata <small>rog sa svake strane</small></button>
-        </div>
+        <label class="opt-label" for="o-wall">Oslonac zidne grede</label>
+        <select id="o-wall" class="pick">
+          <option value="none">Samo postojeći nosači na zidu</option>
+          <option value="brace">Nosači + kosnik ispod svakog</option>
+          <option value="posts">Stupovi uz kuću ispod grede</option>
+        </select>
       </div>
       <div class="opt">
-        <div class="opt-label">Podrožnice</div>
-        <div class="seg" id="o-purlin">
-          <button data-v="cont" aria-pressed="true">Kontinuirane <small>iz jednog komada</small></button>
-          <button data-v="simple" aria-pressed="false">Po poljima <small>između rogova</small></button>
-        </div>
+        <label class="opt-label" for="o-purlin">Podrožnice</label>
+        <select id="o-purlin" class="pick">
+          <option value="cont" selected>Kontinuirane, iz jednog komada</option>
+          <option value="simple">Po poljima, između rogova</option>
+        </select>
       </div>
       <div class="opt">
-        <div class="opt-label">Krov (panel odozgo)</div>
-        <div class="seg" id="o-roof">
-          <button data-v="sandwich" aria-pressed="true">Sendvič panel <small>40 mm</small></button>
-          <button data-v="sandwich30" aria-pressed="false">Sendvič panel <small>30 mm</small></button>
-          <button data-v="trap" aria-pressed="false">Trapezni lim <small>0,5 mm</small></button>
-        </div>
+        <label class="opt-label" for="o-roof">Krov (panel odozgo)</label>
+        <select id="o-roof" class="pick">
+          <option value="sandwich30" selected>Sendvič panel 30 mm</option>
+          <option value="sandwich">Sendvič panel 40 mm</option>
+          <option value="trap">Trapezni lim 0,5 mm</option>
+        </select>
       </div>
       <div class="opt">
         <label class="opt-label" for="o-garage">Garažna vrata</label>
@@ -147,6 +130,11 @@
           <label for="in-GW">Širina garažnih vrata</label><input id="in-GW" inputmode="decimal" type="number" step="0.05">
           <label for="in-DH">Visina ulaznih vrata</label><input id="in-DH" inputmode="decimal" type="number" step="0.05">
         </div>
+        <div class="brk">
+          <label for="in-BR">Postojeći nosači na zidu, m od ulice</label>
+          <input id="in-BR" type="text" inputmode="decimal" aria-describedby="br-note">
+          <span id="br-note" class="s-note">Vrh nosača je visina uz kuću. Odvoji razmakom ili točka-zarezom.</span>
+        </div>
         <div class="gx">
           <label for="in-GX">Položaj garažnih vrata <output id="gx-out"></output></label>
           <input id="in-GX" type="range" step="0.01">
@@ -165,6 +153,33 @@
       <ul id="warn" class="warn" hidden></ul>
     </div>
   </div>
+
+  <section class="stl-sec">
+    <div class="sec-head">
+      <h2>3D ispis čelika (STL)</h2>
+      <p>Čelična konstrukcija iz modela kao STL za 3D printer, u odabranom mjerilu. Tanki profili podebljaju se na najtanji dio koji printer može ispisati.</p>
+    </div>
+    <div class="stl">
+      <select id="stl-part" class="pick" title="Koji sklop izvesti">
+        <option value="all">Cijela konstrukcija</option>
+        <option value="roof">Rogovi, podrožnice i nosač na zidu</option>
+        <option value="front">Pročelje: stupovi i nadvoji</option>
+        <option value="side">Bok uz susjeda: stupovi i greda</option>
+      </select>
+      <select id="stl-scale" class="pick" title="Mjerilo ispisa">
+        <option value="25">Mjerilo 1:25</option>
+        <option value="30">Mjerilo 1:30</option>
+        <option value="50" selected>Mjerilo 1:50</option>
+      </select>
+      <select id="stl-min" class="pick" title="Najtanji dio koji printer može ispisati">
+        <option value="1.2">Najtanji dio 1,2 mm (FDM)</option>
+        <option value="0.8">Najtanji dio 0,8 mm (FDM, fino)</option>
+        <option value="0.5">Najtanji dio 0,5 mm (resin)</option>
+      </select>
+      <button id="stl-btn" type="button">Preuzmi STL</button>
+      <div class="stl-info" id="stl-info"></div>
+    </div>
+  </section>
 
   <section>
     <div class="sec-head">
@@ -193,16 +208,16 @@
     </div>
     <div class="panels">
       <div class="card pick">
-        <h3>Sendvič panel <span class="tag">preporuka</span></h3>
-        <div class="meta">krovni, 3 rebra, 40 mm, antracit · od 5°</div>
-        <ul class="pros"><li>tih na kiši i tuči</li><li>ne kaplje ispod (nema kondenzacije)</li><li>ljeti ne grije, izgleda najurednije</li></ul>
-        <ul class="cons"><li>ispod je tamnije</li><li>skuplji od lima</li></ul>
-      </div>
-      <div class="card">
-        <h3>Sendvič panel 30 mm</h3>
+        <h3>Sendvič panel 30 mm <span class="tag">zadano</span></h3>
         <div class="meta">krovni, 3 rebra, 30 mm, antracit · od 5°</div>
         <ul class="pros"><li>jeftiniji i lakši od 40 mm</li><li>i dalje tih i bez kondenzacije</li></ul>
         <ul class="cons"><li>manji dozvoljeni raspon, pa treba više podrožnica</li><li>slabija toplinska izolacija (za nadstrešnicu nije bitno)</li></ul>
+      </div>
+      <div class="card">
+        <h3>Sendvič panel 40 mm</h3>
+        <div class="meta">krovni, 3 rebra, 40 mm, antracit · od 5°</div>
+        <ul class="pros"><li>tih na kiši i tuči</li><li>ne kaplje ispod (nema kondenzacije)</li><li>ljeti ne grije, izgleda najurednije</li></ul>
+        <ul class="cons"><li>ispod je tamnije</li><li>skuplji od lima</li></ul>
       </div>
       <div class="card">
         <h3>Trapezni lim</h3>
@@ -211,7 +226,7 @@
         <ul class="cons"><li>glasan na kiši</li><li>kondenzacija kaplje ispod (treba filc)</li><li>ne preporučuje se na najvišoj varijanti</li></ul>
       </div>
     </div>
-    <p class="note">Krov završava prije susjeda, a lim uz susjeda ide do visine krova. Oluk ima pad prema ulici i vertikalu na pročelju, pa voda curi van, a ne u dvorište.<br><br><b>Najviša</b> varijanta drži krov uz kuću na postojećim nosačima (3,18 m; iznad je prozor od staklene opeke) i spušta ga najmanjim padom za sendvič panel, 5°. Tako se garažna vrata kače na kutni stup i mogu biti oko 2,30 m visoka sa standardnim okovom. <b>Niža</b> varijanta (1,90 m na kraju) spušta krov iznad garaže, pa vrata od 2,68 m ne mogu biti visoka 2,00 m; treba ih suziti ili podići kraj krova. Dozvoljenu visinu uz među sa susjedom provjeri u općini.</p>
+    <p class="note">Krov završava prije susjeda, a lim uz susjeda ide do visine krova. Oluk ima pad prema ulici i vertikalu na pročelju, pa voda curi van, a ne u dvorište.<br><br><b>Najviša</b> varijanta drži krov uz kuću na postojećim nosačima (3,18 m; iznad je prozor od staklene opeke) i spušta ga najmanjim padom za sendvič panel, 5°. Tako se garažna vrata kače na kutni stup i mogu biti oko 2,30 m visoka sa standardnim okovom. <b>Najniža</b> varijanta (1,90 m na kraju) spušta krov iznad garaže, pa vrata od 2,68 m ne mogu biti visoka 2,00 m; treba ih suziti ili podići kraj krova. Dozvoljenu visinu uz među sa susjedom provjeri u općini.</p>
   </section>
 
   <section>
@@ -251,7 +266,7 @@
       <div><dt>Visina postojećih nosača na zidu</dt><dd>3,18 m</dd></div>
       <div><dt>Kuća → susjedov sokl</dt><dd>5,41 m</dd></div>
       <div><dt>Kuća → kraj žutog zida uz ulicu</dt><dd>5,52 m</dd></div>
-      <div><dt>Kraj krova, niža varijanta</dt><dd>1,90 m</dd></div>
+      <div><dt>Kraj krova, najniža varijanta</dt><dd>1,90 m</dd></div>
       <div><dt>Razmak krova od susjeda</dt><dd>0,50 m</dd></div>
     </dl>
   </section>
@@ -311,13 +326,13 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="js/config.js?v=29"></script>
-<script src="js/statics.js?v=29"></script>
-<script src="js/scene.js?v=29"></script>
-<script src="js/elevation.js?v=29"></script>
-<script src="js/drawings.js?v=29"></script>
-<script src="js/materials.js?v=29"></script>
-<script src="js/gallery.js?v=29"></script>
-<script src="js/main.js?v=29"></script>
+<script src="js/config.js?v=31"></script>
+<script src="js/statics.js?v=31"></script>
+<script src="js/scene.js?v=31"></script>
+<script src="js/elevation.js?v=31"></script>
+<script src="js/drawings.js?v=31"></script>
+<script src="js/materials.js?v=31"></script>
+<script src="js/gallery.js?v=31"></script>
+<script src="js/main.js?v=31"></script>
 </body>
 </html>
