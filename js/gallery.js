@@ -1,10 +1,16 @@
 // Photo gallery with a lightbox; the list mirrors the images in galerija/.
 window.N7 = window.N7 || {};
 (function (N7) {
-  const ITEMS = [
-    ['fotomontaza', 'Fotomontaža, najniža varijanta krova (prvi raspored)'],
-    ['fotomontaza-najvisa', 'Fotomontaža, najviša varijanta krova'],
-    ['prije-poslije', 'Prije i poslije'],
+  // generated from the model's dimensions first, then the photos, measurements and examples
+  const GROUPS = [
+    ['Generirane slike', [
+      ['fotomontaza', 'Fotomontaža, najniža varijanta krova (1,90 m na kraju)'],
+      ['fotomontaza-najvisa', 'Fotomontaža, najviša varijanta krova (2,75 m na kraju)'],
+      ['usporedba', 'Usporedba: najniža i najviša varijanta'],
+      ['fotomontaza-ravni-krov', 'Fotomontaža, najviša varijanta s ravnim krovom izvana'],
+      ['prije-poslije', 'Prije i poslije (najviša varijanta)']
+    ]],
+    ['Fotografije, mjerenja i primjeri', [
     ['ideja', 'Idejna skica s bojama'],
     ['img_2794', 'Pogled s ulice'],
     ['img_2795', 'Kuća i kapija ukoso'],
@@ -20,11 +26,15 @@ window.N7 = window.N7 || {};
     ['img_2842', 'Inspiracija: nadstrešnica u susjedstvu'],
     ['img_2843', 'Inspiracija: nadstrešnica i klizna kapija'],
     ['primjer-3', 'Inspiracija: nadstrešnica između dviju kuća']
+    ]]
   ];
+  const ITEMS = GROUPS.flatMap(g => g[1]);
+  const WIDE = ['usporedba', 'prije-poslije'];   // two photos side by side: show them whole in the thumbnail
 
   N7.initGallery = function (grid, lb) {
-    grid.innerHTML = ITEMS.map(([n, c], i) =>
-      `<figure><button class="thumb" data-i="${i}" aria-label="Otvori: ${c}"><img src="galerija/${n}-t.jpg" alt="${c}" loading="lazy"></button><figcaption>${c}</figcaption></figure>`).join('');
+    let i = 0;
+    grid.innerHTML = GROUPS.map(([title, items]) => `<h3 class="gal-h">${title}</h3><div class="gallery">${items.map(([n, c]) =>
+      `<figure><button class="thumb" data-i="${i++}" aria-label="Otvori: ${c}"><img src="galerija/${n}-t.jpg" alt="${c}" loading="lazy"${WIDE.includes(n) ? ' class="wide"' : ''}></button><figcaption>${c}</figcaption></figure>`).join('')}</div>`).join('');
     const stage = lb.querySelector('#lb-stage'), img = lb.querySelector('#lb-img'), cap = lb.querySelector('#lb-cap'), zoomOut = lb.querySelector('#lb-zoom');
     const MAX = 8;
     let cur = 0;
