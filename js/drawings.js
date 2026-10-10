@@ -238,7 +238,8 @@ window.N7 = window.N7 || {};
       [0.04, -0.04].forEach(o => { b += `<line x1="${X(-bk.eps - 0.10)}" y1="${Y(y1 + o)}" x2="${X(-bk.eps)}" y2="${Y(y1 + o)}" class="ln" stroke-width="3"/>`; });
       b += txt(X(0.05), Y(y1) + 4, `kosnik ${k.s.name}, nova pločica s 2 sidra, ${Math.round(k.drop * 100)} cm niže`, 's', 'start');
     }
-    if (d.st.wallPosts) {
+    if (d.wallSupport === 'posts2') b += txt(X(d.wallX1) + 8, Y(HH - 0.22), 'ovalne rupe: greda se može micati gore-dolje, nosač je drži samo bočno', 's', 'start');
+    if (d.wallSupport === 'posts') {
       b += rect(X(d.wallX0), Y(HH - 0.15), 0.10 * K, 0.18 * K, `class="ln" ${fill('#bbb')}`);
       b += txt(X(d.wallX1) + 8, Y(HH - 0.27), `stup uz kuću ${d.st.wallPosts.s.name} ispod grede`, 's', 'start');
     }

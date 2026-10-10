@@ -93,7 +93,7 @@ window.N7 = window.N7 || {};
     });
 
     // static check first: it picks the rafter section, whose depth sets the headroom under the roof
-    const st = N7.statics({ HH, HL, W, D: p.D, slopeLen, pitchDeg, sideZ, nRafters, rafterZ, rafterType: p.rafterType || 'box', bracket: Object.assign({ z: brZ }, FIX.bracket), wallSupport, wallPostZ, roof: p.roof || 'sandwich', beamType: p.beamType || 'box', purlinType: p.purlinType || 'cont', sk: p.sk, qp: p.qp, houseEave: FIX.houseEave, houseRoofRun: FIX.houseRoofRun });
+    const st = N7.statics({ HH, HL, W, D: p.D, slopeLen, pitchDeg, sideZ, nRafters, rafterZ, rafterType: p.rafterType || 'box', bracket: Object.assign({ z: brZ }, FIX.bracket), wallSupport, wallPostZ, stairsZ: [-stp.z1 - 0.06, -stp.z0 + 0.06], roof: p.roof || 'sandwich', beamType: p.beamType || 'box', purlinType: p.purlinType || 'cont', sk: p.sk, qp: p.qp, houseEave: FIX.houseEave, houseRoofRun: FIX.houseRoofRun });
     const rafterH = st.rafter.s.h / 1000;
     // underside of the rafters: a lattice rafter has its level bottom tube there, a box rafter follows the slope
     const tr = st.rafter.s.truss, rt = tr ? N7.rafterTrussGeom(W, HH, HL, tr) : null;
@@ -197,7 +197,7 @@ window.N7 = window.N7 || {};
       HH, HL, D: p.D, WL: p.WL, gap: p.gap, W, drop, roofY, pitchDeg, pitchPct: drop / W * 100, slopeLen,
       intercomX, GW, gx, gxMin, gxMax, gRight, attached, post, frontPosts, GH, lowHeadroom, tail, fenceW, front,
       st, rafterH, beamDepth, doorH: entryH, doorMax, parapet: !!p.parapet, roof: p.roof || 'sandwich',
-      nSide, sideZ, nRafters, rafterZ, doorSkip, underAt, rt, brZ, wallX0, wallX1, wallSupport, wallPostZ,
+      nSide, sideZ, nRafters, rafterZ, doorSkip, underAt, rt, brZ, wallX0, wallX1, wallSupport, wallPostZ: st.wallPosts ? st.wallPosts.z : wallPostZ,
       warnings, FIX
     };
   }

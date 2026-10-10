@@ -13,7 +13,7 @@
   let prices = {};
   try { prices = JSON.parse(localStorage.getItem(PKEY)) || {}; } catch (e) { prices = {}; }
   const savePrices = () => { try { localStorage.setItem(PKEY, JSON.stringify(prices)); } catch (e) { /* storage blocked */ } };
-  const bomOpt = { slab: true, mix: 3 };
+  const bomOpt = { scope: 'all', mix: 3 };
 
   const scene = N7.createScene($('stage'));
 
@@ -177,7 +177,7 @@
   $('bom-copy').onclick = () => copyText(N7.materialsText(groups, prices));
   function updateSums() {
     const c = N7.costs(groups, prices);
-    document.querySelectorAll('#bom td.eur[data-k]').forEach(td => { td.textContent = N7.euro(N7.rowCost({ k: td.dataset.k, q: +td.dataset.q }, prices)); });
+    document.querySelectorAll('#bom td.eur[data-k]').forEach(td => { td.textContent = N7.euro(N7.rowCost({ k: td.dataset.k, q: +td.dataset.q, opt: !!td.dataset.opt, on: td.dataset.def === '1' }, prices)); });
     document.querySelectorAll('#bom th.eur[data-g]').forEach(th => { const v = c.groups[+th.dataset.g]; th.textContent = v ? N7.euro(v) : ''; });
     $('bom-total').textContent = $('bom-sum').textContent = N7.euro(c.total);
   }
@@ -192,7 +192,12 @@
   $('bom').addEventListener('change', e => { const k = e.target.dataset.k; if (k) e.target.value = N7.fmt(prices[k] != null ? prices[k] : N7.priceDefault(k), 2); });
   window.addEventListener('beforeprint', () => refresh());
   $('price-reset').addEventListener('click', () => { prices = {}; savePrices(); refresh(); });
-  $('in-slab').addEventListener('change', e => { bomOpt.slab = e.target.checked; refresh(); });
+  $('in-scope').addEventListener('change', e => { bomOpt.scope = e.target.value; refresh(); });
+  // optional rows (e.g. the intercom): the tick box decides whether they count in the totals
+  $('bom').addEventListener('change', e => {
+    const k = e.target.dataset.on; if (!k) return;
+    prices['on:' + k] = e.target.checked; savePrices(); updateSums();
+  });
   $('in-mix').addEventListener('change', e => {
     const v = parseFloat(String(e.target.value).replace(',', '.'));
     bomOpt.mix = isFinite(v) ? Math.min(8, Math.max(1, v)) : 3;

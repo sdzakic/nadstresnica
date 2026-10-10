@@ -13,13 +13,14 @@ window.N7 = window.N7 || {};
     sandwich: 22, sandwich30: 20, trap: 10, roofScrew: 0.25, facScrew: 0.15,
     flash: 9, gutter: 12, downpipe: 10,
     'facade-anth': 16, 'facade-house': 18, 'facade-wood': 24, rail: 2.5,
-    garage: 1200, door: 1500, intercom: 250,
+    garage: 1200, door: 500, intercom: 150,
     cement: 5.5, gravel: 40, tampon: 22, mesh: 3.3
   };
   const KGM = {};   // weight per metre of every steel section seen so far, keyed by its name
   N7.priceDefault = k => k.startsWith('kg:') ? steelPrice(KGM[k.slice(3)] || 0) : PRICES[k];
   // a priced row: key, numeric quantity, unit; one price per section name, wherever it is used
-  const P = (k, q, u) => ({ k, q, u });
+  // o: { opt: true, on: false } makes the row optional with a tick box, off by default
+  const P = (k, q, u, o) => Object.assign({ k, q, u }, o);
   const sec = (name, kg, q) => { if (!KGM[name]) KGM[name] = kg; return P('kg:' + name, q, 'm'); };
   const steel = (s_, q) => sec(s_.name, s_.kg, q);
 
@@ -30,7 +31,8 @@ window.N7 = window.N7 || {};
   }
 
   N7.materials = function (d, roofKind, lk = {}, opt = {}) {
-    const mix = opt.mix || 3, slab = opt.slab !== false;
+    // scope: 'canopy' = carport only, 'slab' = carport + concrete slab under it, 'all' = also the driveway to the road
+    const mix = opt.mix || 3, scope = opt.scope || 'all', slab = scope !== 'canopy', drive = scope === 'all';
     const C = N7.COLORS, look = { garage: C.garage[lk.garage || 'anth'][0].toLowerCase(), door: C.door[lk.door || 'anth'][0].toLowerCase(), sheet: C.sheet[lk.sheet || 'anth'] };
     const FIX = N7.FIX, f = N7.fmt;
     const m = (v, dec) => f(v, dec == null ? 2 : dec) + ' m';
@@ -148,8 +150,8 @@ window.N7 = window.N7 || {};
     groups.push({
       title: 'Vrata i interfon', rows: [
         [`Sekcijska garažna vrata s motorom, ${look.garage}`, `${f(d.GW)} × ${f(d.GH)} m`, (d.lowHeadroom ? 'okov za nisku nadvisinu' : 'standardni okov') + (d.attached ? ' · desno na kutni stup' : ''), P('garage', 1, 'kpl')],
-        [`Ulazna vrata, aluminij, ${look.door}`, `${f(FIX.door.x1 - FIX.door.x0)} × ${f(d.doorH)} m`, 'šarke desno, otvaranje prema unutra', P('door', 1, 'kpl')],
-        ['Interfon s kamerom', '1 kpl', 'na limu između stupova vrata, kabel do kuće', P('intercom', 1, 'kpl')],
+        [`Ulazna vrata, ${look.door}`, `${f(FIX.door.x1 - FIX.door.x0)} × ${f(d.doorH)} m`, 'šarke desno, otvaranje prema unutra · jednostavnija vrata; aluminijska s ispunom ≈ 1.200–1.800 €', P('door', 1, 'kpl')],
+        ['Interfon s kamerom', '1 kpl', 'na limu između stupova vrata, kabel do kuće · po želji, označi da uđe u zbroj', P('intercom', 1, 'kpl', { opt: true, on: false })],
         ['Kućni broj i sandučić', 'postojeći', 'premjestiti na lim uz interfon']
       ]
     });
@@ -157,7 +159,7 @@ window.N7 = window.N7 || {};
     // ---------- concrete
     const footings = d.nSide + d.frontPosts.length + 1 + (st.wallPosts ? d.wallPostZ.length : 0); // side, pročelje, fence post (+ posts by the house)
     const fs = st.footing, fVol = footings * fs * fs * 0.8;
-    const driveA = d.post.x1 * FIX.drivewayLen;
+    const driveA = drive ? d.post.x1 * FIX.drivewayLen : 0;
     const slabA = slab ? d.WL * d.D : 0;
     const flatA = driveA + slabA, vol = fVol + flatA * 0.12;
     // cement : aggregate by volume; the dry mix shrinks by about a third when mixed, so dry volume ≈ 1,54 × wet
@@ -167,13 +169,13 @@ window.N7 = window.N7 || {};
     groups.push({
       title: `Beton · ${m3(vol)}`, rows: [
         [`Temelji stupova ${Math.round(fs * 100)}×${Math.round(fs * 100)}×80 cm`, `${kom(footings)} · ${m3(fVol)}`, 'veličina iz statike (vjetar podiže krov)'],
-        ['Betonski prilaz, 12 cm', `${m2(driveA)} · ${m3(driveA * 0.12)}`, `${f(d.post.x1)} × ${f(FIX.drivewayLen)} m do ceste`],
-        slab ? ['Ploča ispod nadstrešnice, 12 cm', `${m2(slabA)} · ${m3(slabA * 0.12)}`, `${f(d.WL)} × ${f(d.D)} m`] : ['Ploča ispod nadstrešnice', 'ne radi se', 'uključi je iznad tablice'],
+        slab ? ['Ploča ispod nadstrešnice, 12 cm', `${m2(slabA)} · ${m3(slabA * 0.12)}`, `${f(d.WL)} × ${f(d.D)} m`] : ['Ploča ispod nadstrešnice', 'ne radi se', 'odaberi je iznad tablice'],
+        drive ? ['Betonski prilaz, 12 cm', `${m2(driveA)} · ${m3(driveA * 0.12)}`, `${f(d.post.x1)} × ${f(FIX.drivewayLen)} m do ceste`] : ['Betonski prilaz', 'ne radi se', 'odaberi ga iznad tablice'],
         [`Cement CEM II 42,5, vreće 25 kg (1 : ${f(mix, 1)})`, `${bags} × 25 kg = ${Math.round(bags * 25)} kg`, `za ${m3(vol)} betona, ≈ ${Math.round(cementKg / vol)} kg/m³`, P('cement', bags, 'vreća')],
         [`Šljunak separirani 0–16 mm (${f(mix, 1)} dijela)`, `${m3(gravelM3)} · ≈ ${f(gravelM3 * 1.65, 1)} t`, 'mješavina pijeska i šljunka za beton', P('gravel', r(gravelM3), 'm³')],
         ['Voda', `≈ ${Math.round(water / 10) * 10} L`, 'v/c ≈ 0,5; manje ako je šljunak mokar'],
-        ['Armaturna mreža Q-188', m2(flatA * 1.1), `${slab ? 'prilaz + ploča' : 'prilaz'}, s preklopima · ploča 2,15 × 6 m = 12,9 m²`, P('mesh', flatA * 1.1, 'm²')],
-        ['Tampon šljunak 0–63, 15 cm', m3(flatA * 0.15), 'ispod betona, nabijeni', P('tampon', r(flatA * 0.15), 'm³')]
+        ...(flatA > 0 ? [['Armaturna mreža Q-188', m2(flatA * 1.1), `${[slab && 'ploča', drive && 'prilaz'].filter(Boolean).join(' + ')}, s preklopima · ploča 2,15 × 6 m = 12,9 m²`, P('mesh', flatA * 1.1, 'm²')],
+        ['Tampon šljunak 0–63, 15 cm', m3(flatA * 0.15), 'ispod betona, nabijeni', P('tampon', r(flatA * 0.15), 'm³')]] : [])
       ]
     });
     return groups;
@@ -182,7 +184,8 @@ window.N7 = window.N7 || {};
   // ---------- prices: optional unit prices next to each row, totals per group and overall
   const euro = v => v.toLocaleString('hr-HR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
   N7.euro = euro;
-  N7.rowCost = (pr, prices) => { const u = prices[pr.k] != null ? prices[pr.k] : N7.priceDefault(pr.k); return isFinite(u) ? u * pr.q : 0; };
+  N7.rowOn = (pr, prices) => !pr.opt || (prices['on:' + pr.k] != null ? !!prices['on:' + pr.k] : !!pr.on);
+  N7.rowCost = (pr, prices) => { if (!N7.rowOn(pr, prices)) return 0; const u = prices[pr.k] != null ? prices[pr.k] : N7.priceDefault(pr.k); return isFinite(u) ? u * pr.q : 0; };
   N7.costs = (groups, prices) => {
     const g = groups.map(gr => gr.rows.reduce((a, r) => a + (r[3] ? N7.rowCost(r[3], prices) : 0), 0));
     return { groups: g, total: g.reduce((a, b) => a + b, 0) };
@@ -194,13 +197,13 @@ window.N7 = window.N7 || {};
     el.innerHTML = '<thead><tr><th scope="col">Stavka</th><th scope="col">Količina</th><th scope="col">Napomena</th><th scope="col">Jed. cijena</th><th scope="col" class="eur">Iznos</th></tr></thead>' + groups.map((g, gi) => `
       <tbody>
         <tr class="grp"><th colspan="4" scope="colgroup">${g.title}</th><th class="eur" data-g="${gi}">${c.groups[gi] ? euro(c.groups[gi]) : ''}</th></tr>
-        ${g.rows.map(r => `<tr><td>${r[0]}</td><td class="q">${r[1]}</td><td class="n">${r[2]}</td>${r[3] ? `<td class="pr"><label><input type="text" inputmode="decimal" data-k="${r[3].k}" value="${N7.fmt(unitPrice(r[3].k, prices), 2)}" aria-label="Cijena: ${r[0]}"${prices[r[3].k] != null ? ' class="own"' : ''}><span>€/${r[3].u}</span></label></td><td class="eur" data-q="${r[3].q}" data-k="${r[3].k}">${euro(N7.rowCost(r[3], prices))}</td>` : '<td></td><td></td>'}</tr>`).join('')}
+        ${g.rows.map(r => `<tr><td>${r[0]}</td><td class="q">${r[1]}</td><td class="n">${r[2]}</td>${r[3] ? `<td class="pr">${r[3].opt ? `<input type="checkbox" class="on" data-on="${r[3].k}"${N7.rowOn(r[3], prices) ? ' checked' : ''} aria-label="Uključi u zbroj: ${r[0]}">` : ''}<label><input type="text" inputmode="decimal" data-k="${r[3].k}" value="${N7.fmt(unitPrice(r[3].k, prices), 2)}" aria-label="Cijena: ${r[0]}"${prices[r[3].k] != null ? ' class="own"' : ''}><span>€/${r[3].u}</span></label></td><td class="eur" data-q="${r[3].q}" data-k="${r[3].k}"${r[3].opt ? ` data-opt="1" data-def="${r[3].on ? 1 : 0}"` : ''}>${euro(N7.rowCost(r[3], prices))}</td>` : '<td></td><td></td>'}</tr>`).join('')}
       </tbody>`).join('') + `<tfoot><tr><th colspan="4" scope="row">Ukupno materijal, okvirno s PDV-om, bez rada i dostave</th><th class="eur" id="bom-total">${euro(c.total)}</th></tr></tfoot>`;
   };
 
   N7.materialsText = function (groups, prices = {}) {
     const c = N7.costs(groups, prices);
-    return groups.map((g, gi) => g.title + (c.groups[gi] ? ` · ${euro(c.groups[gi])}` : '') + '\n' + g.rows.map(r => `- ${r[0]}: ${r[1]}${r[2] ? ' (' + r[2] + ')' : ''}${r[3] ? ` · ${N7.fmt(unitPrice(r[3].k, prices), 2)} €/${r[3].u} = ${euro(N7.rowCost(r[3], prices))}` : ''}`).join('\n')).join('\n\n')
+    return groups.map((g, gi) => g.title + (c.groups[gi] ? ` · ${euro(c.groups[gi])}` : '') + '\n' + g.rows.map(r => `- ${r[0]}: ${r[1]}${r[2] ? ' (' + r[2] + ')' : ''}${r[3] ? ` · ${N7.fmt(unitPrice(r[3].k, prices), 2)} €/${r[3].u}${N7.rowOn(r[3], prices) ? ` = ${euro(N7.rowCost(r[3], prices))}` : ' (nije u zbroju)'}` : ''}`).join('\n')).join('\n\n')
       + `\n\nUkupno materijal (okvirno, s PDV-om, bez rada i dostave): ${euro(c.total)}`;
   };
 })(window.N7);

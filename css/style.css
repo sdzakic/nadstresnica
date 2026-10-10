@@ -167,6 +167,11 @@ section{display:flex;flex-direction:column;gap:16px}
 .bom-opts{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;font-size:14px}
 .bom-opts .chk{display:flex;align-items:center;gap:8px;cursor:pointer}
 .bom-opts .chk input{accent-color:var(--accent);width:16px;height:16px}
+.bom-opts .scope{display:flex;align-items:center;gap:8px}
+.bom-opts .scope .pick{width:auto}
+.bom td.pr{white-space:nowrap}
+.bom td.pr .on{accent-color:var(--accent);width:16px;height:16px;vertical-align:middle;margin:0 6px 0 0}
+.bom td.pr label{display:inline-flex}
 .bom-opts .mix input{width:52px;font:13px var(--mono);padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);text-align:right}
 .bom-opts .bom-sum{margin-left:auto;font-family:var(--mono)}
 .bom-btns{display:flex;flex-wrap:wrap;gap:10px}

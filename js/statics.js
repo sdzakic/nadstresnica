@@ -113,6 +113,7 @@ window.N7 = window.N7 || {};
   const ANCHOR = { d: 12, As: 84.3, fub: 500, hef: 80, fck: 20, NRkp: 16, s: 60 };
   const BRACE = rhs(60, 60, 3), BRACE_DROP = 0.45;   // knee brace under each bracket: down to a new plate 45 cm lower
   const WALL_POST = rhs(100, 100, 4);
+  const POST2_CACHE = new Map();
   function anchorResistance(a) {
     const NRs = 0.9 * a.fub * a.As / 1.25 / 1000;                              // steel, kN
     const scr = 3 * a.hef, gC = (scr + a.s) / scr / 2;                           // two anchors share one cone
@@ -296,7 +297,24 @@ window.N7 = window.N7 || {};
     const br = c.bracket, bz = (br && br.z || []).filter(z => z >= 0 && z <= c.D);
     const support = c.wallSupport || 'none';
     // with posts by the house the wall beam bears on the posts; the brackets only hold it sideways
-    const sz = support === 'posts' ? (c.wallPostZ || bz) : bz;
+    let sz = support === 'posts' ? (c.wallPostZ || bz) : bz;
+    if (support === 'posts2') {
+      // two posts carry the wall beam alone (brackets only hold it sideways): place them where the beam moment is least,
+      // clear of the steps of the side entrance
+      const st = c.stairsZ || [3.24, 4.66], EI = E * 1e3 * WALL_BEAMS[0].I * 1e-12, ok = z => z < st[0] || z > st[1];
+      // the best place only depends on where the rafters are, not on how heavy the load is, so it is cached
+      const key = [c.D, st, rz.map(z => z.toFixed(3))].join('|');
+      let best = POST2_CACHE.get(key);
+      if (!best) {
+        for (let a = 0.3; a < c.D / 2; a += 0.1) for (let b = c.D / 2; b < c.D - 0.25; b += 0.1) {
+          if (!ok(a) || !ok(b)) continue;
+          const r = contBeam(c.D, [a, b], loads, EI);
+          if (!best || r.Mmax < best.M) best = { M: r.Mmax, z: [Math.round(a * 100) / 100, Math.round(b * 100) / 100] };
+        }
+        if (best) POST2_CACHE.set(key, best);
+      }
+      sz = best ? best.z : [0.3, c.D - 0.3];
+    }
     let wallBeam = null, brackets = null, braces = null, wallPosts = null;
     if (sz.length >= 2) {
       for (const s of WALL_BEAMS) {
@@ -313,11 +331,12 @@ window.N7 = window.N7 || {};
       const e = br.tubeL + br.plateT + 0.05;
       const Rmax = Math.max(...wallBeam.R), Rup = Rmax * Twall / Vwall, ar = anchorResistance(ANCHOR);
       const z = br.plateH - 0.04;                     // top bolts to the bottom edge of the plate pressing on the wall
-      if (support === 'posts') {
+      if (support === 'posts' || support === 'posts2') {
         // vertical load goes down the posts; brackets keep the beam in place and take the wind uplift only
         const Lp = c.HH - 0.15, b = buckling(WALL_POST, Rmax * 1.0, Lp);
         wallPosts = Object.assign({ z: sz, s: WALL_POST, L: Lp, N: Rmax, R: wallBeam.R, fail: b.u > 1 }, b);
-        const Tbolt = Rup * e / z / 2 + Rup / br.bolts;
+        // with only two posts the beam sits in vertical slots on the brackets, so the posts also take the wind uplift
+        const RupB = support === 'posts2' ? 0 : Rup, Tbolt = RupB * e / z / 2 + RupB / br.bolts;
         brackets = { z: bz, R: wallBeam.R.map(() => 0), Rmax: 0, Rup, e, M: 0, tube: BRACKET_TUBE, uTube: Rup * e * 1e6 / BRACKET_TUBE.W / FY, Tbolt, Vbolt: 0, TboltUp: Tbolt, anchor: ar, support };
         brackets.uAnchor = interact(Tbolt, 0, ar);
       } else if (support === 'brace') {
@@ -356,8 +375,8 @@ window.N7 = window.N7 || {};
 
   function bracketRows(st, f, kN, pct) {
     const b = st.brackets, a = b.anchor, rows = [];
-    const sup = { none: 'samo postojeći nosači', brace: 'nosači + kosnik ispod svakog', posts: 'stupovi uz kuću, nosači drže bočno' }[b.support];
-    rows.push([`Postojeći nosači na zidu (${b.z.length} kom)`, b.support === 'posts' ? 'bez vertikalnog tereta' : `reakcije ${b.R.map(r => f(r, 1)).join(' / ')} kN`, `${sup}; na ${b.z.map(z => f(z)).join(' · ')} m od ulice; krak do osi grede ${Math.round(b.e * 100)} cm`, '']);
+    const sup = { none: 'samo postojeći nosači', brace: 'nosači + kosnik ispod svakog', posts: 'stupovi uz kuću, nosači drže bočno', posts2: '2 stupa uz kuću, nosači drže samo bočno (ovalne rupe)' }[b.support];
+    rows.push([`Postojeći nosači na zidu (${b.z.length} kom)`, b.support === 'posts' || b.support === 'posts2' ? 'bez vertikalnog tereta' : `reakcije ${b.R.map(r => f(r, 1)).join(' / ')} kN`, `${sup}; na ${b.z.map(z => f(z)).join(' · ')} m od ulice; krak do osi grede ${Math.round(b.e * 100)} cm`, '']);
     if (b.support === 'none') rows.push([`Cijev nosača ${b.tube.name} (pretpostavljena debljina 4 mm)`, `savijanje ${pct(b.uTube)}`, `M = ${f(b.M)} kNm uz zid (kroz stiropor)`, b.fail ? 'fail' : 'ok']);
     rows.push(['Sidra ploče nosača u betonu (4 × M12 mehanička)', `iskorištenje ${pct(b.uAnchor)}`,
       `${b.support === 'brace' ? 'svako sidro' : 'gornje sidro'}: vlak ${kN(b.Tbolt)}, posmik ${kN(b.Vbolt)}; nosivost na vlak ≈ ${kN(a.NRd)}, posmik ≈ ${kN(a.VRd)}. Pretpostavka: dubina 80 mm, beton C20/25 bez pukotina; koso bušenje nije uzeto u obzir`, b.anchorFail ? 'fail' : 'ok']);
@@ -395,7 +414,7 @@ window.N7 = window.N7 || {};
     else rows.push([`Rogovi ${st.rafter.s.name}`, `savijanje ${pct(st.rafter.uM)} · progib ${pct(st.rafter.uW)}`, `raspon ${f(d.W)} m, razmak ${f(st.sR)} m, M = ${f(st.rl.M, 1)} kNm, progib ${Math.round(st.rafter.w)} mm (dop. ${Math.round(d.W * 1000 / 200)})`, st.rafter.fail ? 'fail' : 'ok']);
     if (st.beam.s.truss) rows.push([`Bočna greda: ${st.beam.s.name}`, `pojasnice ${pct(st.beam.uM)} · zmija ${pct(st.beam.uD)} · progib ${pct(st.beam.uW)}`, `jedan raspon ${f(st.Lb)} m na 2 kutna stupa, opterećenje ${f(st.wb)} kN/m, ${f(st.beam.s.kg, 1)} kg/m`, st.beam.fail ? 'fail' : 'ok']);
     else rows.push([`Bočna greda ${st.beam.s.name}`, `savijanje ${pct(st.beam.uM)} · progib ${pct(st.beam.uW)}`, `raspon ${f(st.Lb)} m, opterećenje ${f(st.wb)} kN/m`, st.beam.fail ? 'fail' : 'ok']);
-    if (st.wallBeam) rows.push([`Zidna greda ${st.wallBeam.s.name}`, `savijanje ${pct(st.wallBeam.uM)} · progib ${pct(st.wallBeam.uW)}`, `kontinuirana preko postojećih nosača, najveći raspon ${f(st.wallBeam.spanMax)} m, M = ${f(st.wallBeam.Mmax, 1)} kNm`, st.wallBeam.fail ? 'fail' : 'ok']);
+    if (st.wallBeam) rows.push([`Zidna greda ${st.wallBeam.s.name}`, `savijanje ${pct(st.wallBeam.uM)} · progib ${pct(st.wallBeam.uW)}`, `${st.wallSupport === 'posts2' ? 'na 2 stupa uz kuću' : st.wallSupport === 'posts' ? 'kontinuirana preko stupova uz kuću' : 'kontinuirana preko postojećih nosača'}, najveći raspon ${f(st.wallBeam.spanMax)} m, M = ${f(st.wallBeam.Mmax, 1)} kNm`, st.wallBeam.fail ? 'fail' : 'ok']);
     rows.push([`Stupovi ${st.post.s.name}`, `izvijanje ${pct(st.post.u)}`, `N = ${kN(st.N)}, duljina izvijanja ${f(d.HL)} m, χ = ${f(st.post.chi)}`, st.post.fail ? 'fail' : 'ok']);
     groups.push({ title: 'Nosivi elementi (S235)', rows });
     groups.push({
